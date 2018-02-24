@@ -13,7 +13,7 @@ from game.models import Users, Players, Room, Round, RoundComposition, FirmProfi
 conversion_rate = 0.5 * 10 **(-3)
 
 
-mt_ids = ["A319NJPBZ1Z57M"]
+mt_ids = ["A2KOXR5OXIFUIW"]
 
 
 for mt_id in mt_ids:
@@ -29,7 +29,6 @@ for mt_id in mt_ids:
 
     if rm.state == "end":
         ending_t = rm.ending_t - 1
-        print("ending_t", ending_t)
 
         rds = Round.objects.filter(room_id=rm.room_id)
 
@@ -58,11 +57,45 @@ for mt_id in mt_ids:
         print("{} TO PAY: 1$ + {:.2f} $ BONUS".format(mt_id, profit*conversion_rate))
 
     else:
-        print("Room did not reach ending state")
-        if user.deserter:
-            print("{} DESERTER".format(mt_id))
+
+        if rm.state == "pvp":
+
+            ending_t = rm.ending_t - 1
+
+            rds = Round.objects.filter(room_id=rm.room_id, state="pve")
+
+            round_id_and_agent_ids = []
+
+            for rd in rds:
+
+                rc = RoundComposition.objects.filter(round_id=rd.round_id, player_id=p.player_id).first()
+                if rc is not None:
+                    round_id_and_agent_ids.append((rd.round_id, rc.agent_id))
+
+            profit = 0
+
+            for round_id, agent_id in round_id_and_agent_ids:
+                # print("round_id", round_id, "agent_id", agent_id)
+
+                pr = FirmProfits.objects.get(agent_id=agent_id, t=ending_t, round_id=round_id).value
+
+                profit += pr
+
+                state = Round.objects.get(round_id=round_id).state  # pve, pvp
+                print("Profit round {}: {}".format(state, pr))
+
+            print("Room stopped at PVP")
+            print("{} TO PAY: 1$ + {:.2f} $ BONUS".format(mt_id, profit * conversion_rate))
+
+        elif rm.state == "pve":
+            print("Room stopped at PVE")
+            print("{} TO PAY: 1$".format(mt_id))
 
         else:
+            print("Room stopped at tutorial")
             print("{} TO PAY: 1$".format(mt_id))
+
+        if user.deserter:
+            print("{} DESERTER".format(mt_id))
 
     print()
