@@ -10,31 +10,59 @@ application = get_wsgi_application()
 from game.models import Users, Players, Room, Round, RoundComposition, FirmProfits
 
 
-mt_id = "A1036BH0RBAF1O"
+conversion_rate = 0.5 * 10 **(-3)
 
-# Application logic
-user = Users.objects.get(mechanical_id=mt_id)
 
-p = Players.objects.get(player_id=user.player_id)
+mt_ids = ["A319NJPBZ1Z57M"]
 
-rm = Room.objects.get(room_id=p.room_id)
 
-ending_t = rm.ending_t - 1
+for mt_id in mt_ids:
 
-rds = Round.objects.filter(room_id=rm.room_id)
+    # Application logic
+    user = Users.objects.get(mechanical_id=mt_id)
 
-round_id_and_agent_ids = []
+    print("Looking for MT {} ({})".format(user.mechanical_id, user.username))
 
-for rd in rds:
+    p = Players.objects.get(player_id=user.player_id)
 
-    rc = RoundComposition.objects.filter(round_id=rd.round_id, player_id=p.player_id).first()
-    if rc is not None:
-        round_id_and_agent_ids.append((rd.round_id, rc.agent_id))
+    rm = Room.objects.get(room_id=p.room_id)
 
-profit = 0
+    if rm.state == "end":
+        ending_t = rm.ending_t - 1
+        print("ending_t", ending_t)
 
-for round_id, agent_id in round_id_and_agent_ids:
+        rds = Round.objects.filter(room_id=rm.room_id)
 
-    profit += FirmProfits.objects.get(agent_id=agent_id, t=ending_t, round_id=round_id)
+        round_id_and_agent_ids = []
 
-print("total profit", profit)
+        for rd in rds:
+
+            rc = RoundComposition.objects.filter(round_id=rd.round_id, player_id=p.player_id).first()
+            if rc is not None:
+                round_id_and_agent_ids.append((rd.round_id, rc.agent_id))
+
+        profit = 0
+
+        for round_id, agent_id in round_id_and_agent_ids:
+
+            # print("round_id", round_id, "agent_id", agent_id)
+
+            pr = FirmProfits.objects.get(agent_id=agent_id, t=ending_t, round_id=round_id).value
+
+            profit += pr
+
+            state = Round.objects.get(round_id=round_id).state  # pve, pvp
+            print("Profit round {}: {}".format(state, pr))
+
+        print("Total profit", profit)
+        print("{} TO PAY: 1$ + {:.2f} $ BONUS".format(mt_id, profit*conversion_rate))
+
+    else:
+        print("Room did not reach ending state")
+        if user.deserter:
+            print("{} DESERTER".format(mt_id))
+
+        else:
+            print("{} TO PAY: 1$".format(mt_id))
+
+    print()
