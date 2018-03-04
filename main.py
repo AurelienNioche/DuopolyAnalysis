@@ -7,97 +7,107 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
 # Your application specific imports
-from game.models import Users, Players, Room, Round, RoundComposition, FirmProfits
+from game.models import User, Room, Round, RoundComposition, FirmProfit
 
 
-conversion_rate = 0.5 * 10 **(-3)
+conversion_rate = 0.5 * 10 ** (-3)
 
 
-def compute_remuneration(mt_ids):
+def compute_remuneration(mt_ids=None):
+
+    if mt_ids is None:
+        mt_ids = [i[0] for i in User.objects.all().values_list("mechanical_id")]
+        print(mt_ids)
 
     for mt_id in mt_ids:
 
+        print("Looking for MT '{}'".format(mt_id))
+
         # Application logic
-        user = Users.objects.get(mechanical_id=mt_id)
+        u = User.objects.filter(mechanical_id=mt_id).first()
 
-        print("Looking for MT {} ({})".format(user.mechanical_id, user.username))
+        if u:
+            print("Name: {}".format(u.username))
 
-        p = Players.objects.get(player_id=user.player_id)
+            rm = Room.objects.filter(id=u.room_id).first()
+            if rm:
+                if rm.state == "end":
 
-        rm = Room.objects.get(room_id=p.room_id)
+                    rds = Round.objects.filter(room_id=rm.id)
 
-        if rm.state == "end":
-            ending_t = rm.ending_t - 1
+                    round_id_and_agent_ids = []
 
-            rds = Round.objects.filter(room_id=rm.room_id)
+                    for rd in rds:
 
-            round_id_and_agent_ids = []
+                        rc = RoundComposition.objects.filter(round_id=rd.id, user_id=u.id).first()
+                        if rc is not None:
+                            round_id_and_agent_ids.append((rd.id, rc.firm_id))
 
-            for rd in rds:
+                    profit = 0
 
-                rc = RoundComposition.objects.filter(round_id=rd.round_id, player_id=p.player_id).first()
-                if rc is not None:
-                    round_id_and_agent_ids.append((rd.round_id, rc.agent_id))
+                    for round_id, agent_id in round_id_and_agent_ids:
 
-            profit = 0
+                        # print("round_id", round_id, "agent_id", agent_id)
 
-            for round_id, agent_id in round_id_and_agent_ids:
+                        pr = FirmProfit.objects.get(agent_id=agent_id, t=rm.ending_t, round_id=round_id).value
 
-                # print("round_id", round_id, "agent_id", agent_id)
+                        profit += pr
 
-                pr = FirmProfits.objects.get(agent_id=agent_id, t=ending_t, round_id=round_id).value
+                        state = "pvp" if Round.objects.get(id=round_id).pvp else "pve"
+                        print("Profit round {}: {}".format(state, pr))
 
-                profit += pr
+                    print("Total profit", profit)
+                    print("{} TO PAY: 1$ + {:.2f} $ BONUS".format(mt_id, profit*conversion_rate))
 
-                state = Round.objects.get(round_id=round_id).state  # pve, pvp
-                print("Profit round {}: {}".format(state, pr))
+                else:
 
-            print("Total profit", profit)
-            print("{} TO PAY: 1$ + {:.2f} $ BONUS".format(mt_id, profit*conversion_rate))
+                    if rm.state == "pvp":
 
-        else:
+                        rds = Round.objects.filter(room_id=rm.room_id, state="pve")
 
-            if rm.state == "pvp":
+                        round_id_and_agent_ids = []
 
-                ending_t = rm.ending_t - 1
+                        for rd in rds:
 
-                rds = Round.objects.filter(room_id=rm.room_id, state="pve")
+                            rc = RoundComposition.objects.filter(round_id=rd.id, user_id=u.id).first()
+                            if rc is not None:
+                                round_id_and_agent_ids.append((rd.round_id, rc.agent_id))
 
-                round_id_and_agent_ids = []
+                        profit = 0
 
-                for rd in rds:
+                        for round_id, agent_id in round_id_and_agent_ids:
+                            # print("round_id", round_id, "agent_id", agent_id)
 
-                    rc = RoundComposition.objects.filter(round_id=rd.round_id, player_id=p.player_id).first()
-                    if rc is not None:
-                        round_id_and_agent_ids.append((rd.round_id, rc.agent_id))
+                            pr = FirmProfit.objects.get(agent_id=agent_id, t=rm.ending_t, round_id=round_id).value
 
-                profit = 0
+                            profit += pr
 
-                for round_id, agent_id in round_id_and_agent_ids:
-                    # print("round_id", round_id, "agent_id", agent_id)
+                            state = "pvp" if Round.objects.get(id=round_id).pvp else "pve"
+                            print("Profit round {}: {}".format(state, pr))
 
-                    pr = FirmProfits.objects.get(agent_id=agent_id, t=ending_t, round_id=round_id).value
+                        print("Room stopped at PVP")
+                        print("{} TO PAY: 1$ + {:.2f} $ BONUS".format(mt_id, profit * conversion_rate))
 
-                    profit += pr
+                    elif rm.state == "pve":
+                        print("Room stopped at PVE")
+                        print("{} TO PAY: 1$".format(mt_id))
 
-                    state = Round.objects.get(round_id=round_id).state  # pve, pvp
-                    print("Profit round {}: {}".format(state, pr))
+                    else:
+                        print("Room stopped at tutorial")
+                        print("{} TO PAY: 1$".format(mt_id))
 
-                print("Room stopped at PVP")
-                print("{} TO PAY: 1$ + {:.2f} $ BONUS".format(mt_id, profit * conversion_rate))
+                    if u.deserter:
+                        print("{} DESERTER".format(mt_id))
 
-            elif rm.state == "pve":
-                print("Room stopped at PVE")
-                print("{} TO PAY: 1$".format(mt_id))
+                print()
 
             else:
-                print("Room stopped at tutorial")
-                print("{} TO PAY: 1$".format(mt_id))
+                print("User did not enter in a room")
+                print()
+        else:
+            print("Did not find someone that sign up with this name")
+            print()
 
-            if user.deserter:
-                print("{} DESERTER".format(mt_id))
-
-        print()
 
 
 def compute_n_rooms_that_end_up():
@@ -108,7 +118,10 @@ def compute_n_rooms_that_end_up():
 
 def main():
 
-    compute_remuneration(mt_ids=("A2KOXR5OXIFUIW", ))
+    # compute_remuneration()
+    mt_ids = ("A21B78D7E5N17N", )
+    compute_remuneration(mt_ids=mt_ids)
+    print()
     compute_n_rooms_that_end_up()
 
 
