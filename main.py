@@ -58,6 +58,7 @@ def compute_remuneration(mt_ids=None):
 
                     print("Total score: {}".format(profit))
                     print("Conversion rate: 1,000 points -> 0.50$")
+                    print("Bonus: {:.2f}$".format(profit*conversion_rate))
                     print("{} TO PAY: 1$ + {:.2f} $ BONUS".format(mt_id, profit*conversion_rate))
 
                 else:
@@ -120,7 +121,7 @@ def compute_n_rooms_that_end_up():
 def main():
 
     # compute_remuneration()
-    mt_ids = ("A3HYLVFUDKJFKC", "A1T3YNSVCIU7SC")
+    mt_ids = ("A3XLEQVFG1EHX", )
     compute_remuneration(mt_ids=mt_ids)
     print()
     compute_n_rooms_that_end_up()
