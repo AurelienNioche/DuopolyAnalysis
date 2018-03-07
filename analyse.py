@@ -10,7 +10,7 @@ import numpy as np
 import argparse
 import tqdm
 
-from game.models import Room, Round, FirmPosition, FirmPrice, FirmProfit
+from game.models import Room, Round, FirmPosition, FirmPrice, FirmProfit, RoundComposition, RoundState
 
 from backup import backup
 from analysis.separate import separate
@@ -51,9 +51,22 @@ def load_data_from_db():
                     np.array([i[0] for i in profits_entries.values_list("value").filter(t=t).order_by("agent_id")]) - \
                     np.array([i[0] for i in profits_entries.values_list("value").filter(t=t - 1).order_by("agent_id")])
 
+            round_composition = RoundComposition.objects.filter(round_id=rd.id).order_by("firm_id")
+
+            user_id = []
+
+            for rc in round_composition:
+                if rc.bot:
+                    user_id.append("bot")
+                else:
+                    user_id.append(rc.user_id)
+
+            active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
+
             b = backup.RunBackup(parameters=backup.Parameters(t_max=t_max, r=r),
                                  positions=positions, prices=prices, profits=profits,
-                                 room_id=rm.id, round_id=rd.id, pvp=rd.pvp)
+                                 room_id=rm.id, round_id=rd.id, pvp=rd.pvp, user_id=user_id,
+                                 active_player_t0=active_player_t0)
 
             backups.append(b)
 
@@ -75,10 +88,14 @@ def main(force):
     else:
         pool_backup = backup.PoolBackup.load()
 
-    pool_backup.backups = [b for b in pool_backup.backups if b.pvp]
+    for condition in (True, False):
+        backups = [b for b in pool_backup.backups if b.pvp is condition]
+        new_pool_backup = backup.PoolBackup(backups=backups, parameters=pool_backup.parameters)
 
-    distance.distance(pool_backup=pool_backup, fig_name="fig/pool_distance.pdf")
-    prices_and_profits.prices_and_profits(pool_backup=pool_backup, fig_name="fig/prices_and_profits.pdf")
+        distance.distance(pool_backup=new_pool_backup, fig_name="fig/pool_distance_{}.pdf"
+                          .format("pvp" if condition else "pve"))
+        prices_and_profits.prices_and_profits(pool_backup=new_pool_backup, fig_name="fig/prices_and_profits_{}.pdf"
+                                              .format("pvp" if condition else "pve"))
 
     for b in tqdm.tqdm(pool_backup.backups):
         fig_name = "fig/room{}_round{}_{}_separate.pdf".format(b.room_id, b.round_id, "pvp" if b.pvp else "pve")

@@ -40,15 +40,18 @@ class Backup:
 
 class RunBackup(Backup):
 
-    def __init__(self, parameters, positions, prices, profits, pvp, room_id, round_id, n_consumers=21):
+    def __init__(self, parameters, positions, prices, profits,
+                 pvp, room_id, round_id, active_player_t0, user_id):
         super().__init__(parameters)
 
         self.positions = positions
         self.prices = prices
         self.profits = profits
-        self.n_consumers = n_consumers
+
+        self.active_player_t0 = active_player_t0
 
         self.pvp = pvp
+        self.user_id = user_id
         self.room_id = room_id
         self.round_id = round_id
 
