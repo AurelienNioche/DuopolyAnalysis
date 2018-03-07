@@ -15,21 +15,7 @@
 from pylab import plt, np
 import os
 
-
-def _boxplot(backups, ax, y):
-
-    different_r = list(np.unique([b.parameters.r for b in backups]))
-
-    to_plot = tuple([[] for i in range(len(different_r))])
-
-    for i, b in enumerate(backups):
-        cond = different_r.index(b.parameters.r)
-        to_plot[cond].append(y[i])
-
-    bp = ax.boxplot(to_plot, positions=different_r)
-    for e in ['boxes', 'caps', 'whiskers']:
-        for b in bp[e]:
-            b.set_alpha(0.5)
+from . import plot
 
 
 def prices_over_fov(pool_backup, pos_subplot):
@@ -64,7 +50,7 @@ def prices_over_fov(pool_backup, pos_subplot):
         # Compute the mean price
         y[i] = np.mean(data)
 
-    _boxplot(backups=backups, ax=ax, y=y)
+    plot.boxplot(backups=backups, ax=ax, y=y, content="prices")
 
 
 def profits_over_fov(pool_backup, pos_subplot):
@@ -100,7 +86,7 @@ def profits_over_fov(pool_backup, pos_subplot):
     ax.set_ylabel("Mean profits")
 
     # Plot the boxplot
-    _boxplot(backups=backups, ax=ax, y=y)
+    plot.boxplot(backups=backups, ax=ax, y=y, content="profits")
 
 
 def prices_and_profits(pool_backup, fig_name):
