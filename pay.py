@@ -120,7 +120,7 @@ def main():
 
     # byte000
 
-    mt_ids = ("ARN2SKPX80YV1", )
+    mt_ids = ("A34SLWTNACPBMO", )
     compute_remuneration(mt_ids=mt_ids, supp_bonus=("fishytide@yahoo.com", "patrick_beguin@hotmail.com",
                                                     "byte000@gmail.com", "takerotm@gmail.com"))
 
