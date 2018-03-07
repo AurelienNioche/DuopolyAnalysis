@@ -68,7 +68,7 @@ def compute_remuneration(mt_ids=None, supp_bonus=None):
 
                     if rm.state in ("pvp", "pve"):
 
-                        rds = Round.objects.filter(room_id=rm.room_id)
+                        rds = Round.objects.filter(room_id=rm.id)
 
                         round_id_and_agent_ids = []
 
@@ -120,9 +120,10 @@ def main():
 
     # byte000
 
-    mt_ids = ("A34SLWTNACPBMO", )
+
+    mt_ids = ("A1SCDQLN07S9Y2", )
     compute_remuneration(mt_ids=mt_ids, supp_bonus=("fishytide@yahoo.com", "patrick_beguin@hotmail.com",
-                                                    "byte000@gmail.com", "takerotm@gmail.com"))
+                                                    "byte00@gmail.com", "takerootm@gmail.com"))
 
 
 if __name__ == "__main__":
