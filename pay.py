@@ -13,7 +13,7 @@ from game.models import User, Room, Round, RoundComposition, FirmProfit
 conversion_rate = 0.5 * 10 ** (-3)
 
 
-def compute_remuneration(mt_ids=None):
+def compute_remuneration(mt_ids=None, supp_bonus=None):
 
     if mt_ids is None:
         mt_ids = [i[0] for i in User.objects.all().values_list("mechanical_id")]
@@ -28,6 +28,8 @@ def compute_remuneration(mt_ids=None):
 
         if u:
             print("Name: {}".format(u.username))
+            if supp_bonus and u.username in supp_bonus:
+                print("!!!!!!!!!!!!! SUP BONUS !!!!!!!!!!!!!!!!!!!")
 
             rm = Room.objects.filter(id=u.room_id).first()
             if rm:
@@ -116,8 +118,11 @@ def compute_remuneration(mt_ids=None):
 
 def main():
 
-    mt_ids = ("A2LVCS009DMEAT", )
-    compute_remuneration(mt_ids=mt_ids)
+    # byte000
+
+    mt_ids = ("ARN2SKPX80YV1", )
+    compute_remuneration(mt_ids=mt_ids, supp_bonus=("fishytide@yahoo.com", "patrick_beguin@hotmail.com",
+                                                    "byte000@gmail.com", "takerotm@gmail.com"))
 
 
 if __name__ == "__main__":
