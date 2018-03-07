@@ -64,9 +64,9 @@ def compute_remuneration(mt_ids=None):
 
                 else:
 
-                    if rm.state == "pvp":
+                    if rm.state in ("pvp", "pve"):
 
-                        rds = Round.objects.filter(room_id=rm.room_id, state="pve")
+                        rds = Round.objects.filter(room_id=rm.room_id)
 
                         round_id_and_agent_ids = []
 
@@ -74,26 +74,27 @@ def compute_remuneration(mt_ids=None):
 
                             rc = RoundComposition.objects.filter(round_id=rd.id, user_id=u.id).first()
                             if rc is not None:
-                                round_id_and_agent_ids.append((rd.round_id, rc.agent_id))
+                                round_id_and_agent_ids.append((rd.id, rc.firm_id))
 
                         profit = 0
 
                         for round_id, agent_id in round_id_and_agent_ids:
                             # print("round_id", round_id, "agent_id", agent_id)
 
-                            pr = FirmProfit.objects.get(agent_id=agent_id, t=rm.ending_t, round_id=round_id).value
+                            pr = \
+                                FirmProfit.objects.filter(agent_id=agent_id, round_id=round_id)\
+                                .order_by("-value").first().value
 
                             profit += pr
 
-                            state = "pvp" if Round.objects.get(id=round_id).pvp else "pve"
-                            print("Profit round {}: {}".format(state, pr))
+                            state = "final" if Round.objects.get(id=round_id).pvp else "first"
+                            print("Score {} round: {}".format(state, pr))
 
-                        print("Room stopped at PVP")
-                        print("{} TO PAY: 1$ + {:.2f}$ BONUS".format(mt_id, profit * conversion_rate))
-
-                    elif rm.state == "pve":
-                        print("Room stopped at PVE")
-                        print("{} TO PAY: 1$".format(mt_id))
+                        print("Total score: {}".format(profit))
+                        print("Conversion rate: 1,000 points -> 0.50$")
+                        print("Bonus: {:.2f}$".format(profit * conversion_rate))
+                        print("Thanks for your participation! We hope you enjoyed the game!")
+                        print("{} TO PAY: 1$ + {:.2f} $ BONUS".format(mt_id, profit * conversion_rate))
 
                     else:
                         print("Room stopped at tutorial")
