@@ -89,16 +89,20 @@ def main(force):
         pool_backup = backup.PoolBackup.load()
 
     for condition in (True, False):
+        print("PVP only" if condition is True else "PVE ONLY")
+        str_cond = "pvp" if condition else "pve"
         backups = [b for b in pool_backup.backups if b.pvp is condition]
         new_pool_backup = backup.PoolBackup(backups=backups, parameters=pool_backup.parameters)
 
-        distance.distance(pool_backup=new_pool_backup, fig_name="fig/pool_distance_{}.pdf"
-                          .format("pvp" if condition else "pve"))
-        prices_and_profits.prices_and_profits(pool_backup=new_pool_backup, fig_name="fig/prices_and_profits_{}.pdf"
-                                              .format("pvp" if condition else "pve"))
+        distance.distance(pool_backup=new_pool_backup, fig_name="fig/{}/pool_distance_{}.pdf"
+                          .format(str_cond, str_cond))
+        prices_and_profits.prices_and_profits(pool_backup=new_pool_backup, fig_name="fig/{}/prices_and_profits_{}.pdf"
+                                              .format(str_cond, str_cond))
+        print()
 
     for b in tqdm.tqdm(pool_backup.backups):
-        fig_name = "fig/room{}_round{}_{}_separate.pdf".format(b.room_id, b.round_id, "pvp" if b.pvp else "pve")
+        str_cond = "pvp" if b.pvp else "pve"
+        fig_name = "fig/{}/room{}_round{}_{}_separate.pdf".format(str_cond, b.room_id, b.round_id, str_cond)
         separate.separate(backup=b, fig_name=fig_name)
 
 

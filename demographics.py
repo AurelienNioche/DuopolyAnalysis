@@ -120,8 +120,7 @@ def get_data(users):
         if "india" in nationality:
             data["nationality"].append("indian")
 
-        elif "america" in nationality or nationality == "us"\
-                or nationality == "united states" or nationality == "usa":
+        elif "america" in nationality or nationality in ("us", "united states", "usa"):
             data["nationality"].append("american")
 
         elif "dominican" in nationality:
