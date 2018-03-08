@@ -9,9 +9,6 @@ application = get_wsgi_application()
 import numpy as np
 from collections import Counter
 import matplotlib.gridspec as gridspec
-
-import numpy as np
-from collections import Counter
 from pylab import plt
 import operator
 import itertools
@@ -51,7 +48,7 @@ def plot(data):
 
     gs = gridspec.GridSpec(2, 2)
 
-    plt.figure(figsize=(13, 7))
+    plt.figure(figsize=(15, 7))
 
     ax = plt.subplot(gs[:, 0])
     ax.spines['top'].set_visible(False)
@@ -70,18 +67,6 @@ def plot(data):
     labels_pos = np.arange(len(labels))
 
     values = [round((i[1] / data["n_users"]) * 100) for i in nationalities]
-    plt.style.use("ggplot")
-    plt.axis("off")
-
-    ax = plt.subplot(1, 2, 1)
-    ax.grid(False)
-
-    nationalities = sorted(data["nationality"].items(), key=operator.itemgetter(1))
-
-    labels = [i[0] for i in nationalities]
-    labels_pos = np.arange(len(labels))
-
-    values = [i[1] for i in nationalities]
 
     ax.barh(labels_pos, values, edgecolor="white", align="center")
     ax.set_yticks(labels_pos)
@@ -100,20 +85,6 @@ def plot(data):
 
     ax = plt.subplot(gs[1, 1])
     plt.title("Age group repartition")
-    ax.set_xlim(0, 30)
-    ax.set_xticks([])
-
-    ax = plt.subplot(1, 2, 2)
-
-    genders = data["gender"].items()
-
-    labels = [i[0] for i in genders]
-    values = [i[1] for i in genders]
-
-    ax.pie(values, labels=labels, explode=(0, 0.1), autopct='%1.1f%%', shadow=True, startangle=90)
-    ax.axis('equal')
-
-    ax = plt.subplot(1, 2, 3)
 
     ages = [list(i[1]) for i in itertools.groupby(sorted(data["age"]), lambda x: x // 10)]
 
@@ -126,12 +97,6 @@ def plot(data):
 
     ax.text(2, 0.01, "Age std: {:.2f}".format(np.std(data["age"])))
     ax.text(2, 0.4, "Age mean: {:.2f}".format(np.mean(data["age"])))
-    decades = [str(i[0])[0] + "0" for i in ages]
-    values = [len(i) / n_ages for i in ages]
-
-    ax.pie(values,  labels=decades, shadow=True, autopct='%1.1f%%', startangle=90)
-    # ax.legend("Age std: {}".format(np.std(data["age"])))
-    # ax.legend("Age mean: {}".format(np.mean(data["age"])))
     ax.axis('equal')
 
     plt.show()
@@ -167,9 +132,6 @@ def get_data(users):
 
             data["nationality"].append("undefined")
 
-        elif "america" in nationality or nationality == "us" or nationality == "united states":
-            data["nationality"].append("american")
-
         else:
             data["nationality"].append(u.nationality.lower())
 
@@ -183,4 +145,9 @@ def get_data(users):
 
 
 main()
+
+
+
+
+
 
