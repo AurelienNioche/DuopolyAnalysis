@@ -44,7 +44,7 @@ def main():
 
 def plot(data):
 
-    plt.style.use("seaborn-deep")
+    # plt.style.use("seaborn-deep")
 
     gs = gridspec.GridSpec(2, 2)
 
@@ -95,8 +95,8 @@ def plot(data):
 
     ax.pie(values, labels=decades, explode=(0.1, ) * len(decades), autopct='%1.1f%%', startangle=90, shadow=True)
 
-    ax.text(2, 0.01, "Age std: {:.2f}".format(np.std(data["age"])))
-    ax.text(2, 0.4, "Age mean: {:.2f}".format(np.mean(data["age"])))
+    # ax.text(2, 0.01, "Age std: {:.2f}".format(np.std(data["age"])))
+    ax.text(1, 0.4, "Age: {:.2f} $\pm$ {:.2f} (SD)".format(np.mean(data["age"]), np.std(data["age"])))
     ax.axis('equal')
 
     plt.show()

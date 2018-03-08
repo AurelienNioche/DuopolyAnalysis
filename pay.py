@@ -120,7 +120,7 @@ def compute_remuneration(mt_ids=None, supp_bonus=None):
 
 def main():
 
-    mt_ids = ("A1SCDQLN07S9Y2", )
+    mt_ids = ("ATHSSX3LY8B67", )
     compute_remuneration(mt_ids=mt_ids, supp_bonus=("fishytide@yahoo.com", "patrick_beguin@hotmail.com",
                                                     "byte00@gmail.com", "takerootm@gmail.com"))
 
