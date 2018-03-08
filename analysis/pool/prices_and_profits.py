@@ -18,6 +18,19 @@ import os
 from . import plot
 
 
+def profits_distribution_for_fov(pool_backup, pos_subplot):
+
+    # Shortcuts
+    parameters = pool_backup.parameters
+    backups = pool_backup.backups
+
+    # Look at the parameters
+    t_max = parameters.t_max
+
+
+
+
+
 def prices_over_fov(pool_backup, pos_subplot):
 
     # Shortcuts

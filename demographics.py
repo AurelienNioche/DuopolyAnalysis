@@ -44,60 +44,69 @@ def main():
 
 def plot(data):
 
-    # plt.style.use("seaborn-deep")
+    # plt.style.use("classic")
 
     gs = gridspec.GridSpec(2, 2)
 
     plt.figure(figsize=(15, 7))
 
+    # -------------------------- Nationalities hist ---------------------------------- #
     ax = plt.subplot(gs[:, 0])
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    # ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
-
     ax.tick_params(length=0)
-    # ax.axis("off")
     plt.title("Nationalities repartition (%)")
-    # ax.grid(False)
 
+    # data
     nationalities = sorted(data["nationality"].items(), key=operator.itemgetter(1))
-
     labels = [i[0].capitalize() for i in nationalities]
     labels_pos = np.arange(len(labels))
-
     values = [round((i[1] / data["n_users"]) * 100) for i in nationalities]
 
-    ax.barh(labels_pos, values, edgecolor="white", align="center")
+    # text
     ax.set_yticks(labels_pos)
     ax.set_yticklabels(labels)
 
+    # create
+    ax.barh(labels_pos, values, edgecolor="white", align="center")
+
+    # -------------------------- Gender pie ---------------------------------- #
     ax = plt.subplot(gs[0, 1])
+    ax.axis('equal')
     plt.title("Genders repartition")
 
+    # get data
     genders = data["gender"].items()
-
     labels = [i[0].capitalize() for i in genders]
     values = [i[1] for i in genders]
 
+    # create
     ax.pie(values, labels=labels, explode=(0.1, 0.1), autopct='%1.1f%%', startangle=90, shadow=True)
-    ax.axis('equal')
 
+    # -------------------------- Age hist ---------------------------------- #
     ax = plt.subplot(gs[1, 1])
-    plt.title("Age group repartition")
 
+    plt.title("Age group repartition (%)")
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.tick_params(length=0)
+
+    # get data
+    n_ages = len(data["age"])
     ages = [list(i[1]) for i in itertools.groupby(sorted(data["age"]), lambda x: x // 10)]
+    decades = [str(i[0])[0] + "0-" + str(int(str(i[0])[0]) + 1) + "0" for i in ages]
+    decades_pos = np.arange(len(decades))
+    values = [round((len(i) / n_ages) * 100) for i in ages]
 
-    n_ages = np.sum(np.flatnonzero(np.array(ages)))
+    # text
+    ax.set_xticks(decades_pos)
+    ax.set_xticklabels(decades)
+    ax.text(3, 15, "Age: {:.2f} $\pm$ {:.2f} (SD)".format(np.mean(data["age"]), np.std(data["age"])))
 
-    decades = [str(i[0])[0] + "0 y.o." for i in ages]
-    values = [len(i) / n_ages for i in ages]
-
-    ax.pie(values, labels=decades, explode=(0.1, ) * len(decades), autopct='%1.1f%%', startangle=90, shadow=True)
-
-    # ax.text(2, 0.01, "Age std: {:.2f}".format(np.std(data["age"])))
-    ax.text(1, 0.4, "Age: {:.2f} $\pm$ {:.2f} (SD)".format(np.mean(data["age"]), np.std(data["age"])))
-    ax.axis('equal')
+    # create
+    ax.bar(decades_pos, values, edgecolor="white", align="center")
 
     plt.show()
 
@@ -127,7 +136,7 @@ def get_data(users):
 
             data["nationality"].append("dominican republic")
 
-        elif nationality == "black":
+        elif nationality in ("black", ):
 
             data["nationality"].append("undefined")
 
