@@ -97,7 +97,8 @@ def compute_remuneration(mt_ids=None, supp_bonus=None):
                         print("Total score: {}".format(profit))
                         print("Conversion rate: 1,000 points -> 0.50$")
                         print("Bonus: {:.2f}$".format(profit * conversion_rate))
-                        print("Thanks for your participation! We hope you enjoyed the game!")
+                        print("Thanks for your participation!")
+                        print("Room stopped before the end.")
                         print("{} TO PAY: 1$ + {:.2f} $ BONUS".format(mt_id, profit * conversion_rate))
 
                     else:
@@ -120,7 +121,7 @@ def compute_remuneration(mt_ids=None, supp_bonus=None):
 
 def main():
 
-    mt_ids = ("A1SCDQLN07S9Y2", )
+    mt_ids = ("A1C5SQZ045W0L5", )
     compute_remuneration(mt_ids=mt_ids, supp_bonus=(
         "xelitexk1llerx@yahoo.com", "l.turner782@gmail.com", "restinagony@gmail.com",
         "marcusdavvid@icloud.com", "amy_777_rene@hotmail.com", "kmhaines91@gmail.com"))
