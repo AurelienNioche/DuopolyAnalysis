@@ -6,15 +6,12 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
-<<<<<<< HEAD
 import numpy as np
 from collections import Counter
 import matplotlib.gridspec as gridspec
-=======
 
 import numpy as np
 from collections import Counter
->>>>>>> origin/master
 from pylab import plt
 import operator
 import itertools
@@ -33,10 +30,7 @@ def main():
     print("\nThere is a total of {} users.".format(users.count()))
 
     data = get_data(users)
-<<<<<<< HEAD
     data["n_users"] = users.count()
-=======
->>>>>>> origin/master
 
     print("******* Age ********")
     print("Average age: {:.2f} ".format(np.mean(data["age"])))
@@ -53,7 +47,6 @@ def main():
 
 def plot(data):
 
-<<<<<<< HEAD
     plt.style.use("seaborn-deep")
 
     gs = gridspec.GridSpec(2, 2)
@@ -77,7 +70,6 @@ def plot(data):
     labels_pos = np.arange(len(labels))
 
     values = [round((i[1] / data["n_users"]) * 100) for i in nationalities]
-=======
     plt.style.use("ggplot")
     plt.axis("off")
 
@@ -90,12 +82,10 @@ def plot(data):
     labels_pos = np.arange(len(labels))
 
     values = [i[1] for i in nationalities]
->>>>>>> origin/master
 
     ax.barh(labels_pos, values, edgecolor="white", align="center")
     ax.set_yticks(labels_pos)
     ax.set_yticklabels(labels)
-<<<<<<< HEAD
 
     ax = plt.subplot(gs[0, 1])
     plt.title("Genders repartition")
@@ -110,7 +100,6 @@ def plot(data):
 
     ax = plt.subplot(gs[1, 1])
     plt.title("Age group repartition")
-=======
     ax.set_xlim(0, 30)
     ax.set_xticks([])
 
@@ -125,13 +114,11 @@ def plot(data):
     ax.axis('equal')
 
     ax = plt.subplot(1, 2, 3)
->>>>>>> origin/master
 
     ages = [list(i[1]) for i in itertools.groupby(sorted(data["age"]), lambda x: x // 10)]
 
     n_ages = np.sum(np.flatnonzero(np.array(ages)))
 
-<<<<<<< HEAD
     decades = [str(i[0])[0] + "0 y.o." for i in ages]
     values = [len(i) / n_ages for i in ages]
 
@@ -139,25 +126,17 @@ def plot(data):
 
     ax.text(2, 0.01, "Age std: {:.2f}".format(np.std(data["age"])))
     ax.text(2, 0.4, "Age mean: {:.2f}".format(np.mean(data["age"])))
-=======
     decades = [str(i[0])[0] + "0" for i in ages]
     values = [len(i) / n_ages for i in ages]
 
     ax.pie(values,  labels=decades, shadow=True, autopct='%1.1f%%', startangle=90)
     # ax.legend("Age std: {}".format(np.std(data["age"])))
     # ax.legend("Age mean: {}".format(np.mean(data["age"])))
->>>>>>> origin/master
     ax.axis('equal')
 
     plt.show()
 
 
-<<<<<<< HEAD
-=======
-    # ax.pie
-
-
->>>>>>> origin/master
 def get_data(users):
 
     data = {
@@ -176,7 +155,6 @@ def get_data(users):
         if "india" in nationality:
             data["nationality"].append("indian")
 
-<<<<<<< HEAD
         elif "america" in nationality or nationality == "us"\
                 or nationality == "united states" or nationality == "usa":
             data["nationality"].append("american")
@@ -189,11 +167,9 @@ def get_data(users):
 
             data["nationality"].append("undefined")
 
-=======
         elif "america" in nationality or nationality == "us" or nationality == "united states":
             data["nationality"].append("american")
 
->>>>>>> origin/master
         else:
             data["nationality"].append(u.nationality.lower())
 
@@ -206,14 +182,5 @@ def get_data(users):
     return data
 
 
-<<<<<<< HEAD
 main()
 
-
-
-
-
-
-=======
-main()
->>>>>>> origin/master
