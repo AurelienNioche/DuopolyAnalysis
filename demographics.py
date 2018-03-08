@@ -6,9 +6,9 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
-
 import numpy as np
 from collections import Counter
+import matplotlib.gridspec as gridspec
 from pylab import plt
 import operator
 import itertools
@@ -27,6 +27,7 @@ def main():
     print("\nThere is a total of {} users.".format(users.count()))
 
     data = get_data(users)
+    data["n_users"] = users.count()
 
     print("******* Age ********")
     print("Average age: {:.2f} ".format(np.mean(data["age"])))
@@ -43,53 +44,62 @@ def main():
 
 def plot(data):
 
-    plt.style.use("ggplot")
-    plt.axis("off")
+    plt.style.use("seaborn-deep")
 
-    ax = plt.subplot(1, 2, 1)
-    ax.grid(False)
+    gs = gridspec.GridSpec(2, 2)
+
+    plt.figure(figsize=(13, 7))
+
+    ax = plt.subplot(gs[:, 0])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    # ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+    ax.tick_params(length=0)
+    # ax.axis("off")
+    plt.title("Nationalities repartition (%)")
+    # ax.grid(False)
 
     nationalities = sorted(data["nationality"].items(), key=operator.itemgetter(1))
 
-    labels = [i[0] for i in nationalities]
+    labels = [i[0].capitalize() for i in nationalities]
     labels_pos = np.arange(len(labels))
 
-    values = [i[1] for i in nationalities]
+    values = [round((i[1] / data["n_users"]) * 100) for i in nationalities]
 
     ax.barh(labels_pos, values, edgecolor="white", align="center")
     ax.set_yticks(labels_pos)
     ax.set_yticklabels(labels)
-    ax.set_xlim(0, 30)
-    ax.set_xticks([])
 
-    ax = plt.subplot(1, 2, 2)
+    ax = plt.subplot(gs[0, 1])
+    plt.title("Genders repartition")
 
     genders = data["gender"].items()
 
-    labels = [i[0] for i in genders]
+    labels = [i[0].capitalize() for i in genders]
     values = [i[1] for i in genders]
 
-    ax.pie(values, labels=labels, explode=(0, 0.1), autopct='%1.1f%%', shadow=True, startangle=90)
+    ax.pie(values, labels=labels, explode=(0.1, 0.1), autopct='%1.1f%%', startangle=90, shadow=True)
     ax.axis('equal')
 
-    ax = plt.subplot(1, 2, 3)
+    ax = plt.subplot(gs[1, 1])
+    plt.title("Age group repartition")
 
     ages = [list(i[1]) for i in itertools.groupby(sorted(data["age"]), lambda x: x // 10)]
 
     n_ages = np.sum(np.flatnonzero(np.array(ages)))
 
-    decades = [str(i[0])[0] + "0" for i in ages]
+    decades = [str(i[0])[0] + "0 y.o." for i in ages]
     values = [len(i) / n_ages for i in ages]
 
-    ax.pie(values,  labels=decades, shadow=True, autopct='%1.1f%%', startangle=90)
-    # ax.legend("Age std: {}".format(np.std(data["age"])))
-    # ax.legend("Age mean: {}".format(np.mean(data["age"])))
+    ax.pie(values, labels=decades, explode=(0.1, ) * len(decades), autopct='%1.1f%%', startangle=90, shadow=True)
+
+    ax.text(2, 0.01, "Age std: {:.2f}".format(np.std(data["age"])))
+    ax.text(2, 0.4, "Age mean: {:.2f}".format(np.mean(data["age"])))
     ax.axis('equal')
 
     plt.show()
-
-
-    # ax.pie
 
 
 def get_data(users):
@@ -110,8 +120,17 @@ def get_data(users):
         if "india" in nationality:
             data["nationality"].append("indian")
 
-        elif "america" in nationality or nationality == "us" or nationality == "united states":
+        elif "america" in nationality or nationality == "us"\
+                or nationality == "united states" or nationality == "usa":
             data["nationality"].append("american")
+
+        elif "dominican" in nationality:
+
+            data["nationality"].append("dominican republic")
+
+        elif nationality == "black":
+
+            data["nationality"].append("undefined")
 
         else:
             data["nationality"].append(u.nationality.lower())
