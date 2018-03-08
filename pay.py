@@ -92,7 +92,7 @@ def compute_remuneration(mt_ids=None, supp_bonus=None):
                             profit += pr
 
                             state = "final" if Round.objects.get(id=round_id).pvp else "first"
-                            print("Score {} round: {}".format(state, pr))
+                            print("Score {} round: {}".format(state, pr) if pr > 0 else "")
 
                         print("Total score: {}".format(profit))
                         print("Conversion rate: 1,000 points -> 0.50$")
