@@ -6,7 +6,9 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
-from game.models import Room
+from game.models import Room, RoomComposition, User
+
+import numpy as np
 
 
 def count():
@@ -19,8 +21,30 @@ def count():
     print("N rooms with 50: {}".format(len(rm_50)))
 
 
+def count2():
+
+    n = 0
+    rms = Room.objects.all()
+
+    for rm in rms:
+
+        end = True
+        rcs = RoomComposition.objects.filter(room_id=rm.id)
+        for rc in rcs:
+
+            u = User.objects.filter(id=rc.user_id).first()
+            if u and u.state == "end":
+                pass
+            else:
+                end = False
+        n += int(end)
+
+    print("N room (version 2 for computing):", n)
+
+
 def main():
     count()
+    count2()
 
 
 if __name__ == "__main__":
