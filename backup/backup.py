@@ -19,60 +19,45 @@ import os
 
 class Backup:
 
-    def __init__(self, parameters):
+    def __init__(self, r, t_max, display_opponent_score, positions, prices, profits,
+                 pvp, room_id, round_id, active_player_t0, user_id, n_positions=21, n_prices=11,
+                 p_min=0, p_max=11):
 
-        self.parameters = parameters
+        # Backup.__init__(self)
 
-    def save(self, file_name="data/data.p"):
-
-        os.makedirs(os.path.dirname(file_name), exist_ok=True)
-
-        # Save data in pickle
-        with open(file_name, "wb") as f:
-            pickle.dump(self, f)
-
-    @staticmethod
-    def load(file_name="data/data.p"):
-
-        with open(file_name, "rb") as f:
-            return pickle.load(f)
-
-
-class RunBackup(Backup):
-
-    def __init__(self, parameters, positions, prices, profits,
-                 pvp, room_id, round_id, active_player_t0, user_id):
-        super().__init__(parameters)
-
+        # Data
         self.positions = positions
         self.prices = prices
         self.profits = profits
 
         self.active_player_t0 = active_player_t0
 
+        # Parameters
         self.pvp = pvp
-        self.user_id = user_id
+        self.r = r
+        self.display_opponent_score = display_opponent_score
+        self.t_max = t_max  # Should be 25
+        self.n_positions = n_positions
+        self.n_prices = n_prices
+        self.p_min = p_min
+        self.p_max = p_max
+
+        # Info
+        self.user_id = user_id  # List of 2 users
         self.room_id = room_id
         self.round_id = round_id
 
 
-class PoolBackup(Backup):
+def save(obj, file_name="data/data.p"):
 
-    def __init__(self, parameters, backups):
-        super().__init__(parameters)
+    os.makedirs(os.path.dirname(file_name), exist_ok=True)
 
-        self.backups = backups
+    # Save data in pickle
+    with open(file_name, "wb") as f:
+        pickle.dump(obj, f)
 
 
-class Parameters:
+def load(file_name="data/data.p"):
 
-    def __init__(self, r, t_max, n_positions=21, n_prices=11, p_min=1, p_max=11):
-
-        self.r = r
-        self.t_max = t_max
-
-        self.n_positions = n_positions
-        self.n_prices = n_prices
-
-        self.p_min = p_min
-        self.p_max = p_max
+    with open(file_name, "rb") as f:
+        return pickle.load(f)

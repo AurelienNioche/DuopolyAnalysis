@@ -8,7 +8,7 @@ application = get_wsgi_application()
 
 import numpy as np
 import argparse
-import tqdm
+from tqdm import tqdm
 
 from game.models import Room, Round, FirmPosition, FirmPrice, FirmProfit, RoundComposition, RoundState
 
@@ -27,6 +27,7 @@ def load_data_from_db():
 
         t_max = rm.ending_t
         r = rm.radius
+        display_opponent_score = rm.display_opponent_score
 
         rds = Round.objects.filter(room_id=rm.id).order_by("pvp")
 
@@ -52,57 +53,102 @@ def load_data_from_db():
                     np.array([i[0] for i in profits_entries.values_list("value").filter(t=t - 1).order_by("agent_id")])
 
             round_composition = RoundComposition.objects.filter(round_id=rd.id).order_by("firm_id")
-
-            user_id = []
-
-            for rc in round_composition:
-                if rc.bot:
-                    user_id.append("bot")
-                else:
-                    user_id.append(rc.user_id)
+            user_id = ["bot" if rc.bot else rc.user_id for rc in round_composition]
 
             active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
 
-            b = backup.RunBackup(parameters=backup.Parameters(t_max=t_max, r=r),
-                                 positions=positions, prices=prices, profits=profits,
-                                 room_id=rm.id, round_id=rd.id, pvp=rd.pvp, user_id=user_id,
-                                 active_player_t0=active_player_t0)
+            b = backup.Backup(
+                t_max=t_max, r=r, display_opponent_score=display_opponent_score,
+                positions=positions, prices=prices, profits=profits,
+                room_id=rm.id, round_id=rd.id, pvp=rd.pvp, user_id=user_id,
+                active_player_t0=active_player_t0)
 
             backups.append(b)
 
-    pool_backup = backup.PoolBackup(
-        parameters=backup.Parameters(r=None, t_max=25),
-        backups=backups
-    )
+    backup.save(backups)
 
-    pool_backup.save()
-
-    return pool_backup
+    return backups
 
 
 def main(force):
 
     if not os.path.exists("data/data.p") or force:
-        pool_backup = load_data_from_db()
+        backups = load_data_from_db()
 
     else:
-        pool_backup = backup.PoolBackup.load()
+        backups = backup.load()
 
-    for condition in (True, False):
-        print("PVP only" if condition is True else "PVE ONLY")
-        str_cond = "pvp" if condition else "pve"
-        backups = [b for b in pool_backup.backups if b.pvp is condition]
-        new_pool_backup = backup.PoolBackup(backups=backups, parameters=pool_backup.parameters)
+    # For naming
+    str_os_cond = {
+        True: "OS",
+        False: "NOS"
+    }
 
-        distance.distance(pool_backup=new_pool_backup, fig_name="fig/{}/pool_distance_{}.pdf"
-                          .format(str_cond, str_cond))
-        prices_and_profits.prices_and_profits(pool_backup=new_pool_backup, fig_name="fig/{}/prices_and_profits_{}.pdf"
-                                              .format(str_cond, str_cond))
-        print()
+    str_pvp_cond = {
+        True: "PVP",
+        False: "PVE"
+    }
 
-    for b in tqdm.tqdm(pool_backup.backups):
-        str_cond = "pvp" if b.pvp else "pve"
-        fig_name = "fig/{}/room{}_round{}_{}_separate.pdf".format(str_cond, b.room_id, b.round_id, str_cond)
+    # Compare with r respectively to pvp condition
+    tqdm.write("Compare with r respectively to pvp condition...\n")
+
+    for pvp_condition in (True, False):
+
+        str_pvp = str_pvp_cond[pvp_condition]
+        str_os = str_os_cond[True]
+
+        fig_name_args = "main", str_pvp, str_pvp, str_os
+
+        tqdm.write(str_pvp_cond[pvp_condition])
+
+        bkp = [b for b in backups if b.pvp is pvp_condition and b.display_opponent_score]
+
+        distance.distance(
+            backups=bkp,
+            fig_name="fig/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args))
+
+        prices_and_profits.prices_and_profits(
+            backups=bkp,
+            fig_name="fig/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args))
+
+        tqdm.write("\n")
+
+    # Compare with 'display_opponent_score' respectively to pvp condition
+    tqdm.write("Compare with 'display_opponent_score' respectively to pvp condition (r=0.25)...\n")
+    for pvp_condition in (True, False):
+
+        str_pvp = str_pvp_cond[pvp_condition]
+
+        fig_name_args = "control", str_pvp, str_pvp, "r25"
+
+        tqdm.write(str_pvp_cond[pvp_condition])
+
+        bkp = [b for b in backups if b.pvp is pvp_condition and b.r == 0.25]
+
+        distance.distance(
+            backups=bkp,
+            fig_name="fig/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args),
+            attr="display_opponent_score"
+        )
+
+        prices_and_profits.prices_and_profits(
+            backups=bkp,
+            fig_name="fig/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args),
+            attr="display_opponent_score"
+        )
+
+        tqdm.write("\n")
+
+    # Separate: Plot figure for every round
+    tqdm.write("Create a figure for every round...\n")
+    for b in tqdm(backups):
+
+        str_pvp = str_pvp_cond[b.pvp]
+        str_os = str_os_cond[b.display_opponent_score]
+
+        fig_name_args = str_os, str_pvp, b.room_id, b.round_id, str_os, str_pvp
+
+        fig_name = "fig/{}/{}/room{}_round{}_{}_{}_separate.pdf".format(*fig_name_args)
         separate.separate(backup=b, fig_name=fig_name)
 
 

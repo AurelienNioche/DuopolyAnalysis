@@ -8,18 +8,17 @@ from analyse import load_data_from_db
 from model import model
 
 
-def fit(pool_backup):
+def fit(backups):
 
-    parameters = pool_backup.parameters
-    backups = pool_backup.backups
-
-    t_max = parameters.t_max
+    t_max = backups[0].t_max
 
     summary = []
 
-    ps = []
-    cs = []
-    rs = []
+    x = []
+    y = []
+    colors = []
+    markers = []
+
     scores = []
 
     m = {
@@ -27,15 +26,14 @@ def fit(pool_backup):
         0.50: model.Model(r=0.5)
     }
 
-    temp = 0.01
+    temp = 0.005
 
     for b in backups:
         if b.pvp:
-            param = b.parameters
 
             positions = b.positions
             prices = b.prices
-            r = param.r
+            r = b.r
 
             for player in (0, 1):
 
@@ -66,11 +64,14 @@ def fit(pool_backup):
                 p = np.mean(delta_profit)
                 c = np.mean(delta_competition)
 
-                ps.append(p)
-                cs.append(c)
-                rs.append("C0" if r == 0.25 else "C1")
+                x.append(p)
+                y.append(c)
+
+                colors.append("C0" if r == 0.25 else "C1")
 
                 scores.append(np.sum(b.profits[:, player]))
+
+                markers.append("o" if b.display_opponent_score else "x")
 
                 print("profit: {:.2f}".format(p))
                 print("best: {:.2f}".format(c))
@@ -82,18 +83,30 @@ def fit(pool_backup):
     print(summary.count("BEST"), "vs", summary.count("PROFIT"))
     from pylab import plt
 
-    scores = np.array(scores)
-    rel_scores = scores / max(scores)
+    x = np.array(x)
+    y = np.array(y)
+    colors = np.array(colors)
+    markers = np.array(markers)
+    sizes = np.ones(len(colors)) * 25  # np.square(scores / max(scores)) * 100
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.scatter(ps, cs, alpha=0.5, c=rs, s=np.square(rel_scores)*100)
+    for m in np.unique(markers):
+        ax.scatter(x[markers == m], y[markers == m],
+                   alpha=0.5, c=colors[markers == m],
+                   s=sizes[markers == m], marker=m)
+
+    ax.scatter((-1, ), (-1, ), alpha=0.5, c="C0", marker="o", label="r = .25, s = 1")
+    ax.scatter((-1, ), (-1, ), alpha=0.5, c="C0", marker="x", label="r = .25, s = 0")
+    ax.scatter((-1, ), (-1, ), alpha=0.5, c="C1", marker="o", label="r = .50, s = 1")
+    ax.scatter((-1, ), (-1, ), alpha=0.5, c="C1", marker="x", label="r = .50, s = 0")
     plt.xlabel("Profit-based prediction")
     plt.ylabel("Competition-based prediction")
     ax.set_xlim(-0.02, 1.02)
     ax.set_ylim(-0.02, 1.02)
     ax.set_aspect(1)
     plt.tight_layout()
+    ax.legend()
     plt.savefig("fig/pool_prediction.pdf")
     plt.show()
     plt.close()
@@ -119,12 +132,13 @@ def fit(pool_backup):
 def main(force):
 
     if not os.path.exists("data/data.p") or force:
-        pool_backup = load_data_from_db()
+
+        backups = load_data_from_db()
 
     else:
-        pool_backup = backup.PoolBackup.load()
+        backups = backup.load()
 
-    fit(pool_backup)
+    fit(backups)
 
 
 if __name__ == "__main__":

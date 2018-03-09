@@ -18,33 +18,24 @@ import os
 from . import plot
 
 
-def distance(pool_backup, fig_name):
+def distance(backups, fig_name, attr="r"):
 
     # Create directories if not already existing
     os.makedirs(os.path.dirname(fig_name), exist_ok=True)
 
-    # Shortcuts
-    parameters = pool_backup.parameters
-    backups = pool_backup.backups
-
     # Look at the parameters
     n_simulations = len(backups)
-    n_positions = parameters.n_positions
-    t_max = parameters.t_max
+    n_positions = backups[0].n_positions
 
     # Containers
     y = np.zeros(n_simulations)
-
-    # How many time steps from the end of the simulation are included in analysis
-    span_ratio = 0.33  # Take last third
-    span = int(span_ratio * t_max)
 
     for i, b in enumerate(backups):
 
         # Compute the mean distance between the two firms
         data = np.absolute(
-            b.positions[-span:, 0] -
-            b.positions[-span:, 1]) / n_positions
+            b.positions[:, 0] -
+            b.positions[:, 1]) / n_positions
 
         y[i] = np.mean(data)
 
@@ -54,13 +45,13 @@ def distance(pool_backup, fig_name):
 
     # Enhance aesthetics
     ax.set_xlim(-0.01, 1.01)
-    if max(y) < 0.5:
-        ax.set_ylim(-0.01, 0.51)
+    if max(y) < 0.7:
+        ax.set_ylim(0, 0.7)
+    # if max(y) < 0.5:
+    #     ax.set_ylim(-0.01, 0.51)
 
-    ax.set_xticks(np.arange(0, 1.1, 0.25))
-    ax.set_yticks(np.arange(0, 0.51, 0.1))
+    # ax.set_yticks(np.arange(0, 0.51, 0.1))
 
-    ax.set_xlabel("$r$")
     ax.set_ylabel("Mean distance")
 
     # Display line for indicating 'random' level
@@ -72,7 +63,7 @@ def distance(pool_backup, fig_name):
     ax.axhline(random_dist, color='0.5', linewidth=0.5, linestyle="--", zorder=1)
 
     # Plot the boxplot
-    plot.boxplot(backups=backups, ax=ax, y=y, content="localisation")
+    plot.boxplot(backups=backups, ax=ax, y=y, attr=attr, content="Localisation")
 
     # Cut the margins
     plt.tight_layout()

@@ -82,7 +82,7 @@ def plot(data):
     values = [i[1] for i in genders]
 
     # create
-    ax.pie(values, labels=labels, explode=(0.1, 0.1), autopct='%1.1f%%', startangle=90, shadow=True)
+    ax.pie(values, labels=labels, explode=(0.1, 0.1), autopct='%1.1f%%', startangle=90, shadow=False)
 
     # -------------------------- Age hist ---------------------------------- #
     ax = plt.subplot(gs[1, 1])
@@ -96,14 +96,14 @@ def plot(data):
     # get data
     n_ages = len(data["age"])
     ages = [list(i[1]) for i in itertools.groupby(sorted(data["age"]), lambda x: x // 10)]
-    decades = [str(i[0])[0] + "0-" + str(int(str(i[0])[0]) + 1) + "0" for i in ages]
+    decades = ["{}0-{}0".format(int(i[0]/10), int(i[0]/10) + 1) for i in ages]
     decades_pos = np.arange(len(decades))
     values = [round((len(i) / n_ages) * 100) for i in ages]
 
     # text
     ax.set_xticks(decades_pos)
     ax.set_xticklabels(decades)
-    ax.text(3, 15, "Age: {:.2f} $\pm$ {:.2f} (SD)".format(np.mean(data["age"]), np.std(data["age"])))
+    ax.text(3, 15, "Mean: {:.2f} $\pm$ {:.2f} (SD)".format(np.mean(data["age"]), np.std(data["age"])))
 
     # create
     ax.bar(decades_pos, values, edgecolor="white", align="center")
@@ -129,14 +129,15 @@ def get_data(users):
         if "india" in nationality:
             data["nationality"].append("indian")
 
-        elif "america" in nationality or nationality in ("us", "united states", "usa"):
+        elif "america" in nationality or nationality in ("us", "united states", "usa",
+                                                         "uniyed states", "americian"):
             data["nationality"].append("american")
 
         elif "dominican" in nationality:
 
             data["nationality"].append("dominican republic")
 
-        elif nationality in ("black", ):
+        elif nationality in ("black", "european" ):
 
             data["nationality"].append("undefined")
 

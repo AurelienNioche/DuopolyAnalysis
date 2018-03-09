@@ -24,11 +24,11 @@ def eeg_like(backup, subplots_positions):
     pst = backup.positions
     prc = backup.prices
 
-    t_max = backup.parameters.t_max
+    t_max = backup.t_max
 
     t = np.arange(1, t_max)
 
-    position_max = backup.parameters.n_positions - 1
+    position_max = backup.n_positions - 1  # -1 as idx start at 0
 
     position_A = pst[1:t_max, 0] / position_max
     position_B = pst[1:t_max, 1] / position_max
@@ -38,8 +38,8 @@ def eeg_like(backup, subplots_positions):
     color_A = "orange"
     color_B = "blue"
 
-    price_min = backup.parameters.p_min
-    price_max = backup.parameters.p_max
+    price_min = backup.p_min
+    price_max = backup.p_max
 
     # Position firm A
     ax = plt.subplot(subplots_positions[0])
@@ -53,7 +53,7 @@ def eeg_like(backup, subplots_positions):
     ax.set_ylabel('Position $a$', labelpad=16)
 
     # Add title
-    plt.title("$r={}$".format(backup.parameters.r))
+    plt.title("$r={}$".format(backup.r))
 
     # Position firm B
     ax = plt.subplot(subplots_positions[1])
@@ -93,7 +93,7 @@ def eeg_like(backup, subplots_positions):
 
 def pos_firmA_over_pos_firmB(backup, subplot_position):
 
-    position_max = backup.parameters.n_positions - 1
+    position_max = backup.n_positions - 1
 
     pos = backup.positions[-1000:] / position_max
 
@@ -116,7 +116,7 @@ def pos_firmA_over_pos_firmB(backup, subplot_position):
     for tick in ax.get_yticklabels():
         tick.set_fontsize("small")
 
-    plt.title("$r={:.2f}$".format(backup.parameters.r))
+    plt.title("$r={:.2f}$".format(backup.r))
     ax.set_aspect(1)
 
 
