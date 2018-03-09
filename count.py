@@ -8,8 +8,6 @@ application = get_wsgi_application()
 
 from game.models import Room, RoomComposition, User
 
-import numpy as np
-
 
 def count():
 
