@@ -14,7 +14,7 @@ DATABASES = {
     },
     'old': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'duopolyNew.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'duopolyOld.sqlite3'),
     }
 }
 
