@@ -6,11 +6,11 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
+from game.models import Room, Round, FirmPosition, FirmPrice, FirmProfit, RoundComposition, RoundState
+
 import numpy as np
 import argparse
 from tqdm import tqdm
-
-from game.models import Room, Round, FirmPosition, FirmPrice, FirmProfit, RoundComposition, RoundState
 
 from backup import backup
 from analysis.separate import separate
