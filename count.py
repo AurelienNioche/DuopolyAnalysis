@@ -1,49 +1,44 @@
-# Django specific settings
+from pylab import np, plt
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+import argparse
 
-# Ensure settings are read
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
-
-from game.models import Room, RoomComposition, User
+from analyse import load_data_from_db
+from backup import backup
 
 
-def count():
+def main(force):
 
-    rms = Room.objects.filter(state="end")
-    print("N rooms with final state at end: {}".format(len(rms)))
-    rm_25 = rms.filter(radius=0.25)
-    rm_50 = rms.filter(radius=0.5)
-    print("N rooms with 25: {}".format(len(rm_25)))
-    print("N rooms with 50: {}".format(len(rm_50)))
+    if not os.path.exists("data/data.p") or force:
+        backups = load_data_from_db()
 
+    else:
+        backups = backup.load()
 
-def count2():
+    n = {
+        0.25: {True: 0, False: 0},
+        0.50: {True: 0, False: 0}
+    }
+    for b in backups:
 
-    n = 0
-    rms = Room.objects.all()
+        if b.active_player_t0 == 1:
+            cond = b.positions[0, 0] == 0 and b.prices[0, 0] == 5
+        else:
+            cond = b.positions[0, 1] == 20 and b.prices[0, 1] == 5
 
-    for rm in rms:
+        if not cond:
+            print(b.positions[0, :], b.prices[0, :], b.r, b.display_opponent_score)
 
-        end = True
-        rcs = RoomComposition.objects.filter(room_id=rm.id)
-        for rc in rcs:
+        if cond and b.pvp:
+            n[b.r][b.display_opponent_score] += 1
 
-            u = User.objects.filter(id=rc.user_id).first()
-            if u and u.state == "end":
-                pass
-            else:
-                end = False
-        n += int(end)
-
-    print("N room (version 2 for computing):", n)
-
-
-def main():
-    count()
-    count2()
+    print(n)
 
 
 if __name__ == "__main__":
-    main()
+
+    parser = argparse.ArgumentParser(description='Produce figures.')
+    parser.add_argument('-f', '--force', action="store_true", default=False,
+                        help="Re-run analysis")
+    parsed_args = parser.parse_args()
+
+    main(force=parsed_args.force)
