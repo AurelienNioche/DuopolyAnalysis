@@ -17,8 +17,10 @@ from pylab import plt, np
 import os
 from . import plot
 
+# plt.style.use("seaborn")
 
-def distance(backups, fig_name, attr="r"):
+
+def distance(backups, fig_name, attr="r", violin=True):
 
     # Create directories if not already existing
     os.makedirs(os.path.dirname(fig_name), exist_ok=True)
@@ -44,9 +46,12 @@ def distance(backups, fig_name, attr="r"):
     ax = fig.add_subplot(111)
 
     # Enhance aesthetics
-    ax.set_xlim(-0.01, 1.01)
-    if max(y) < 0.7:
-        ax.set_ylim(0, 0.7)
+    # ax.set_xlim(-0.01, 1.01)
+    y_upper_bound = 0.9
+    if max(y) < y_upper_bound:
+        ax.set_ylim(0, y_upper_bound)
+    else:
+        raise Exception('Y upper bound has been reached')
     # if max(y) < 0.5:
     #     ax.set_ylim(-0.01, 0.51)
 
@@ -62,8 +67,11 @@ def distance(backups, fig_name, attr="r"):
     # noinspection PyTypeChecker
     ax.axhline(random_dist, color='0.5', linewidth=0.5, linestyle="--", zorder=1)
 
-    # Plot the boxplot
-    plot.boxplot(backups=backups, ax=ax, y=y, attr=attr, content="Localisation")
+    # Plot data
+    if violin:
+        plot.violin(backups=backups, ax=ax, y=y, attr=attr, content="Localisation")
+    else:
+        plot.boxplot(backups=backups, ax=ax, y=y, attr=attr, content="Localisation")
 
     # Cut the margins
     plt.tight_layout()

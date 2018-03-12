@@ -18,18 +18,9 @@ import os
 from . import plot
 
 
-def prices_over_fov(backups, pos_subplot, attr="r"):
+def prices_over_fov(backups, pos_subplot, attr="r", violin=True):
 
-    # Create figs and plot
-    ax = plt.subplot(*pos_subplot)
-
-    # Enhance aesthetics
-    ax.set_xlim(-0.01, 1.01)
-    ax.set_xticks([])
-    ax.set_ylabel("Mean prices")
-    ax.set_ylim(0, 11)
-
-    # Do the boxplot
+    # Format data
     n_simulations = len(backups)
     y = np.zeros(n_simulations)
 
@@ -40,12 +31,25 @@ def prices_over_fov(backups, pos_subplot, attr="r"):
         # Compute the mean price
         y[i] = np.mean(data)
 
-    plot.boxplot(backups=backups, ax=ax, y=y, attr=attr, content="Prices")
+    # Create figs and plot
+    ax = plt.subplot(*pos_subplot)
+
+    # Enhance aesthetics
+    ax.set_ylabel("Mean prices")
+    ax.set_ylim(0.5, 11.5)
+
+    ax.set_yticks(np.arange(1, 12, 2))
+
+    # Plot data
+    if violin:
+        plot.violin(backups=backups, ax=ax, y=y, attr=attr, content="Prices")
+    else:
+        plot.boxplot(backups=backups, ax=ax, y=y, attr=attr, content="Prices")
 
 
-def profits_over_fov(backups, pos_subplot, attr="r"):
+def profits_over_fov(backups, pos_subplot, attr="r", violin=True):
 
-    # Do the boxplot
+    # Format data
     n_simulations = len(backups)
     y = np.zeros(n_simulations)
 
@@ -60,10 +64,13 @@ def profits_over_fov(backups, pos_subplot, attr="r"):
 
     # Enhance aesthetics
     ax.set_ylabel("Mean profits")
-    ax.set_ylim(0, 130)
+    ax.set_ylim(0, 150)
 
-    # Plot the boxplot
-    plot.boxplot(backups=backups, ax=ax, y=y, attr=attr, content="Profits")
+    # Plot data
+    if violin:
+        plot.violin(backups=backups, ax=ax, y=y, attr=attr, content="Profits")
+    else:
+        plot.boxplot(backups=backups, ax=ax, y=y, attr=attr, content="Profits")
 
 
 def prices_and_profits(backups, fig_name, attr="r"):

@@ -87,8 +87,8 @@ def main(force):
 
     # For naming
     str_os_cond = {
-        True: "OS",
-        False: "NOS"
+        True: "opp_score",
+        False: "no_opp_score"
     }
 
     str_pvp_cond = {
@@ -106,9 +106,9 @@ def main(force):
             str_pvp = str_pvp_cond[pvp_condition]
             str_os = str_os_cond[os_condition]
 
-            fig_name_args = str_os, str_pvp, str_pvp, str_os
+            fig_name_args = "effect_r", str_os, str_pvp, str_pvp, str_os
 
-            tqdm.write("{} {}".format(str_os, str_pvp))
+            tqdm.write("Effect r: {} {}".format(str_os, str_pvp))
 
             bkp = [b for b in backups if
                    b.pvp is pvp_condition and
@@ -116,11 +116,11 @@ def main(force):
 
             distance.distance(
                 backups=bkp,
-                fig_name="fig/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args))
+                fig_name="fig/{}/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args))
 
             prices_and_profits.prices_and_profits(
                 backups=bkp,
-                fig_name="fig/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args))
+                fig_name="fig/{}/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args))
 
             tqdm.write("\n")
 
@@ -133,22 +133,22 @@ def main(force):
             str_pvp = str_pvp_cond[pvp_condition]
             str_r = "{}".format(int(r*100))
 
-            fig_name_args = str_r, str_pvp, str_pvp, str_r
+            fig_name_args = "effect_score_opp", str_r, str_pvp, str_pvp, str_r
 
-            tqdm.write(str_pvp_cond[pvp_condition])
+            tqdm.write("Effect opp score: {} {}".format(str_r, str_pvp))
 
             bkp = [b for b in backups
                    if b.pvp is pvp_condition and b.r == r]
 
             distance.distance(
                 backups=bkp,
-                fig_name="fig/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args),
+                fig_name="fig/{}/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args),
                 attr="display_opponent_score"
             )
 
             prices_and_profits.prices_and_profits(
                 backups=bkp,
-                fig_name="fig/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args),
+                fig_name="fig/{}/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args),
                 attr="display_opponent_score"
             )
 
@@ -161,9 +161,9 @@ def main(force):
         str_pvp = str_pvp_cond[b.pvp]
         str_os = str_os_cond[b.display_opponent_score]
 
-        fig_name_args = str_os, str_pvp, b.room_id, b.round_id, str_os, str_pvp
+        fig_name_args = "separate", str_os, str_pvp, b.room_id, b.round_id, str_os, str_pvp
 
-        fig_name = "fig/{}/{}/room{}_round{}_{}_{}_separate.pdf".format(*fig_name_args)
+        fig_name = "fig/{}/{}/{}/room{}_round{}_{}_{}_separate.pdf".format(*fig_name_args)
         separate.separate(backup=b, fig_name=fig_name)
 
 

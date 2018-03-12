@@ -24,8 +24,6 @@ class AbstractModel:
     p_max = 11
     t_max = 25
 
-    max_profit = p_max*n_positions
-
     def __init__(self, r):
 
         self.r = r
@@ -41,7 +39,9 @@ class AbstractModel:
         self.idx_strategies = np.arange(self.n_strategies)
 
         # Prepare useful arrays
-        self.n_consumers = self.compute_n_consumers()
+        self.n_consumers, self.max_n = self.compute_n_consumers()
+
+        self.max_profit = self.p_max * self.max_n
 
     def get_strategies(self):
 
@@ -72,8 +72,11 @@ class AbstractModel:
         field_of_view = np.zeros((self.n_positions, 2))  # 2: min, max
         field_of_view[:] = [self._field_of_view(x) for x in range(self.n_positions)]
 
+        max_n = 0
+
         for i, j in itertools.combinations_with_replacement(range(self.n_positions), r=2):
 
+            n0, n1 = 0, 0
             for x in range(self.n_positions):
 
                 see_firm_0 = field_of_view[x, 0] <= i <= field_of_view[x, 1]
@@ -81,18 +84,24 @@ class AbstractModel:
 
                 if see_firm_0 and see_firm_1:
                     z[i, j, 2] += 1
+                    n0 += 1
+                    n1 += 1
 
                 elif see_firm_0:
                     z[i, j, 0] += 1
+                    n0 += 1
 
                 elif see_firm_1:
                     z[i, j, 1] += 1
+                    n1 += 1
+
+            max_n = max(max_n, n0, n1)
 
             z[j, i, 0] = z[i, j, 1]
             z[j, i, 1] = z[i, j, 0]
             z[j, i, 2] = z[i, j, 2]
 
-        return z
+        return z, max_n
 
     def _field_of_view(self, x):
 
