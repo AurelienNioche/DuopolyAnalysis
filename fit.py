@@ -4,6 +4,8 @@ import argparse
 from tqdm import tqdm
 from pylab import plt
 
+import matplotlib.gridspec
+
 from backup import backup
 from analyse import load_data_from_db
 
@@ -178,8 +180,15 @@ def plot_fit(force):
     # markers = ["o" if i == 0.25 else "x" for i in fit_b.r]
     sizes = np.ones(len(colors)) * 25  # np.square(scores / max(scores)) * 100
 
-    fig = plt.figure(figsize=(6, 6))
-    ax = fig.add_subplot(111)
+    fig = plt.figure(figsize=(8, 8))
+
+    # ax = fig.add_subplot(111)
+    # ax = plt.subplot2grid((3, 2), (0, 0), colspan=2)
+
+    gs = matplotlib.gridspec.GridSpec(3, 1, height_ratios=[1, 0.05, 0.6])
+
+    ax = fig.add_subplot(gs[0, 0])
+
     for m in np.unique(markers):
         ax.scatter(x[markers == m], y[markers == m],
                    alpha=0.5, c=colors[markers == m],
@@ -189,26 +198,37 @@ def plot_fit(force):
     ax.scatter((-1, ), (-1, ), alpha=0.5, c="C0", marker="x", label="r = .25, s = 0")
     ax.scatter((-1, ), (-1, ), alpha=0.5, c="C1", marker="o", label="r = .50, s = 1")
     ax.scatter((-1, ), (-1, ), alpha=0.5, c="C1", marker="x", label="r = .50, s = 0")
-    plt.xlabel("Profit-based prediction")
-    plt.ylabel("Competition-based prediction")
+    plt.xlabel("Profit-based fit accuracy")
+    plt.ylabel("Competition-based fit accuracy")
     ax.set_xlim(-0.02, 1.02)
     ax.set_ylim(-0.02, 1.02)
     ax.set_aspect(1)
     ax.legend(bbox_to_anchor=(0.7, 0.5))
 
-    plt.tight_layout()
-    plt.savefig("fig/pool_prediction.pdf")
-    plt.show()
-    plt.close()
+    ax.text(-0.65, 0.95, "A", fontsize=20)
+
+    # plt.tight_layout()
+    # plt.savefig("fig/pool_prediction.pdf")
+    # plt.show()
+    # plt.close()
 
     # --------------------------------------------- #
 
-    fig = plt.figure(figsize=(10, 5))
+    # fig = plt.figure(figsize=(10, 5))
 
-    ax1 = fig.add_subplot(2, 2, 1)
-    ax2 = fig.add_subplot(2, 2, 2)
-    ax3 = fig.add_subplot(2, 2, 3)
-    ax4 = fig.add_subplot(2, 2, 4)
+    # ax1 = fig.add_subplot(2, 2, 1)
+    # ax2 = fig.add_subplot(2, 2, 2)
+    # ax3 = fig.add_subplot(2, 2, 3)
+    # ax4 = fig.add_subplot(2, 2, 4)
+
+    sub_gs = matplotlib.gridspec.GridSpecFromSubplotSpec(subplot_spec=gs[2, 0], nrows=2, ncols=2, hspace=0.3)
+
+    ax1 = fig.add_subplot(sub_gs[0, 0])
+    ax2 = fig.add_subplot(sub_gs[0, 1])
+    ax3 = fig.add_subplot(sub_gs[1, 0])
+    ax4 = fig.add_subplot(sub_gs[1, 1])
+
+    ax1.text(-0.79, 1.2,  "B", fontsize=20)
 
     for prediction_accuracy, y_label, ax, r, in zip(
             (fit_b.prediction_accuracy_c,  fit_b.prediction_accuracy_c,
@@ -244,7 +264,7 @@ def plot_fit(force):
             ax.set_xticks([])
 
         if ax in (ax1, ax3):
-            ax.set_ylabel("{}-based fit accuracy".format(y_label))
+            ax.set_ylabel("{}-based\nfit accuracy".format(y_label))
             ax.set_yticks([0, 0.5, 1])
 
         else:
@@ -253,9 +273,9 @@ def plot_fit(force):
         if ax in (ax1, ax2):
             ax.set_title("r = {}\n".format(r))
 
-    plt.savefig("fig/pool_prediction_violin.pdf")
-
     plt.tight_layout()
+
+    plt.savefig("fig/pool_prediction.pdf")
     plt.show()
 
     # fig = plt.figure()
