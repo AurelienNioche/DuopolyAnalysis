@@ -1,41 +1,55 @@
-# Django specific settings
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-
-# Ensure settings are read
 from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
-
-
-from game.models import Room, Round, FirmPosition, FirmPrice, FirmProfit, RoundComposition, RoundState
-
-import shutil
 from tqdm import tqdm
+import shutil
 
 from analyse import load_data_from_db
+from game.models import User, Room, Round, FirmPosition, FirmPrice, \
+    FirmProfit, RoundComposition, RoundState
+
+
+application = get_wsgi_application()
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
 
 def merge():
 
     shutil.copy("duopolyNew.sqlite3", "duopoly.sqlite3")
 
-    for table in Room, Round, FirmPosition, FirmPrice, FirmProfit, RoundComposition, RoundState:
+    tables = (
+        Room,
+        Round,
+        FirmPosition,
+        FirmPrice,
+        FirmProfit,
+        RoundComposition,
+        RoundState
+    )
 
-        entries = table.objects.all().using('old')
-        print("entries in ", table, ":", entries.count())
-        i = 0
-        # new_entries = []
-        for e in entries:
-            e_dic = {k:v for (k, v) in e.__dict__.items() if not k.startswith("_")}
-            print(e_dic)
-            new_e = table(**e_dic)
-            new_e.save()
-            i += 1
-            print(i, "done")
-            # new_entries.append(new_e)
+    n_entries = sum([table.objects.using("old").count() for table in tables])
+    to_print = []
 
+    with tqdm(total=n_entries) as pbar:
 
-        # table.objects.bulk_create(new_entries)
+        for table in tables:
+
+            entries = table.objects.all().using('old')
+            new_entries = []
+
+            for e in entries:
+                if not table.objects.filter(id=e.id).first():
+                    new_entries.append(e)
+                pbar.update()
+
+            if new_entries:
+                to_print.append("Created {} new entries in table {}.".format(len(new_entries), table.__name__))
+                table.objects.bulk_create(new_entries)
+            else:
+                to_print.append("No new entries for table {}.".format(table.__name__))
+
+    print("\n*****************************************")
+    print("\n".join(to_print))
+    print("*******************************************")
 
 
 def stats():
@@ -65,7 +79,7 @@ def stats():
 def main():
 
     merge()
-    stats()
+    # stats()
 
 
 if __name__ == "__main__":
