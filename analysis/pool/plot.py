@@ -63,14 +63,11 @@ def violin(backups, ax, y, attr, content=""):
 
     ticks_positions = np.arange(len(different_cond))
 
-    to_plot = tuple([[] for i in range(len(different_cond))])
+    to_plot = [[] for i in range(len(different_cond))]
 
     for i, b in enumerate(backups):
         cond = different_cond.index(getattr(b, attr))
         to_plot[cond].append(y[i])
-
-    if content == "Prices":
-        print(np.max(to_plot))
 
     sns.violinplot(data=to_plot, ax=ax, color="white", scale="count", cut=0)
 

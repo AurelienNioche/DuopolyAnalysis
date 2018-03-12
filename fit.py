@@ -7,13 +7,18 @@ from pylab import plt
 from backup import backup
 from analyse import load_data_from_db
 
-from model import model
+from model import fit
 from hyperopt import fmin, tpe, hp
+
+import seaborn as sns
+from scipy.stats import mannwhitneyu
 
 
 class BackupFit:
 
-    def __init__(self, temp_c, temp_p, prediction_accuracy_c, prediction_accuracy_p, r, display_opponent_score, score):
+    def __init__(self, temp_c, temp_p, prediction_accuracy_c,
+                 prediction_accuracy_p, r, display_opponent_score, score,
+                 firm_id, room_id):
 
         self.temp_c = temp_c
         self.prediction_accuracy_c = prediction_accuracy_c
@@ -24,6 +29,8 @@ class BackupFit:
         self.display_opponent_score = display_opponent_score
         self.r = r
         self.score = score
+        self.firm_id = firm_id
+        self.room_id = room_id
 
 
 class RunModel:
@@ -72,14 +79,14 @@ def optimize_model(**kwargs):
     return best["temp"]
 
 
-def get_fit(force):
+def get_fit():
 
     m = {
-        0.25: model.Model(r=0.25),
-        0.50: model.Model(r=0.5)
+        0.25: fit.Model(r=0.25),
+        0.50: fit.Model(r=0.5)
     }
 
-    if not os.path.exists("data/data.p") or force:
+    if not os.path.exists("data/data.p"):
 
         backups = load_data_from_db()
 
@@ -95,6 +102,8 @@ def get_fit(force):
     display_opponent_score = []
     r = []
     score = []
+    firm_id = []
+    room_id = []
 
     for b in tqdm(backups):
         if b.pvp:
@@ -131,15 +140,19 @@ def get_fit(force):
                 display_opponent_score.append(b.display_opponent_score)
                 r.append(b.r)
                 score.append(np.sum(b.profits[:, player]))
+                firm_id.append(player)
+                room_id.append(b.room_id)
 
     fit_b = BackupFit(
-        temp_c=temp_c,
-        temp_p=temp_p,
-        prediction_accuracy_p=prediction_accuracy_p,
-        prediction_accuracy_c=prediction_accuracy_c,
-        display_opponent_score=display_opponent_score,
-        r=r,
-        score=score
+        temp_c=np.array(temp_c),
+        temp_p=np.array(temp_p),
+        prediction_accuracy_p=np.array(prediction_accuracy_p),
+        prediction_accuracy_c=np.array(prediction_accuracy_c),
+        display_opponent_score=np.array(display_opponent_score),
+        r=np.array(r),
+        score=np.array(score),
+        firm_id=np.array(firm_id),
+        room_id=np.array(room_id)
     )
 
     backup.save(fit_b, "data/fit.p")
@@ -150,20 +163,19 @@ def get_fit(force):
 def plot_fit(force):
 
     if not os.path.exists("data/fit.p") or force:
-        fit_b = get_fit(force)
+        fit_b = get_fit()
 
     else:
         fit_b = backup.load("data/fit.p")
 
     x = fit_b.prediction_accuracy_p
     y = fit_b.prediction_accuracy_c
-    colors = ["C0" if i == 0.25 else "C1" for i in fit_b.r]
-    markers = ["o" if i is True else "x" for i in fit_b.display_opponent_score]
 
-    x = np.array(x)
-    y = np.array(y)
-    colors = np.array(colors)
-    markers = np.array(markers)
+    colors = np.array(["C0" if i == 0.25 else "C1" for i in fit_b.r])
+    markers = np.array(["o" if i else "x" for i in fit_b.display_opponent_score])
+
+    # colors = ["C0" if i is True else "C1" for i in fit_b.display_opponent_score]
+    # markers = ["o" if i == 0.25 else "x" for i in fit_b.r]
     sizes = np.ones(len(colors)) * 25  # np.square(scores / max(scores)) * 100
 
     fig = plt.figure(figsize=(6, 6))
@@ -188,6 +200,63 @@ def plot_fit(force):
     plt.savefig("fig/pool_prediction.pdf")
     plt.show()
     plt.close()
+
+    # --------------------------------------------- #
+
+    fig = plt.figure(figsize=(10, 5))
+
+    ax1 = fig.add_subplot(2, 2, 1)
+    ax2 = fig.add_subplot(2, 2, 2)
+    ax3 = fig.add_subplot(2, 2, 3)
+    ax4 = fig.add_subplot(2, 2, 4)
+
+    for prediction_accuracy, y_label, ax, r, in zip(
+            (fit_b.prediction_accuracy_c,  fit_b.prediction_accuracy_c,
+             fit_b.prediction_accuracy_p, fit_b.prediction_accuracy_p),
+            ("Competition", "Competition", "Profit", "Profit"),
+            (ax1, ax2, ax3, ax4),
+            (0.25, 0.50, 0.25, 0.50)):
+
+        # Violin plot
+        s1_25 = (fit_b.r == r) * (fit_b.display_opponent_score == 1)
+        s0_25 = (fit_b.r == r) * (fit_b.display_opponent_score == 0)
+
+        ticks_positions = np.arange(2)
+
+        to_plot = np.array([
+            prediction_accuracy[s0_25],
+            prediction_accuracy[s1_25]
+        ])
+
+        # print(to_plot)
+
+        sns.violinplot(data=to_plot, ax=ax, color="white", scale="count", cut=0)
+
+        if len(to_plot) == 2:
+            u, p = mannwhitneyu(to_plot[0], to_plot[1])
+            print("[{}] Mann-Whitney rank test: u {}, p {}".format("Prediction {}-based r={}".format(y_label, r), u, p))
+
+        if ax in (ax3, ax4):
+            ax.set_xticks(ticks_positions)
+            ax.set_xticklabels(["False", "True"])
+            ax.set_xlabel("Display opponent score")
+        else:
+            ax.set_xticks([])
+
+        if ax in (ax1, ax3):
+            ax.set_ylabel("{}-based fit accuracy".format(y_label))
+            ax.set_yticks([0, 0.5, 1])
+
+        else:
+            ax.set_yticks([])
+
+        if ax in (ax1, ax2):
+            ax.set_title("r = {}\n".format(r))
+
+    plt.savefig("fig/pool_prediction_violin.pdf")
+
+    plt.tight_layout()
+    plt.show()
 
     # fig = plt.figure()
     # ax = fig.add_subplot(221)

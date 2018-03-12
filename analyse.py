@@ -23,7 +23,7 @@ def load_data_from_db():
 
     rms = Room.objects.filter(state="end")
 
-    for rm in rms:
+    for rm in tqdm(rms):
 
         t_max = rm.ending_t
         r = rm.radius
