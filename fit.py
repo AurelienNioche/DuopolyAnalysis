@@ -1,87 +1,164 @@
 import os
 import numpy as np
 import argparse
+from tqdm import tqdm
+from pylab import plt
 
 from backup import backup
 from analyse import load_data_from_db
 
 from model import model
+from hyperopt import fmin, tpe, hp
 
 
-def fit(backups):
+class BackupFit:
 
-    t_max = backups[0].t_max
+    def __init__(self, temp_c, temp_p, prediction_accuracy_c, prediction_accuracy_p, r, display_opponent_score, score):
 
-    summary = []
+        self.temp_c = temp_c
+        self.prediction_accuracy_c = prediction_accuracy_c
 
-    x = []
-    y = []
-    colors = []
-    markers = []
+        self.temp_p = temp_p
+        self.prediction_accuracy_p = prediction_accuracy_p
 
-    scores = []
+        self.display_opponent_score = display_opponent_score
+        self.r = r
+        self.score = score
+
+
+class RunModel:
+
+    def __init__(self, dm_model, str_method, firm_id, active_player_t0, positions, prices, t_max):
+
+        self.model = dm_model
+        self.str_method = str_method
+        self.firm_id = firm_id
+        self.active_player_t0 = active_player_t0
+        self.positions = positions
+        self.prices = prices
+        self.t_max = t_max
+
+    def run(self, temp):
+
+        opp = (self.firm_id + 1) % 2
+        player_active = self.active_player_t0
+
+        ps = []
+
+        for t in range(self.t_max):
+
+            if player_active == self.firm_id:
+                p = getattr(self.model, self.str_method)(
+                    player_position=self.positions[t, self.firm_id], player_price=self.prices[t, self.firm_id],
+                    opp_position=self.positions[t, opp], opp_price=self.prices[t, opp], temp=temp
+                )
+
+                ps.append(p)
+
+            player_active = (player_active + 1) % 2
+
+        return -np.mean(ps)
+
+
+def optimize_model(**kwargs):
+
+    run_model = RunModel(**kwargs)
+
+    best = fmin(fn=run_model.run,
+                space=hp.uniform('temp', 0.0015, 0.2),
+                algo=tpe.suggest,
+                max_evals=100)
+
+    return best["temp"]
+
+
+def get_fit(force):
 
     m = {
         0.25: model.Model(r=0.25),
         0.50: model.Model(r=0.5)
     }
 
-    temp = 0.005
+    if not os.path.exists("data/data.p") or force:
 
-    for b in backups:
+        backups = load_data_from_db()
+
+    else:
+        backups = backup.load()
+
+    temp_c = []
+    prediction_accuracy_c = []
+
+    temp_p = []
+    prediction_accuracy_p = []
+
+    display_opponent_score = []
+    r = []
+    score = []
+
+    for b in tqdm(backups):
         if b.pvp:
-
-            positions = b.positions
-            prices = b.prices
-            r = b.r
 
             for player in (0, 1):
 
-                delta_profit = []
-                delta_competition = []
+                kwargs = {
+                    "dm_model": m[b.r],
+                    "str_method": "p_profit",
+                    "firm_id": player,
+                    "active_player_t0": b.active_player_t0,
+                    "positions": b.positions,
+                    "prices": b.prices,
+                    "t_max": b.t_max
+                }
 
-                opp = (player + 1) % 2
-                player_active = b.active_player_t0
+                best_temp = optimize_model(**kwargs)
 
-                for t in range(t_max):
+                rm = RunModel(**kwargs)
+                p = rm.run(temp=best_temp) * -1
 
-                    if player_active == player:
+                temp_p.append(best_temp)
+                prediction_accuracy_p.append(p)
 
-                        p_compet = m[r].p_competition(
-                            player_position=positions[t, player], player_price=prices[t, player],
-                            opp_position=positions[t, opp], opp_price=prices[t, opp], temp=temp
-                        )
-                        p_profit = m[r].p_profit(
-                            player_position=positions[t, player], player_price=prices[t, player],
-                            opp_position=positions[t, opp], opp_price=prices[t, opp], temp=temp
-                        )
+                kwargs["str_method"] = "p_competition"
 
-                        delta_profit.append(p_profit)
-                        delta_competition.append(p_compet)
+                best_temp = optimize_model(**kwargs)
+                rm = RunModel(**kwargs)
+                c = rm.run(temp=best_temp) * -1
 
-                    player_active = (player_active + 1) % 2
+                temp_c.append(best_temp)
+                prediction_accuracy_c.append(c)
 
-                p = np.mean(delta_profit)
-                c = np.mean(delta_competition)
+                display_opponent_score.append(b.display_opponent_score)
+                r.append(b.r)
+                score.append(np.sum(b.profits[:, player]))
 
-                x.append(p)
-                y.append(c)
+    fit_b = BackupFit(
+        temp_c=temp_c,
+        temp_p=temp_p,
+        prediction_accuracy_p=prediction_accuracy_p,
+        prediction_accuracy_c=prediction_accuracy_c,
+        display_opponent_score=display_opponent_score,
+        r=r,
+        score=score
+    )
 
-                colors.append("C0" if r == 0.25 else "C1")
+    backup.save(fit_b, "data/fit.p")
 
-                scores.append(np.sum(b.profits[:, player]))
+    return fit_b
 
-                markers.append("o" if b.display_opponent_score else "x")
 
-                print("profit: {:.2f}".format(p))
-                print("best: {:.2f}".format(c))
-                best_fit = "BEST" if c > p else "PROFIT"
-                summary.append(best_fit)
-                print(best_fit)
-                print()
+def plot_fit(force):
 
-    print(summary.count("BEST"), "vs", summary.count("PROFIT"))
-    from pylab import plt
+    if not os.path.exists("data/fit.p") or force:
+        fit_b = get_fit(force)
+
+    else:
+        fit_b = backup.load()
+
+    x = fit_b.prediction_accuracy_p
+    y = fit_b.prediction_accuracy_c
+    colors = ["C0" if i == 0.25 else "C1" for i in fit_b.r]
+    markers = ["o" if i is True else "x" for i in fit_b.display_opponent_score]
 
     x = np.array(x)
     y = np.array(y)
@@ -131,14 +208,7 @@ def fit(backups):
 
 def main(force):
 
-    if not os.path.exists("data/data.p") or force:
-
-        backups = load_data_from_db()
-
-    else:
-        backups = backup.load()
-
-    fit(backups)
+    plot_fit(force)
 
 
 if __name__ == "__main__":

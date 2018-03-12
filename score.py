@@ -14,7 +14,7 @@ def main(force):
     else:
         backups = backup.load()
 
-    bins = np.arange(0, 3001, 300)
+    bins = np.arange(0, 3800, 400)
 
     bounds = ["{}~{}".format(i, j) for i, j in zip(bins[:-1], bins[1:])]
 
@@ -41,25 +41,27 @@ def main(force):
 
             sc = np.array(scores[r])
 
+            print("Score (r = {:.2f}, s = {}) mean: {:.2f}, std: {:.2f}, min:{}, max: {}"
+                  .format(r, s, np.mean(sc), np.std(sc), np.min(sc), np.max(sc)))
+
             d = np.digitize(sc, bins=bins)
 
-            n = []
+            n = len(sc)
 
+            y = []
             for i in ind:
 
-                n.append(len(sc[d == i]))
+                y.append(len(sc[d == i]) / n * 100)
 
             width = 0.35  # the width of the bars
 
-            print(len(n))
-            print(len(ind))
-
-            ax.bar(ind - width / 2 if r == 0.25 else ind+width/2, n, width, label='r = {:.2f}'.format(r))
+            ax.bar(ind - width / 2 if r == 0.25 else ind+width/2, y, width, label='r = {:.2f}'.format(r))
 
         ax.set_xticks(ind)
         ax.set_xticklabels(bounds, fontsize=8)
 
-        ax.set_ylim(0, 10)
+        ax.set_ylim(0, 30)
+        ax.set_ylabel("Proportion (%)")
 
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
