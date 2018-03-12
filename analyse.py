@@ -57,13 +57,20 @@ def load_data_from_db():
 
             active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
 
-            b = backup.Backup(
-                t_max=t_max, r=r, display_opponent_score=display_opponent_score,
-                positions=positions, prices=prices, profits=profits,
-                room_id=rm.id, round_id=rd.id, pvp=rd.pvp, user_id=user_id,
-                active_player_t0=active_player_t0)
+            if active_player_t0 == 1:
+                cond = positions[0, 0] == 0 and prices[0, 0] == 5
+            else:
+                cond = positions[0, 1] == 20 and prices[0, 1] == 5
 
-            backups.append(b)
+            if cond:
+
+                b = backup.Backup(
+                    t_max=t_max, r=r, display_opponent_score=display_opponent_score,
+                    positions=positions, prices=prices, profits=profits,
+                    room_id=rm.id, round_id=rd.id, pvp=rd.pvp, user_id=user_id,
+                    active_player_t0=active_player_t0)
+
+                backups.append(b)
 
     backup.save(backups)
 
@@ -90,54 +97,62 @@ def main(force):
     }
 
     # Compare with r respectively to pvp condition
-    tqdm.write("Compare with r respectively to pvp condition...\n")
+    tqdm.write("Effect of r given opp score/no opp score and pvp/pve...\n")
 
-    for pvp_condition in (True, False):
+    for os_condition in (True, False):
 
-        str_pvp = str_pvp_cond[pvp_condition]
-        str_os = str_os_cond[True]
+        for pvp_condition in (True, False):
 
-        fig_name_args = "main", str_pvp, str_pvp, str_os
+            str_pvp = str_pvp_cond[pvp_condition]
+            str_os = str_os_cond[os_condition]
 
-        tqdm.write(str_pvp_cond[pvp_condition])
+            fig_name_args = str_os, str_pvp, str_pvp, str_os
 
-        bkp = [b for b in backups if b.pvp is pvp_condition and b.display_opponent_score]
+            tqdm.write("{} {}".format(str_os, str_pvp))
 
-        distance.distance(
-            backups=bkp,
-            fig_name="fig/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args))
+            bkp = [b for b in backups if
+                   b.pvp is pvp_condition and
+                   b.display_opponent_score is os_condition]
 
-        prices_and_profits.prices_and_profits(
-            backups=bkp,
-            fig_name="fig/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args))
+            distance.distance(
+                backups=bkp,
+                fig_name="fig/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args))
 
-        tqdm.write("\n")
+            prices_and_profits.prices_and_profits(
+                backups=bkp,
+                fig_name="fig/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args))
+
+            tqdm.write("\n")
 
     # Compare with 'display_opponent_score' respectively to pvp condition
-    tqdm.write("Compare with 'display_opponent_score' respectively to pvp condition (r=0.25)...\n")
-    for pvp_condition in (True, False):
+    tqdm.write("Effect of displaying opponent score given r and pvp condition...\n")
 
-        str_pvp = str_pvp_cond[pvp_condition]
+    for r in (0.25, 0.50):
+        for pvp_condition in (True, False):
 
-        fig_name_args = "control", str_pvp, str_pvp, "r25"
+            str_pvp = str_pvp_cond[pvp_condition]
+            str_r = "{}".format(int(r*100))
 
-        tqdm.write(str_pvp_cond[pvp_condition])
+            fig_name_args = str_r, str_pvp, str_pvp, str_r
 
-        bkp = [b for b in backups if b.pvp is pvp_condition and b.r == 0.25]
+            tqdm.write(str_pvp_cond[pvp_condition])
 
-        distance.distance(
-            backups=bkp,
-            fig_name="fig/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args),
-            attr="display_opponent_score"
-        )
+            bkp = [b for b in backups
+                   if b.pvp is pvp_condition and b.r == r]
 
-        prices_and_profits.prices_and_profits(
-            backups=bkp,
-            fig_name="fig/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args),
-            attr="display_opponent_score"
-        )
+            distance.distance(
+                backups=bkp,
+                fig_name="fig/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args),
+                attr="display_opponent_score"
+            )
 
-        tqdm.write("\n")
+            prices_and_profits.prices_and_profits(
+                backups=bkp,
+                fig_name="fig/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args),
+                attr="display_opponent_score"
+            )
+
+            tqdm.write("\n")
 
     # Separate: Plot figure for every round
     tqdm.write("Create a figure for every round...\n")
