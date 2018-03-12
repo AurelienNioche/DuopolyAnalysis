@@ -37,7 +37,7 @@ def main(force):
 
         ind = np.arange(len(bins)-1)
 
-        for r in (0.25, 0.50):
+        for r, color in zip((0.25, 0.50), ("C0", "C1")):
 
             sc = np.array(scores[r])
 
@@ -55,7 +55,8 @@ def main(force):
 
             width = 0.35  # the width of the bars
 
-            ax.bar(ind - width / 2 if r == 0.25 else ind+width/2, y, width, label='r = {:.2f}'.format(r))
+            ax.bar(ind - width / 2 if r == 0.25 else ind+width/2, y, width,
+                   label='r = {:.2f}'.format(r), alpha=0.5, edgecolor=color)
 
         ax.set_xticks(ind)
         ax.set_xticklabels(bounds, fontsize=8)

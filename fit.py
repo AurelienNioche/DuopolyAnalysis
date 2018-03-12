@@ -153,7 +153,7 @@ def plot_fit(force):
         fit_b = get_fit(force)
 
     else:
-        fit_b = backup.load()
+        fit_b = backup.load("data/fit.p")
 
     x = fit_b.prediction_accuracy_p
     y = fit_b.prediction_accuracy_c
@@ -166,7 +166,7 @@ def plot_fit(force):
     markers = np.array(markers)
     sizes = np.ones(len(colors)) * 25  # np.square(scores / max(scores)) * 100
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot(111)
     for m in np.unique(markers):
         ax.scatter(x[markers == m], y[markers == m],
@@ -182,8 +182,9 @@ def plot_fit(force):
     ax.set_xlim(-0.02, 1.02)
     ax.set_ylim(-0.02, 1.02)
     ax.set_aspect(1)
+    ax.legend(bbox_to_anchor=(0.7, 0.5))
+
     plt.tight_layout()
-    ax.legend()
     plt.savefig("fig/pool_prediction.pdf")
     plt.show()
     plt.close()
@@ -219,4 +220,3 @@ if __name__ == "__main__":
     parsed_args = parser.parse_args()
 
     main(force=parsed_args.force)
-
