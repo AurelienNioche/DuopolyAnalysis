@@ -16,12 +16,17 @@ import numpy as np
 from . import abstract
 
 
-class SimulationModel(abstract.AbstractModel):
+class Model(abstract.AbstractModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def optimal_profit_move(self, opp_move):
+        self.p_strategy = (
+            getattr(self, kwargs["p0_strategy"]),
+            getattr(self, kwargs["p1_strategy"])
+        )
+
+    def profit_strategy(self, opp_move):
 
         """
         Select the move that give the maximum profit at t
@@ -40,7 +45,7 @@ class SimulationModel(abstract.AbstractModel):
 
         return np.random.choice(idx)
 
-    def optimal_move_to_beat_the_opponent(self, opp_move):
+    def competition_strategy(self, opp_move):
 
         exp_profits = np.zeros((self.n_strategies, 2))
 
@@ -50,26 +55,11 @@ class SimulationModel(abstract.AbstractModel):
         profits_differences = np.array(exp_profits[:, 0] - exp_profits[:, 1])
         max_profits_difference = max(profits_differences)
 
-        idx_max_diff = np.flatnonzero(profits_differences == max_profits_difference)
+        idx = np.flatnonzero(profits_differences == max_profits_difference)
 
-        # If more than one value
-        if len(idx_max_diff) > 1:
+        return np.random.choice(idx)
 
-            # Get max profit
-            max_profits_value = max(exp_profits[idx_max_diff][:, 0])
-
-            # Get matching idx
-            idx_max_profit = np.flatnonzero(exp_profits[:, 0] == max_profits_value)
-
-            # Get idx that are True in both condition: max profit and max difference
-            idx_max_profit_in_max_diff = np.intersect1d(idx_max_profit, idx_max_diff)
-
-            return np.random.choice(idx_max_profit_in_max_diff)
-
-        else:
-            return np.random.choice(idx_max_diff)
-
-    def random_move(self):
+    def random_strategy(self):
         return np.random.randint(self.n_positions), np.random.randint(self.p_min, self.p_max + 1)
 
     def run(self):
@@ -95,7 +85,7 @@ class SimulationModel(abstract.AbstractModel):
 
             passive = (active + 1) % 2  # Get passive id
 
-            moves[active] = self.random_move()
+            moves[active] = self.p_strategy[active]()
 
             move0, move1 = moves  # Useful for call of functions
 
@@ -108,6 +98,4 @@ class SimulationModel(abstract.AbstractModel):
 
             active = passive  # Inverse role
 
-        # return backup.backup.save(
-        #     obj={"profits": profits},
-        #     file_name="data/random_player_{}.p".format(data         ))
+        return positions, prices, n_consumers, profits

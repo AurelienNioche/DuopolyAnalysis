@@ -16,7 +16,7 @@ import numpy as np
 from . import abstract
 
 
-class FitModel(abstract.AbstractModel):
+class Model(abstract.AbstractModel):
 
     def __int__(self, **kwargs):
         super().__init__(**kwargs)
@@ -52,24 +52,5 @@ class FitModel(abstract.AbstractModel):
 
         profits_differences = np.array(exp_profits[:, 0] - exp_profits[:, 1])
 
-        max_profits_difference = max(profits_differences)
-
-        idx_max_diff = np.flatnonzero(profits_differences == max_profits_difference)
-
-        # If more than one value
-        if len(idx_max_diff) > 1:
-
-            # Get max profit
-            max_profits_value = max(exp_profits[idx_max_diff][:, 0])
-
-            # Get matching idx
-            idx_max_profit = np.flatnonzero(exp_profits[:, 0] == max_profits_value)
-
-            # Get idx that are True in both condition: max profit and max difference
-            idx_max_profit_in_max_diff = np.intersect1d(idx_max_profit, idx_max_diff)
-
-            return np.random.choice(idx_max_profit_in_max_diff)
-
-        else:
-            return self._softmax(profits_differences/self.max_profit, temp)[player_move]
+        return self._softmax(profits_differences/self.max_profit, temp)[player_move]
 
