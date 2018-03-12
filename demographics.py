@@ -59,14 +59,14 @@ def plot(data):
     nationalities = sorted(data["nationality"].items(), key=operator.itemgetter(1))
     labels = [i[0].capitalize() for i in nationalities]
     labels_pos = np.arange(len(labels))
-    values = [round((i[1] / data["n_users"]) * 100) for i in nationalities]
+    values = [round((i[1] / data["n_users"]) * 100, 2) for i in nationalities]
 
     # text
     ax.set_yticks(labels_pos)
     ax.set_yticklabels(labels)
     ax.set_xticks([])
     for i, v in enumerate(values):
-        ax.text(v + 1, i - 0.05, "{}%".format(v))
+        ax.text(v + 1, i - 0.05, "{:.2f}%".format(v))
 
     # create
     ax.barh(labels_pos, values, edgecolor="white", align="center")
@@ -99,7 +99,7 @@ def plot(data):
     ages = [list(i[1]) for i in itertools.groupby(sorted(data["age"]), lambda x: x // 10)]
     decades = ["{}0-{}0".format(int(i[0] / 10), int(i[0] / 10) + 1) for i in ages]
     decades_pos = np.arange(len(decades))
-    values = [round((len(i) / n_ages) * 100) for i in ages]
+    values = np.array([round((len(i) / n_ages) * 100) for i in ages])
 
     # text
     ax.set_xticks(decades_pos)
@@ -107,7 +107,7 @@ def plot(data):
     ax.set_yticks([])
     for i, v in enumerate(values):
         ax.text(i - 0.1, v + 1, "{}%".format(v))
-    ax.text(3, 15, "Mean: {:.2f} $\pm$ {:.2f} (SD)".format(np.mean(data["age"]), np.std(data["age"])))
+    ax.text(3.5, 20, "Mean: {:.2f} $\pm$ {:.2f} (SD)".format(np.mean(data["age"]), np.std(data["age"])))
 
     # create
     ax.bar(decades_pos, values, edgecolor="white", align="center")
@@ -132,7 +132,7 @@ def get_data(users):
         if "india" in nationality:
             data["nationality"].append("indian")
 
-        elif "america" in nationality or nationality in ("us", "united states", "usa"):
+        elif "america" in nationality or nationality in ("us", "united states", "usa", "english/united states", "uniyed states"):
             data["nationality"].append("american")
 
         elif "dominican" in nationality:

@@ -12,19 +12,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import numpy as np
 import itertools
 
-import backup
 
-
-class Model:
+class AbstractModel:
 
     n_positions = 21
     n_prices = 11
     p_min = 1
     p_max = 11
+    t_max = 25
 
     max_profit = p_max*n_positions
 
@@ -157,36 +155,3 @@ class Model:
                 n_consumers[int(price1 < price0)] += to_share
 
         return n_consumers
-
-    @staticmethod
-    def _softmax(values, temp):
-
-        e = np.exp(values / temp)
-        dist = e / np.sum(e)
-        return dist
-
-    def p_profit(self, player_position, player_price, opp_position, opp_price, temp):
-
-        player_move = self.convert_to_strategies[(player_position, player_price)]
-        opp_move = self.convert_to_strategies[(opp_position, opp_price)]
-
-        exp_profits = np.zeros(self.n_strategies)
-
-        for i in range(self.n_strategies):
-            exp_profits[i] = self._profits_given_position_and_price(i, opp_move)[0]
-
-        return self._softmax(exp_profits/self.max_profit, temp)[player_move]
-
-    def p_competition(self, player_position, player_price, opp_position, opp_price, temp):
-
-        player_move = self.convert_to_strategies[(player_position, player_price)]
-        opp_move = self.convert_to_strategies[(opp_position, opp_price)]
-
-        exp_profits = np.zeros((self.n_strategies, 2))
-
-        for i in range(self.n_strategies):
-            exp_profits[i, :] = self._profits_given_position_and_price(i, opp_move)
-
-        profits_differences = np.array(exp_profits[:, 0] - exp_profits[:, 1])
-
-        return self._softmax(profits_differences/self.max_profit, temp)[player_move]
