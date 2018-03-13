@@ -8,6 +8,8 @@ application = get_wsgi_application()
 
 from game.models import Room, Round, FirmPosition, FirmPrice, FirmProfit, RoundComposition, RoundState
 
+from run_simulation import BackupSimulation
+
 import numpy as np
 import argparse
 from tqdm import tqdm
@@ -183,18 +185,6 @@ def _get_mean_profits(r):
         profits.append(np.mean(i.profits[:, 0]))
 
     return np.mean(profits)
-
-
-class BackupSimulation:
-
-    def __init__(self, positions, prices, profits, n_consumers):
-
-        self.positions = positions
-        self.prices = prices
-        self.profits = profits
-        self.n_consumers = n_consumers
-
-
 
 
 if __name__ == "__main__":
