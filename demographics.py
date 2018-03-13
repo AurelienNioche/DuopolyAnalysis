@@ -32,8 +32,8 @@ def main(force):
 
 def plot(data):
 
-    gs = gridspec.GridSpec(2, 2)
-    plt.figure(figsize=(12, 4))
+    gs = gridspec.GridSpec(2, 2, width_ratios=[1, 1.5])
+    plt.figure(figsize=(9, 4))
 
     # -------------------------- Nationalities hist ---------------------------------- #
     ax = plt.subplot(gs[:, 0])
@@ -42,7 +42,7 @@ def plot(data):
     ax.spines['left'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
     ax.tick_params(length=0)
-    plt.title("Nationalities repartition")
+    plt.title("Nationality")
 
     # data
     dic_nationality = {}
@@ -67,7 +67,7 @@ def plot(data):
 
     ax = plt.subplot(gs[0, 1])
     ax.axis('equal')
-    plt.title("Genders repartition")
+    plt.title("Gender")
 
     # get data
     genders = np.unique(data.gender)
@@ -80,7 +80,7 @@ def plot(data):
            startangle=90, shadow=False)
     # -------------------------- Age hist ---------------------------------- #
     ax = plt.subplot(gs[1, 1])
-    plt.title("Age repartition", y=1.05)
+    plt.title("Age", y=1.05)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
@@ -107,7 +107,7 @@ def plot(data):
 
     plt.tight_layout()
 
-    plt.savefig("fig/pool_demographics.pdf")
+    plt.savefig("fig/demographics.pdf")
     plt.show()
 
 

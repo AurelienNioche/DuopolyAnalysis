@@ -90,7 +90,7 @@ def main(force):
         ax.set_xticklabels([])
 
     for ax, y_label, y_lim in zip(axes[0::2], y_labels, y_limits):
-        ax.set_ylabel(y_label, xrel=-10)
+        ax.set_ylabel(y_label)
         ax.set_ylim(y_lim)
 
     for ax, y_lim in zip(axes[1::2], y_limits):
@@ -99,6 +99,8 @@ def main(force):
         ax.set_yticklabels([])
 
     plt.tight_layout()
+
+    plt.savefig("fig/main_exp.pdf")
     plt.show()
 
     # ----------- Stats ----------------- #

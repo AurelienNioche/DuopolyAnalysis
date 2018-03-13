@@ -2,17 +2,14 @@ import os
 import numpy as np
 import argparse
 from tqdm import tqdm
-from pylab import plt
-
+import matplotlib.pyplot as plt
 import matplotlib.gridspec
+from hyperopt import fmin, tpe, hp
+from scipy.stats import mannwhitneyu
 
 from backup import backup
-
 from model import fit
-from hyperopt import fmin, tpe, hp
-
-import seaborn as sns
-from scipy.stats import mannwhitneyu
+from analysis import customized_plot
 
 
 class BackupFit:
@@ -164,7 +161,7 @@ def get_fit(force):
     return fit_b
 
 
-def plot_fit(force, do_it_again):
+def main(force, do_it_again):
 
     if not os.path.exists("data/fit.p") or do_it_again or force:
         fit_b = get_fit(force)
@@ -182,12 +179,12 @@ def plot_fit(force, do_it_again):
     # markers = ["o" if i == 0.25 else "x" for i in fit_b.r]
     sizes = np.ones(len(colors)) * 25  # np.square(scores / max(scores)) * 100
 
-    fig = plt.figure(figsize=(8, 8))
+    fig = plt.figure(figsize=(11, 4.5))
 
     # ax = fig.add_subplot(111)
     # ax = plt.subplot2grid((3, 2), (0, 0), colspan=2)
 
-    gs = matplotlib.gridspec.GridSpec(3, 1, height_ratios=[1, 0.05, 0.6])
+    gs = matplotlib.gridspec.GridSpec(1, 2, width_ratios=(1, 1.35))# height_ratios=[1, 0.03, 0.6])
 
     ax = fig.add_subplot(gs[0, 0])
 
@@ -205,32 +202,21 @@ def plot_fit(force, do_it_again):
     ax.set_xlim(-0.02, 1.02)
     ax.set_ylim(-0.02, 1.02)
     ax.set_aspect(1)
-    ax.legend(bbox_to_anchor=(0.7, 0.5))
-
-    ax.text(-0.65, 0.95, "A", fontsize=20)
-
-    # plt.tight_layout()
-    # plt.savefig("fig/pool_prediction.pdf")
-    # plt.show()
-    # plt.close()
+    ax.legend(bbox_to_anchor=(0.65, 0.6))
 
     # --------------------------------------------- #
 
-    # fig = plt.figure(figsize=(10, 5))
-
-    # ax1 = fig.add_subplot(2, 2, 1)
-    # ax2 = fig.add_subplot(2, 2, 2)
-    # ax3 = fig.add_subplot(2, 2, 3)
-    # ax4 = fig.add_subplot(2, 2, 4)
-
-    sub_gs = matplotlib.gridspec.GridSpecFromSubplotSpec(subplot_spec=gs[2, 0], nrows=2, ncols=2, hspace=0.3)
+    sub_gs = matplotlib.gridspec.GridSpecFromSubplotSpec(
+        subplot_spec=gs[0, 1], nrows=2, ncols=2, hspace=0, wspace=0.1) #hspace=0.2, wspace=-0.4)
 
     ax1 = fig.add_subplot(sub_gs[0, 0])
     ax2 = fig.add_subplot(sub_gs[0, 1])
     ax3 = fig.add_subplot(sub_gs[1, 0])
     ax4 = fig.add_subplot(sub_gs[1, 1])
 
-    ax1.text(-0.79, 1.2,  "B", fontsize=20)
+    # Number 'sub-figures'
+    ax.text(-0.2, -0.15, "A", fontsize=20)
+    ax3.text(0.2, -0.35,  "B", fontsize=20)
 
     for prediction_accuracy, y_label, ax, r, in zip(
             (fit_b.prediction_accuracy_c,  fit_b.prediction_accuracy_c,
@@ -243,64 +229,44 @@ def plot_fit(force, do_it_again):
         s1_25 = (fit_b.r == r) * (fit_b.display_opponent_score == 1)
         s0_25 = (fit_b.r == r) * (fit_b.display_opponent_score == 0)
 
-        ticks_positions = np.arange(2)
-
-        to_plot = np.array([
+        to_plot = [
             prediction_accuracy[s0_25],
             prediction_accuracy[s1_25]
-        ])
+        ]
 
-        # print(to_plot)
+        color = "C0" if r == 0.25 else "C1"
+        customized_plot.violin(data=to_plot, ax=ax, color=color, edgecolor=color, alpha=0.5)
 
-        sns.violinplot(data=to_plot, ax=ax, color="white", scale="count", cut=0)
+        ax.set_ylim(-0.025, 1.025)
+
+        ax.set_yticks(np.arange(0, 1.1, 0.25))
+        ax.set_aspect(1)
 
         if len(to_plot) == 2:
             u, p = mannwhitneyu(to_plot[0], to_plot[1])
             print("[{}] Mann-Whitney rank test: u {}, p {}".format("Prediction {}-based r={}".format(y_label, r), u, p))
 
         if ax in (ax3, ax4):
-            ax.set_xticks(ticks_positions)
             ax.set_xticklabels(["False", "True"])
             ax.set_xlabel("Display opponent score")
         else:
-            ax.set_xticks([])
+            ax.tick_params(length=0, axis="x")
+            ax.set_xticklabels([])
 
         if ax in (ax1, ax3):
             ax.set_ylabel("{}-based\nfit accuracy".format(y_label))
-            ax.set_yticks([0, 0.5, 1])
 
         else:
-            ax.set_yticks([])
+            ax.tick_params(length=0, axis="y")
+            ax.set_yticklabels([])
 
         if ax in (ax1, ax2):
             ax.set_title("r = {}\n".format(r))
 
     plt.tight_layout()
 
-    plt.savefig("fig/pool_prediction.pdf")
+    plt.savefig("fig/fit.pdf")
     plt.show()
-
-    # fig = plt.figure()
-    # ax = fig.add_subplot(221)
-    # ax.scatter(scores, ps, alpha=0.5, c=rs)
-    # ax.set_xlabel("Score")duopoly.sqlite3
-    # ax.set_ylabel("Profit-based prediction")
-    #
-    # ax = fig.add_subplot(222)
-    # ax.scatter(scores, cs, alpha=0.5, c=rs)
-    # ax.set_xlabel("Score")
-    # ax.set_ylabel("Competition-based prediction")
-    # # ax.set_ylim(-0.02, 1.02)
-    # # ax.set_aspect(0.5)
-    #
-    # plt.tight_layout()
-    # plt.savefig("fig/pool_prediction_against_score.pdf")
-    # plt.show()
-
-
-def main(force):
-
-    plot_fit(force)
 
 
 if __name__ == "__main__":
@@ -312,4 +278,4 @@ if __name__ == "__main__":
                         help="Re-do fit")
     parsed_args = parser.parse_args()
 
-    main(force=parsed_args.force)
+    main(force=parsed_args.force, do_it_again=parsed_args.do_it_again)
