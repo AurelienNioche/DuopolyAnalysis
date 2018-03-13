@@ -18,7 +18,7 @@ from . import abstract
 
 class Model(abstract.AbstractModel):
 
-    def __int__(self, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     @staticmethod

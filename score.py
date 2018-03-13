@@ -14,7 +14,7 @@ def main(force):
     else:
         backups = backup.load()
 
-    bins = np.arange(0, 3800, 400)
+    bins = np.arange(0, 3800, 500)
 
     bounds = ["{}~{}".format(i, j) for i, j in zip(bins[:-1], bins[1:])]
 
@@ -35,6 +35,11 @@ def main(force):
                     sum_profit = np.sum(b.profits[:, player])
                     scores[b.r].append(sum_profit)
 
+        if np.max([max(i) for i in scores.values()]) > max(bins):
+            raise Exception("Max bound has been reached")
+
+        y_upper_bound = 55
+
         ind = np.arange(len(bins)-1)
 
         for r, color in zip((0.25, 0.50), ("C0", "C1")):
@@ -53,6 +58,10 @@ def main(force):
 
                 y.append(len(sc[d == i]) / n * 100)
 
+            if np.max(y) > y_upper_bound:
+                raise Exception("Max bound has been reached ({:.2f} > {})"
+                                .format(np.max(y), y_upper_bound))
+
             width = 0.35  # the width of the bars
 
             ax.bar(ind - width / 2 if r == 0.25 else ind+width/2, y, width,
@@ -61,7 +70,8 @@ def main(force):
         ax.set_xticks(ind)
         ax.set_xticklabels(bounds, fontsize=8)
 
-        ax.set_ylim(0, 30)
+        ax.set_ylim(0, y_upper_bound)
+
         ax.set_ylabel("Proportion (%)")
 
         ax.spines['top'].set_visible(False)
