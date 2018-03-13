@@ -83,6 +83,8 @@ def get_fit(force):
 
     backups = backup.get_data(force)
 
+    backups = [b for b in backups if b.pvp]
+
     m = {
         0.25: fit.Model(r=0.25),
         0.50: fit.Model(r=0.5)
@@ -103,44 +105,43 @@ def get_fit(force):
     user_id = []
 
     for b in tqdm(backups):
-        if b.pvp:
 
-            for player in (0, 1):
+        for player in (0, 1):
 
-                kwargs = {
-                    "dm_model": m[b.r],
-                    "str_method": "p_profit",
-                    "firm_id": player,
-                    "active_player_t0": b.active_player_t0,
-                    "positions": b.positions,
-                    "prices": b.prices,
-                    "t_max": b.t_max
-                }
+            kwargs = {
+                "dm_model": m[b.r],
+                "str_method": "p_profit",
+                "firm_id": player,
+                "active_player_t0": b.active_player_t0,
+                "positions": b.positions,
+                "prices": b.prices,
+                "t_max": b.t_max
+            }
 
-                best_temp = optimize_model(**kwargs)
+            best_temp = optimize_model(**kwargs)
 
-                rm = RunModel(**kwargs)
-                p = rm.run(temp=best_temp) * -1
+            rm = RunModel(**kwargs)
+            p = rm.run(temp=best_temp) * -1
 
-                temp_p.append(best_temp)
-                prediction_accuracy_p.append(p)
+            temp_p.append(best_temp)
+            prediction_accuracy_p.append(p)
 
-                kwargs["str_method"] = "p_competition"
+            kwargs["str_method"] = "p_competition"
 
-                best_temp = optimize_model(**kwargs)
-                rm = RunModel(**kwargs)
-                c = rm.run(temp=best_temp) * -1
+            best_temp = optimize_model(**kwargs)
+            rm = RunModel(**kwargs)
+            c = rm.run(temp=best_temp) * -1
 
-                temp_c.append(best_temp)
-                prediction_accuracy_c.append(c)
+            temp_c.append(best_temp)
+            prediction_accuracy_c.append(c)
 
-                display_opponent_score.append(b.display_opponent_score)
-                r.append(b.r)
-                score.append(np.sum(b.profits[:, player]))
-                firm_id.append(player)
-                room_id.append(b.room_id)
-                round_id.append(b.round_id)
-                user_id.append(b.user_id[player])
+            display_opponent_score.append(b.display_opponent_score)
+            r.append(b.r)
+            score.append(np.sum(b.profits[:, player]))
+            firm_id.append(player)
+            room_id.append(b.room_id)
+            round_id.append(b.round_id)
+            user_id.append(b.user_id[player])
 
     fit_b = BackupFit(
         temp_c=np.array(temp_c),

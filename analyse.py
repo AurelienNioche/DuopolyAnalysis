@@ -8,9 +8,11 @@ from backup import backup
 from analysis import customized_plot
 
 
-def main(force, exclude):
+def main(force):
 
     backups = backup.get_data(force)
+
+    backups = [b for b in backups if b.pvp]
 
     # ----------------- Data ------------------- #
 
