@@ -144,6 +144,66 @@ def load_data_from_db():
     return backups
 
 
+def load_filtered_data_from_db():
+
+    backups = []
+
+    rms = Room.objects.filter(state="end")
+
+    for rm in tqdm(rms):
+
+        t_max = rm.ending_t
+        r = rm.radius
+        display_opponent_score = rm.display_opponent_score
+
+        rds = Round.objects.filter(room_id=rm.id).order_by("pvp")
+
+        for rd in rds:
+
+            positions = np.zeros((t_max, 2), dtype=int)
+            prices = np.zeros((t_max, 2), dtype=int)
+            profits = np.zeros((t_max, 2), dtype=int)
+
+            position_entries = FirmPosition.objects.filter(round_id=rd.id)
+            price_entries = FirmPrice.objects.filter(round_id=rd.id)
+            profits_entries = FirmProfit.objects.filter(round_id=rd.id)
+
+            for t in range(t_max):
+                positions[t, :] = \
+                    [i[0] for i in position_entries.values_list("value").filter(t=t).order_by("agent_id")]
+                prices[t, :] = \
+                    [i[0] for i in price_entries.values_list("value").filter(t=t).order_by("agent_id")]
+
+            for t in range(1, t_max + 1):
+                profits[t - 1] = \
+                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t).order_by("agent_id")]) - \
+                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t - 1).order_by("agent_id")])
+
+            round_composition = RoundComposition.objects.filter(round_id=rd.id).order_by("firm_id")
+            user_id = ["bot" if rc.bot else rc.user_id for rc in round_composition]
+
+            active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
+
+            if active_player_t0 == 1:
+                cond = positions[0, 0] == 0 and prices[0, 0] == 5
+            else:
+                cond = positions[0, 1] == 20 and prices[0, 1] == 5
+
+            if cond:
+
+                b = Backup(
+                    t_max=t_max, r=r, display_opponent_score=display_opponent_score,
+                    positions=positions, prices=prices, profits=profits,
+                    room_id=rm.id, round_id=rd.id, pvp=rd.pvp, user_id=user_id,
+                    active_player_t0=active_player_t0)
+
+                backups.append(b)
+
+    save(backups)
+
+    return backups
+
+
 def load_user_data_from_db():
 
     print("reimport data")

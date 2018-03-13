@@ -8,7 +8,7 @@ from backup import backup
 from analysis import customized_plot
 
 
-def main(force):
+def main(force, exclude):
 
     backups = backup.get_data(force)
 
