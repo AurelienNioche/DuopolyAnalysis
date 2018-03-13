@@ -1,97 +1,117 @@
-import os
 import numpy as np
 import argparse
-from tqdm import tqdm
+import matplotlib.gridspec
+import matplotlib.pyplot as plt
+import scipy.stats
 
 from backup import backup
-from analysis.separate import separate
-from analysis.pool import distance, prices_and_profits
+from analysis import customized_plot
 
 
 def main(force):
 
     backups = backup.get_data(force)
 
-    # For naming
-    str_os_cond = {
-        True: "opp_score",
-        False: "no_opp_score"
+    # ----------------- Data ------------------- #
+
+    # Look at the parameters
+    n_simulations = len(backups)
+    n_positions = backups[0].n_positions
+
+    # Containers
+    d = np.zeros(n_simulations)
+    prices = np.zeros(n_simulations)
+    scores = np.zeros(n_simulations)
+    r = np.zeros(n_simulations)
+    s = np.zeros(n_simulations, dtype=bool)
+
+    for i, b in enumerate(backups):
+
+        # Compute the mean distance between the two firms
+        data = np.absolute(
+            b.positions[:, 0] -
+            b.positions[:, 1]) / n_positions
+
+        d[i] = np.mean(data)
+
+        # Compute the mean price
+        prices[i] = np.mean(b.prices[:, :])
+
+        # Compute the mean profit
+        scores[i] = np.mean(b.profits[:, :])
+
+        r[i] = b.r
+        s[i] = b.display_opponent_score
+
+    # ---------- Plot ----------------------------- #
+
+    fig = plt.figure(figsize=(10, 7))
+
+    sub_gs = matplotlib.gridspec.GridSpec(nrows=3, ncols=2)
+
+    axes = (
+        fig.add_subplot(sub_gs[0, 0]),
+        fig.add_subplot(sub_gs[0, 1]),
+        fig.add_subplot(sub_gs[1, 0]),
+        fig.add_subplot(sub_gs[1, 1]),
+        fig.add_subplot(sub_gs[2, 0]),
+        fig.add_subplot(sub_gs[2, 1])
+    )
+
+    y_labels = "Distance", "Price", "Score"
+    y_limits = (0, 1), (0.9, 11.1), (0, 120)
+
+    s_values = (0, 1, ) * 3
+
+    arr = (d, d, prices, prices, scores, scores)
+
+    axes[0].text(2, 1.3, "Display opponent score", fontsize=12)
+    axes[0].set_title("\n\nFalse")
+    axes[1].set_title("True")
+
+    for idx in range(len(axes)):
+
+        ax = axes[idx]
+
+        ax.set_axisbelow(True)
+
+        # Violin plot
+        data = [arr[idx][(r == r_value) * (s == s_values[idx])] for r_value in (0.25, 0.50)]
+        color = ['C0' if r_value == 0.25 else 'C1' for r_value in (0.25, 0.50)]
+
+        customized_plot.violin(ax=ax, data=data, color=color, edgecolor=color, alpha=0.5)
+
+    for ax in (axes[-2:]):
+        ax.set_xticklabels(["{:.2f}".format(i) for i in (0.25, 0.50)])
+        ax.set_xlabel("r")
+
+    for ax in axes[:4]:
+        ax.tick_params(length=0)
+        ax.set_xticklabels([])
+
+    for ax, y_label, y_lim in zip(axes[0::2], y_labels, y_limits):
+        ax.set_ylabel(y_label, xrel=-10)
+        ax.set_ylim(y_lim)
+
+    for ax, y_lim in zip(axes[1::2], y_limits):
+        ax.set_ylim(y_lim)
+        ax.tick_params(length=0)
+        ax.set_yticklabels([])
+
+    plt.tight_layout()
+    plt.show()
+
+    # ----------- Stats ----------------- #
+
+    to_compare = {
+        "Distance when s = 0": [d[(r == r_value) * (s == 0)] for r_value in (0.25, 0.50)],
+        "Distance when s = 1": [d[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
     }
 
-    str_pvp_cond = {
-        True: "PVP",
-        False: "PVE"
-    }
-
-    # Compare with r respectively to pvp condition
-    tqdm.write("Effect of r given opp score/no opp score and pvp/pve...\n")
-
-    for os_condition in (True, False):
-
-        for pvp_condition in (True, False):
-
-            str_pvp = str_pvp_cond[pvp_condition]
-            str_os = str_os_cond[os_condition]
-
-            fig_name_args = "effect_r", str_os, str_pvp, str_pvp, str_os
-
-            tqdm.write("Effect r: {} {}".format(str_os, str_pvp))
-
-            bkp = [b for b in backups if
-                   b.pvp is pvp_condition and
-                   b.display_opponent_score is os_condition]
-
-            distance.distance(
-                backups=bkp,
-                fig_name="fig/{}/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args))
-
-            prices_and_profits.prices_and_profits(
-                backups=bkp,
-                fig_name="fig/{}/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args))
-
-            tqdm.write("\n")
-
-    # Compare with 'display_opponent_score' respectively to pvp condition
-    tqdm.write("Effect of displaying opponent score given r and pvp condition...\n")
-
-    for r in (0.25, 0.50):
-        for pvp_condition in (True, False):
-
-            str_pvp = str_pvp_cond[pvp_condition]
-            str_r = "{}".format(int(r*100))
-
-            fig_name_args = "effect_score_opp", str_r, str_pvp, str_pvp, str_r
-
-            tqdm.write("Effect opp score: {} {}".format(str_r, str_pvp))
-
-            bkp = [b for b in backups
-                   if b.pvp is pvp_condition and b.r == r]
-
-            distance.distance(
-                backups=bkp,
-                fig_name="fig/{}/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args),
-                attr="display_opponent_score"
-            )
-
-            prices_and_profits.prices_and_profits(
-                backups=bkp,
-                fig_name="fig/{}/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args),
-                attr="display_opponent_score"
-            )
-
-            tqdm.write("\n")
-
-    # Separate: Plot figure for every round
-    tqdm.write("Create a figure for every round...\n")
-    for b in tqdm(backups):
-
-        str_pvp = str_pvp_cond[b.pvp]
-        str_os = str_os_cond[b.display_opponent_score]
-
-        fig_name_args = "separate", str_os, str_pvp, b.room_id, b.round_id, str_os, str_pvp
-
-        fig_name = "fig/{}/{}/{}/room{}_round{}_{}_{}_separate.pdf".format(*fig_name_args)
-        separate.separate(backup=b, fig_name=fig_name)
+    for k, v in to_compare.items():
+        u, p = scipy.stats.mannwhitneyu(v[0], v[1])
+        print("[{}] Mann-Whitney rank test: u {}, p {}".format(k, u, p))
+        print()
 
 
 if __name__ == "__main__":
