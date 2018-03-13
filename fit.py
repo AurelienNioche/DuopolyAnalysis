@@ -7,7 +7,6 @@ from pylab import plt
 import matplotlib.gridspec
 
 from backup import backup
-from analyse import load_data_from_db
 
 from model import fit
 from hyperopt import fmin, tpe, hp
@@ -20,7 +19,7 @@ class BackupFit:
 
     def __init__(self, temp_c, temp_p, prediction_accuracy_c,
                  prediction_accuracy_p, r, display_opponent_score, score,
-                 firm_id, room_id):
+                 firm_id, user_id, room_id, round_id):
 
         self.temp_c = temp_c
         self.prediction_accuracy_c = prediction_accuracy_c
@@ -32,7 +31,9 @@ class BackupFit:
         self.r = r
         self.score = score
         self.firm_id = firm_id
+        self.user_id = user_id
         self.room_id = room_id
+        self.round_id = round_id
 
 
 class RunModel:
@@ -81,19 +82,14 @@ def optimize_model(**kwargs):
     return best["temp"]
 
 
-def get_fit():
+def get_fit(force):
+
+    backups = backup.get_data(force)
 
     m = {
         0.25: fit.Model(r=0.25),
         0.50: fit.Model(r=0.5)
     }
-
-    if not os.path.exists("data/data.p"):
-
-        backups = load_data_from_db()
-
-    else:
-        backups = backup.load()
 
     temp_c = []
     prediction_accuracy_c = []
@@ -106,6 +102,8 @@ def get_fit():
     score = []
     firm_id = []
     room_id = []
+    round_id = []
+    user_id = []
 
     for b in tqdm(backups):
         if b.pvp:
@@ -144,6 +142,8 @@ def get_fit():
                 score.append(np.sum(b.profits[:, player]))
                 firm_id.append(player)
                 room_id.append(b.room_id)
+                round_id.append(b.round_id)
+                user_id.append(b.user_id[player])
 
     fit_b = BackupFit(
         temp_c=np.array(temp_c),
@@ -154,7 +154,9 @@ def get_fit():
         r=np.array(r),
         score=np.array(score),
         firm_id=np.array(firm_id),
-        room_id=np.array(room_id)
+        user_id=np.array(user_id),
+        room_id=np.array(room_id),
+        round_id=np.array(round_id)
     )
 
     backup.save(fit_b, "data/fit.p")
@@ -162,10 +164,10 @@ def get_fit():
     return fit_b
 
 
-def plot_fit(force):
+def plot_fit(force, do_it_again):
 
-    if not os.path.exists("data/fit.p") or force:
-        fit_b = get_fit()
+    if not os.path.exists("data/fit.p") or do_it_again or force:
+        fit_b = get_fit(force)
 
     else:
         fit_b = backup.load("data/fit.p")
@@ -281,7 +283,7 @@ def plot_fit(force):
     # fig = plt.figure()
     # ax = fig.add_subplot(221)
     # ax.scatter(scores, ps, alpha=0.5, c=rs)
-    # ax.set_xlabel("Score")
+    # ax.set_xlabel("Score")duopoly.sqlite3
     # ax.set_ylabel("Profit-based prediction")
     #
     # ax = fig.add_subplot(222)
@@ -305,7 +307,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Produce figures.')
     parser.add_argument('-f', '--force', action="store_true", default=False,
-                        help="Re-run analysis")
+                        help="Re-import data")
+    parser.add_argument('-d', '--do_it_again', action="store_true", default=False,
+                        help="Re-do fit")
     parsed_args = parser.parse_args()
 
     main(force=parsed_args.force)

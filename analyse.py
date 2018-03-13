@@ -1,15 +1,4 @@
-# Django specific settings
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-
-# Ensure settings are read
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
-
-from game.models import Room, Round, FirmPosition, FirmPrice, FirmProfit, RoundComposition, RoundState
-
-from run_simulation import BackupSimulation
-
 import numpy as np
 import argparse
 from tqdm import tqdm
@@ -19,116 +8,9 @@ from analysis.separate import separate
 from analysis.pool import distance, prices_and_profits
 
 
-def _filter_with_profit_comparison():
+def main(force):
 
-    rms = Room.objects.filter(state="end")
-    filtered_rms = []
-
-    tqdm.write("Filtering rooms containing bad players...")
-
-    for rm in tqdm(rms):
-
-        t_max = rm.ending_t
-        r = rm.radius
-
-        rds = Round.objects.filter(room_id=rm.id).order_by("pvp")
-
-        for rd in rds:
-
-            profits = np.zeros((t_max, 2), dtype=int)
-
-            profits_entries = FirmProfit.objects.filter(round_id=rd.id)
-
-            for t in range(1, t_max + 1):
-                profits[t - 1] = \
-                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t).order_by("agent_id")]) - \
-                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t - 1).order_by("agent_id")])
-
-            round_composition = RoundComposition.objects.filter(round_id=rd.id).order_by("firm_id")
-            user_id = ["bot" if rc.bot else rc.user_id for rc in round_composition]
-
-            # Exclude room with bad players
-            player_id = [rc.firm_id for rc in round_composition if not rc.bot][0]
-            cond0 = "bot" in user_id
-            cond1 = np.mean(profits[:, player_id]) > _get_mean_profits(r=r)
-
-            if cond0 and cond1:
-                if rm not in filtered_rms:
-                    filtered_rms.append(rm)
-
-    return filtered_rms
-
-
-def load_data_from_db(exclude):
-
-    backups = []
-
-    if exclude:
-        rms = _filter_with_profit_comparison()
-    else:
-        rms = Room.objects.filter(state="end")
-
-    for rm in tqdm(rms):
-
-        t_max = rm.ending_t
-        r = rm.radius
-        display_opponent_score = rm.display_opponent_score
-
-        rds = Round.objects.filter(room_id=rm.id).order_by("pvp")
-
-        for rd in rds:
-
-            positions = np.zeros((t_max, 2), dtype=int)
-            prices = np.zeros((t_max, 2), dtype=int)
-            profits = np.zeros((t_max, 2), dtype=int)
-
-            position_entries = FirmPosition.objects.filter(round_id=rd.id)
-            price_entries = FirmPrice.objects.filter(round_id=rd.id)
-            profits_entries = FirmProfit.objects.filter(round_id=rd.id)
-
-            for t in range(t_max):
-                positions[t, :] = \
-                    [i[0] for i in position_entries.values_list("value").filter(t=t).order_by("agent_id")]
-                prices[t, :] = \
-                    [i[0] for i in price_entries.values_list("value").filter(t=t).order_by("agent_id")]
-
-            for t in range(1, t_max + 1):
-                profits[t - 1] = \
-                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t).order_by("agent_id")]) - \
-                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t - 1).order_by("agent_id")])
-
-            round_composition = RoundComposition.objects.filter(round_id=rd.id).order_by("firm_id")
-            user_id = ["bot" if rc.bot else rc.user_id for rc in round_composition]
-
-            active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
-
-            if active_player_t0 == 1:
-                cond = positions[0, 0] == 0 and prices[0, 0] == 5
-            else:
-                cond = positions[0, 1] == 20 and prices[0, 1] == 5
-
-            if cond:
-
-                b = backup.Backup(
-                    t_max=t_max, r=r, display_opponent_score=display_opponent_score,
-                    positions=positions, prices=prices, profits=profits,
-                    room_id=rm.id, round_id=rd.id, pvp=rd.pvp, user_id=user_id,
-                    active_player_t0=active_player_t0)
-
-                backups.append(b)
-
-    backup.save(backups)
-
-    return backups
-
-
-def main(force, exclude):
-
-    if not os.path.exists("data/data.p") or force:
-        backups = load_data_from_db(exclude=exclude)
-
-    else:
-        backups = backup.load()
+    backups = backup.get_data(force)
 
     # For naming
     str_os_cond = {
@@ -212,27 +94,12 @@ def main(force, exclude):
         separate.separate(backup=b, fig_name=fig_name)
 
 
-def _get_mean_profits(r):
-
-    obj = backup.load(
-        file_name="data/simulation_r_{}_random_strategy_vs_profit_strategy.p".format(r))
-
-    profits = []
-
-    for i in obj:
-        profits.append(np.mean(i.profits[:, 0]))
-
-    return np.mean(profits)
-
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Produce figures.')
     parser.add_argument('-f', '--force', action="store_true", default=False,
-                        help="Re-run analysis")
-    parser.add_argument('-e', '--exclude', action="store_true", default=False,
-                        help="Exclude bad players.")
+                        help="Re-import data")
     parsed_args = parser.parse_args()
 
-    main(force=parsed_args.force, exclude=parsed_args.exclude)
+    main(force=parsed_args.force)
 

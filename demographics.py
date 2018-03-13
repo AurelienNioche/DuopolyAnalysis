@@ -1,32 +1,19 @@
-# Django specific settings
-import os
 from pylab import plt
 import numpy as np
-from collections import Counter
 import matplotlib.gridspec as gridspec
 
 import operator
 import itertools
+import argparse
 
-from django.core.wsgi import get_wsgi_application
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-# Ensure settings are read
-application = get_wsgi_application()
-
-from game.models import User
+from backup import backup
 
 
-def main():
-    # Mean age + sd
-    # gender parity
-    # nationalities
-    users = User.objects.filter(state="end")
+def main(force):
 
-    print("\nThere is a total of {} users.".format(users.count()))
+    data = backup.get_user_data(force)
 
-    data = get_data(users)
-    data["n_users"] = users.count()
+    print("\nThere is a total of {} users.".format(data["n"]))
 
     print("******* Age ********")
     print("Average age: {:.2f} ".format(np.mean(data["age"])))
@@ -59,7 +46,7 @@ def plot(data):
     nationalities = sorted(data["nationality"].items(), key=operator.itemgetter(1))
     labels = [i[0].capitalize() for i in nationalities]
     labels_pos = np.arange(len(labels))
-    values = [round((i[1] / data["n_users"]) * 100, 2) for i in nationalities]
+    values = [round((i[1] / data["n"]) * 100, 2) for i in nationalities]
 
     # text
     ax.set_yticks(labels_pos)
@@ -115,41 +102,11 @@ def plot(data):
     plt.show()
 
 
-def get_data(users):
+if __name__ == "__main__":
 
-    data = {
-        "gender": {"male": 0, "female": 0},
-        "age": [],
-        "nationality": [],
-    }
+    parser = argparse.ArgumentParser(description='Produce figures.')
+    parser.add_argument('-f', '--force', action="store_true", default=False,
+                        help="Re-import data")
+    parsed_args = parser.parse_args()
 
-    for u in users:
-
-        data["gender"][u.gender.lower()] += 1
-        data["age"].append(u.age)
-        nationality = u.nationality.lower()
-
-        if "india" in nationality:
-            data["nationality"].append("indian")
-
-        elif "america" in nationality or nationality in ("us", "united states", "usa", "english/united states", "uniyed states"):
-            data["nationality"].append("american")
-
-        elif "dominican" in nationality:
-            data["nationality"].append("dominican republic")
-
-        elif nationality in ("black", "european"):
-            data["nationality"].append("undefined")
-
-        else:
-            data["nationality"].append(u.nationality.lower())
-
-    data["nationality"] = Counter(data["nationality"])
-    # data["age"] = {"mean": np.mean(data["age"]), "std": np.std(data["age"])}
-    for k, v in data["gender"].items():
-        data["gender"][k] = (v / users.count()) * 100
-    return data
-
-
-if __name__ == '__main__':
-    main()
+    main(force=parsed_args.force)

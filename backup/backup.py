@@ -12,9 +12,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# Django specific settings
+import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+
+# Ensure settings are read
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
+
+from game.models import Room, Round, FirmPosition, FirmPrice, FirmProfit, RoundComposition, RoundState, User
 
 import pickle
-import os
+from tqdm import tqdm
+import numpy as np
+import collections
 
 
 class Backup:
@@ -61,3 +72,155 @@ def load(file_name="data/data.p"):
 
     with open(file_name, "rb") as f:
         return pickle.load(f)
+
+
+def load_data_from_db():
+
+    backups = []
+
+    rms = Room.objects.filter(state="end")
+
+    for rm in tqdm(rms):
+
+        t_max = rm.ending_t
+        r = rm.radius
+        display_opponent_score = rm.display_opponent_score
+
+        rds = Round.objects.filter(room_id=rm.id).order_by("pvp")
+
+        for rd in rds:
+
+            positions = np.zeros((t_max, 2), dtype=int)
+            prices = np.zeros((t_max, 2), dtype=int)
+            profits = np.zeros((t_max, 2), dtype=int)
+
+            position_entries = FirmPosition.objects.filter(round_id=rd.id)
+            price_entries = FirmPrice.objects.filter(round_id=rd.id)
+            profits_entries = FirmProfit.objects.filter(round_id=rd.id)
+
+            for t in range(t_max):
+                positions[t, :] = \
+                    [i[0] for i in position_entries.values_list("value").filter(t=t).order_by("agent_id")]
+                prices[t, :] = \
+                    [i[0] for i in price_entries.values_list("value").filter(t=t).order_by("agent_id")]
+
+            for t in range(1, t_max + 1):
+                profits[t - 1] = \
+                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t).order_by("agent_id")]) - \
+                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t - 1).order_by("agent_id")])
+
+            round_composition = RoundComposition.objects.filter(round_id=rd.id).order_by("firm_id")
+            user_id = ["bot" if rc.bot else rc.user_id for rc in round_composition]
+
+            active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
+
+            if active_player_t0 == 1:
+                cond = positions[0, 0] == 0 and prices[0, 0] == 5
+            else:
+                cond = positions[0, 1] == 20 and prices[0, 1] == 5
+
+            if cond:
+
+                b = Backup(
+                    t_max=t_max, r=r, display_opponent_score=display_opponent_score,
+                    positions=positions, prices=prices, profits=profits,
+                    room_id=rm.id, round_id=rd.id, pvp=rd.pvp, user_id=user_id,
+                    active_player_t0=active_player_t0)
+
+                backups.append(b)
+
+    save(backups)
+
+    return backups
+
+
+def load_user_data_from_db():
+
+    print("reimport data")
+
+    users = User.objects.filter(state="end")
+
+    data = {
+        "gender": {"male": 0, "female": 0},
+        "age": [],
+        "nationality": [],
+        "n": 0
+    }
+
+    for u in users:
+
+        rm = Room.objects.get(id=u.room_id)
+        if rm.state != "end":
+            print('room not ended')
+            continue
+        else:
+            initial_placement_correct = True
+
+            rds = Round.objects.filter(room_id=rm.id).order_by("pvp")
+
+            for rd in rds:
+                active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
+
+                if active_player_t0 == 1:
+                    cond = FirmPosition.objects.get(round_id=rd.id, t=0, agent_id=0).value == 0 and \
+                           FirmPrice.objects.get(round_id=rd.id, t=0, agent_id=0).value == 5
+                else:
+                    cond = FirmPosition.objects.get(round_id=rd.id, t=0, agent_id=1).value == 20 and \
+                           FirmPrice.objects.get(round_id=rd.id, t=0, agent_id=1).value == 5
+
+                if not cond:
+                   initial_placement_correct = False
+
+            if not initial_placement_correct:
+                continue
+
+        data["n"] += 1
+
+        data["gender"][u.gender.lower()] += 1
+        data["age"].append(u.age)
+        nationality = u.nationality.lower()
+
+        if "india" in nationality:
+            data["nationality"].append("indian")
+
+        elif "america" in nationality or nationality in (
+                "us", "americian", "united states", "usa", "english/united states", "uniyed states"):
+            data["nationality"].append("american")
+
+        elif "dominican" in nationality:
+            data["nationality"].append("dominican republic")
+
+        elif nationality in ("black", "european", "White"):
+            data["nationality"].append("undefined")
+
+        else:
+            data["nationality"].append(u.nationality.lower())
+
+    data["nationality"] = collections.Counter(data["nationality"])
+    # data["age"] = {"mean": np.mean(data["age"]), "std": np.std(data["age"])}
+    for k, v in data["gender"].items():
+        data["gender"][k] = (v / users.count()) * 100
+
+    save(data, "data/user.p")
+    return data
+
+
+def get_user_data(force):
+
+    if not os.path.exists("data/user.p") or force:
+        user_data = load_user_data_from_db()
+    else:
+        user_data = load("data/user.p")
+
+    return user_data
+
+
+def get_data(force):
+
+    if not os.path.exists("data/data.p") or force:
+        backups = load_data_from_db()
+
+    else:
+        backups = load()
+
+    return backups
