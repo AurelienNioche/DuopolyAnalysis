@@ -1,18 +1,12 @@
 from pylab import np, plt
-import os
 import argparse
 
-from analyse import load_data_from_db
 from backup import backup
 
 
 def main(force):
 
-    if not os.path.exists("data/data.p") or force:
-        backups = load_data_from_db()
-
-    else:
-        backups = backup.load()
+    backups = backup.get_data(force)
 
     bins = np.arange(0, 3800, 500)
 

@@ -1,10 +1,8 @@
 # Django specific settings
 import os
-import numpy as np
 import xlsxwriter
 from tqdm import tqdm
 from django.core.wsgi import get_wsgi_application
-
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 # Ensure settings are read
@@ -60,13 +58,15 @@ def get_formatted_data():
             active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
 
             if active_player_t0 == 1:
-                cond0 = FirmPosition.objects.get(agent_id=0, t=0, round_id=rd.id).value == 0
-                cond1 = FirmPrice.objects.get(agent_id=0, t=0, round_id=rd.id).value == 5
+                cond = \
+                    FirmPosition.objects.get(agent_id=0, t=0, round_id=rd.id).value == 0 and \
+                    FirmPrice.objects.get(agent_id=0, t=0, round_id=rd.id).value == 5
             else:
-                cond0 = FirmPosition.objects.get(agent_id=1, t=0, round_id=rd.id).value == 20
-                cond1 = FirmPrice.objects.get(agent_id=1, t=0, round_id=rd.id).value == 5
+                cond = \
+                    FirmPosition.objects.get(agent_id=1, t=0, round_id=rd.id).value == 20 and \
+                    FirmPrice.objects.get(agent_id=1, t=0, round_id=rd.id).value == 5
 
-            if cond0 and cond1:
+            if cond:
                 for t in range(rm.ending_t):
 
                     row = [rm.id, rm.radius, int(rm.display_opponent_score), rd.id, pvp]

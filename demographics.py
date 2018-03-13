@@ -13,17 +13,19 @@ def main(force):
 
     data = backup.get_user_data(force)
 
-    print("\nThere is a total of {} users.".format(data["n"]))
+    print("\nThere is a total of {} users.".format(len(data.age)))
 
     print("******* Age ********")
-    print("Average age: {:.2f} ".format(np.mean(data["age"])))
-    print("Std age: {:.2f}".format(np.std(data["age"])))
+    print("Average age: {:.2f} ".format(np.mean(data.age)))
+    print("Std age: {:.2f}".format(np.std(data.age)))
+    print("Min age: {}".format(np.min(data.age)))
+    print("Max age: {}".format(np.max(data.age)))
     print("******* Nationalities ********")
-    for n in data["nationality"].items():
-        print(n)
+    for n in np.unique(data.nationality):
+        print(n, np.sum(data.nationality == n))
     print("******* Gender ********")
-    for g, n in data["gender"].items():
-        print("{}: {:.2f}".format(g, n))
+    for g in np.unique(data.gender):
+        print("{}: {}".format(g, np.sum(data.gender == g)))
 
     plot(data)
 
@@ -31,7 +33,7 @@ def main(force):
 def plot(data):
 
     gs = gridspec.GridSpec(2, 2)
-    plt.figure(figsize=(15, 7))
+    plt.figure(figsize=(12, 4))
 
     # -------------------------- Nationalities hist ---------------------------------- #
     ax = plt.subplot(gs[:, 0])
@@ -43,10 +45,13 @@ def plot(data):
     plt.title("Nationalities repartition")
 
     # data
-    nationalities = sorted(data["nationality"].items(), key=operator.itemgetter(1))
+    dic_nationality = {}
+    for n in np.unique(data.nationality):
+        dic_nationality[n] = np.sum(data.nationality == n)
+    nationalities = sorted(dic_nationality.items(), key=operator.itemgetter(1))
     labels = [i[0].capitalize() for i in nationalities]
     labels_pos = np.arange(len(labels))
-    values = [round((i[1] / data["n"]) * 100, 2) for i in nationalities]
+    values = [round((i[1] / len(data.age)) * 100, 2) for i in nationalities]
 
     # text
     ax.set_yticks(labels_pos)
@@ -65,16 +70,17 @@ def plot(data):
     plt.title("Genders repartition")
 
     # get data
-    genders = data["gender"].items()
-    labels = [i[0].capitalize() for i in genders]
-    values = [i[1] for i in genders]
+    genders = np.unique(data.gender)
+    labels = [i.capitalize() for i in genders]
+    values = [np.sum(data.gender == i) for i in genders]
 
     # create
-    ax.pie(values, labels=labels, explode=(0.01, 0.05), autopct='%1.1f%%',
-            startangle=90, shadow=False)
+    ax.pie(values,
+           labels=labels, explode=(0.01, 0.05), autopct='%1.1f%%',
+           startangle=90, shadow=False)
     # -------------------------- Age hist ---------------------------------- #
     ax = plt.subplot(gs[1, 1])
-    plt.title("Age group repartition", y=1.05)
+    plt.title("Age repartition", y=1.05)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
@@ -82,9 +88,9 @@ def plot(data):
     ax.tick_params(length=0)
 
     # get data
-    n_ages = len(data["age"])
-    ages = [list(i[1]) for i in itertools.groupby(sorted(data["age"]), lambda x: x // 10)]
-    decades = ["{}0-{}0".format(int(i[0] / 10), int(i[0] / 10) + 1) for i in ages]
+    n_ages = len(data.age)
+    ages = [list(i[1]) for i in itertools.groupby(sorted(data.age), lambda x: x // 10)]
+    decades = ["{}0-{}9".format(int(i[0] / 10), int(i[0] / 10)) if i[0] >= 20 else "18-19" for i in ages]
     decades_pos = np.arange(len(decades))
     values = np.array([round((len(i) / n_ages) * 100) for i in ages])
 
@@ -94,11 +100,14 @@ def plot(data):
     ax.set_yticks([])
     for i, v in enumerate(values):
         ax.text(i - 0.1, v + 1, "{}%".format(v))
-    ax.text(3.5, 20, "Mean: {:.2f} $\pm$ {:.2f} (SD)".format(np.mean(data["age"]), np.std(data["age"])))
+    ax.text(3.5, 20, "Mean: {:.2f} $\pm$ {:.2f} (SD)".format(np.mean(data.age), np.std(data.age)))
 
     # create
     ax.bar(decades_pos, values, edgecolor="white", align="center")
 
+    plt.tight_layout()
+
+    plt.savefig("fig/pool_demographics.pdf")
     plt.show()
 
 
