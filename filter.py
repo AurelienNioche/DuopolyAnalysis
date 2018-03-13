@@ -8,57 +8,34 @@ application = get_wsgi_application()
 import numpy as np
 from tqdm import tqdm
 import argparse
+import matplotlib.gridspec
+import matplotlib.pyplot as plt
+from analysis import customized_plot
 
 from game.models import Room, FirmProfit, RoundComposition, Round
 
 from backup import backup
-from analysis.pool import prices_and_profits, distance
-from analysis.separate import separate
 
 
-def exclude():
+def get_filtered_data():
 
-    rms = Room.objects.filter(state="end")
-
-    filtered_rd = []
+    backups = backup.load_data_from_db()
 
     means = {}
-
     means[0.25], means[0.5] = _get_random_bot_mean_profits()
 
-    tqdm.write("Filtering round containing bad players...")
+    filtered_backups = []
 
-    for rm in tqdm(rms):
+    for b in backups:
 
-        t_max = rm.ending_t
-        r = rm.radius
+        for player_id in (0, 1):
 
-        rds = Round.objects.filter(room_id=rm.id).order_by("pvp")
+            cond = np.mean(b.profits[:, player_id]) > means[b.r]
 
-        for rd in rds:
+            if cond:
+                filtered_backups.append(b)
 
-            profits = np.zeros((t_max, 2), dtype=int)
-
-            profits_entries = FirmProfit.objects.filter(round_id=rd.id)
-
-            for t in range(1, t_max + 1):
-                profits[t - 1] = \
-                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t).order_by("agent_id")]) - \
-                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t - 1).order_by("agent_id")])
-
-            round_composition = RoundComposition.objects.filter(round_id=rd.id).order_by("firm_id")
-            user_id = ["bot" if rc.bot else rc.user_id for rc in round_composition]
-
-            # Exclude room with bad players
-            player_id = [rc.firm_id for rc in round_composition if not rc.bot][0]
-            cond0 = "bot" in user_id
-            cond1 = np.mean(profits[:, player_id]) < means[r]
-
-            if cond0 and cond1:
-                if rd.id not in filtered_rd:
-                    filtered_rd.append(rd.id)
-
-    return filtered_rd
+    return filtered_backups
 
 
 def _get_random_bot_mean_profits():
@@ -80,101 +57,104 @@ def _get_random_bot_mean_profits():
 
 def main(force):
 
-    excluded_rd = exclude()
+    plot_violin_with_dashed_mean(force)
+    # excluded_rd = exclude()
+    #
+    # backups = backup.get_data(force)
+    #
+    # filtered_backups = []
+    #
+    # for b in backups:
+    #     if b.round_id in excluded_rd:
+    #         filtered_backups.append(b)
+    #
+    # # plots(filtered_backups)
+    # # prices_and_profits.prices_and_profits(backups=filtered_backups, fig_name="fig/excluded/prices_and_profits.pdf")
+    # print("N excluded players in 0.25 radius condition: ", len([b for b in filtered_backups if b.r == 0.25]))
+    # print("N excluded players in 0.5 radius condition: ", len([b for b in filtered_backups if b.r == 0.5]))
+
+
+def plot_violin_with_dashed_mean(force):
 
     backups = backup.get_data(force)
 
-    filtered_backups = []
+    # ----------------- Data ------------------- #
 
-    for b in backups:
-        if b.round_id in excluded_rd:
-            filtered_backups.append(b)
+    # Look at the parameters
+    n_simulations = len(backups)
+    n_positions = backups[0].n_positions
 
-    # plots(filtered_backups)
-    # prices_and_profits.prices_and_profits(backups=filtered_backups, fig_name="fig/excluded/prices_and_profits.pdf")
-    print("N excluded players in 0.25 radius condition: ", len([b for b in filtered_backups if b.r == 0.25]))
-    print("N excluded players in 0.5 radius condition: ", len([b for b in filtered_backups if b.r == 0.5]))
+    # Containers
+    d = np.zeros(n_simulations)
+    prices = np.zeros(n_simulations)
+    scores = np.zeros(n_simulations)
+    r = np.zeros(n_simulations)
+    s = np.zeros(n_simulations, dtype=bool)
 
+    for i, b in enumerate(backups):
 
-def plots(backups):
+        # Compute the mean distance between the two firms
+        data = np.absolute(
+            b.positions[:, 0] -
+            b.positions[:, 1]) / n_positions
 
-    # For naming
-    str_os_cond = {
-        True: "opp_score",
-        False: "no_opp_score"
-    }
+        d[i] = np.mean(data)
 
-    str_pvp_cond = {
-        True: "PVP",
-        False: "PVE"
-    }
+        # Compute the mean price
+        prices[i] = np.mean(b.prices[:, :])
 
-    # Compare with r respectively to pvp condition
-    tqdm.write("Effect of r given opp score/no opp score and pvp/pve...\n")
+        # Compute the mean profit
+        scores[i] = np.mean(b.profits[:, :])
 
-    for os_condition in (True, False):
+        r[i] = b.r
+        s[i] = b.display_opponent_score
 
-        for pvp_condition in (True, False):
-            str_pvp = str_pvp_cond[pvp_condition]
-            str_os = str_os_cond[os_condition]
+    # ---------- Plot ----------------------------- #
 
-            fig_name_args = "effect_r", str_os, str_pvp, str_pvp, str_os
+    fig = plt.figure(figsize=(8, 4))
 
-            tqdm.write("Effect r: {} {}".format(str_os, str_pvp))
+    sub_gs = matplotlib.gridspec.GridSpec(nrows=1, ncols=2)
 
-            bkp = [b for b in backups if
-                   b.pvp is pvp_condition and
-                   b.display_opponent_score is os_condition]
+    axes = (
+        fig.add_subplot(sub_gs[0, 0]),
+        fig.add_subplot(sub_gs[0, 1]),
+    )
 
-            distance.distance(
-                backups=bkp,
-                fig_name="fig/{}/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args))
+    s_values = (0, 1)
+    r_values = (0.25, 0.5)
 
-            prices_and_profits.prices_and_profits(
-                backups=bkp,
-                fig_name="fig/{}/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args))
+    arr = (scores, scores)
 
-            tqdm.write("\n")
+    mean_05, mean_025 = _get_random_bot_mean_profits()
+    arr_mean = ((mean_025, mean_05), ) * 2
+    xmins = (0.02, 0.6)
+    xmaxs = (0.4, 0.98)
 
-    # Compare with 'display_opponent_score' respectively to pvp condition
-    tqdm.write("Effect of displaying opponent score given r and pvp condition...\n")
+    plt.text(0.01, 140, "Display opponent score", fontsize=12)
+    axes[0].set_title("\n\nFalse")
+    axes[1].set_title("True")
 
-    for r in (0.25, 0.50):
-        for pvp_condition in (True, False):
-            str_pvp = str_pvp_cond[pvp_condition]
-            str_r = "{}".format(int(r * 100))
+    for idx in range(len(axes)):
 
-            fig_name_args = "effect_score_opp", str_r, str_pvp, str_pvp, str_r
+        ax = axes[idx]
 
-            tqdm.write("Effect opp score: {} {}".format(str_r, str_pvp))
+        ax.set_axisbelow(True)
+        ax.set_ylim(0, 120)
+        ax.set_ylabel("Score")
+        ax.set_xticklabels(r_values)
 
-            bkp = [b for b in backups
-                   if b.pvp is pvp_condition and b.r == r]
+        for i in range(2):
+            ax.axhline(arr_mean[idx][i], color='0.01', linewidth=0.7, linestyle="--",
+                       zorder=1, xmin=xmins[i], xmax=xmaxs[i])
 
-            distance.distance(
-                backups=bkp,
-                fig_name="fig/{}/{}/{}/pool_distance_{}_{}.pdf".format(*fig_name_args),
-                attr="display_opponent_score"
-            )
+        # Violin plot
+        data = [arr[idx][(r == r_value) * (s == s_values[idx])] for r_value in (0.25, 0.50)]
+        color = ['C0' if r_value == 0.25 else 'C1' for r_value in (0.25, 0.50)]
 
-            prices_and_profits.prices_and_profits(
-                backups=bkp,
-                fig_name="fig/{}/{}/{}/prices_and_profits_{}_{}.pdf".format(*fig_name_args),
-                attr="display_opponent_score"
-            )
+        customized_plot.violin(ax=ax, data=data, color=color, edgecolor=color, alpha=0.5)
 
-            tqdm.write("\n")
-
-    # Separate: Plot figure for every round
-    tqdm.write("Create a figure for every round...\n")
-    for b in tqdm(backups):
-        str_pvp = str_pvp_cond[b.pvp]
-        str_os = str_os_cond[b.display_opponent_score]
-
-        fig_name_args = "separate", str_os, str_pvp, b.room_id, b.round_id, str_os, str_pvp
-
-        fig_name = "fig/{}/{}/{}/room{}_round{}_{}_{}_separate.pdf".format(*fig_name_args)
-        separate.separate(backup=b, fig_name=fig_name)
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == '__main__':
