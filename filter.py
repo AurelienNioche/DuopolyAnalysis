@@ -38,10 +38,10 @@ def get_filtered_data():
     return filtered_backups
 
 
-def _get_random_bot_mean_profits():
+def _get_random_bot_mean_profits(strategy0, strategy1):
 
     backups = backup.load(
-        file_name="data/simulation_random_strategy_vs_profit_strategy.p")
+        file_name="data/simulation_{}_strategy_vs_{}_strategy.p".format(strategy0, strategy1))
 
     means = []
 
@@ -125,8 +125,10 @@ def plot_violin_with_dashed_mean(force):
 
     arr = (scores, scores)
 
-    mean_05, mean_025 = _get_random_bot_mean_profits()
-    arr_mean = ((mean_025, mean_05), ) * 2
+    mean_025_profit, mean_05_profit = _get_random_bot_mean_profits("profit", "profit")
+    mean_025_comp, mean_05_comp = _get_random_bot_mean_profits("competition", "competition")
+    arr_mean_profit = ((mean_025_profit, mean_05_profit), ) * 2
+    arr_mean_comp = ((mean_025_comp, mean_05_comp), ) * 2
     xmins = (0.02, 0.6)
     xmaxs = (0.4, 0.98)
 
@@ -144,10 +146,17 @@ def plot_violin_with_dashed_mean(force):
         ax.set_xticklabels(r_values)
 
         for i in range(2):
-            ax.axhline(arr_mean[idx][i], color='0.01', linewidth=0.7, linestyle="--",
+            ax.axhline(arr_mean_profit[idx][i], color='green', linewidth=1.2, linestyle="--",
+                       label="Profit-based" if i == 0 else None,
                        zorder=1, xmin=xmins[i], xmax=xmaxs[i])
 
-        # Violin plot
+        for i in range(2):
+            ax.axhline(arr_mean_comp[idx][i], color='red', linewidth=1.2, linestyle="--",
+                       label="Competition-based" if i == 0 else None,
+                       zorder=1, xmin=xmins[i], xmax=xmaxs[i])
+
+        ax.legend()
+
         data = [arr[idx][(r == r_value) * (s == s_values[idx])] for r_value in (0.25, 0.50)]
         color = ['C0' if r_value == 0.25 else 'C1' for r_value in (0.25, 0.50)]
 
