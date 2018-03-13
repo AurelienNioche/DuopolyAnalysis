@@ -1,10 +1,12 @@
 import numpy as np
-import tqdm as tqdm
+from tqdm import tqdm
+
+from game.models import Room, FirmProfit, RoundComposition, Round
 
 from backup import backup
 
 
-def filter():
+def exclude():
 
     rms = Room.objects.filter(state="end")
     filtered_rms = []

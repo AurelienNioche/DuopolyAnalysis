@@ -7,43 +7,17 @@ import numpy as np
 
 class BackupSimulation:
 
-    def __init__(self, positions, prices, profits, n_consumers):
+    def __init__(self, positions, prices, profits, n_consumers, active_firm, r):
 
         self.positions = positions
         self.prices = prices
         self.profits = profits
         self.n_consumers = n_consumers
+        self.active_firm = active_firm
+        self.r = r
 
 
-def main(*args):
-
-    p0_strategy, p1_strategy = _treat_args(*args)
-
-    n_simulation = 100
-
-    for r in (0.25, 0.5):
-
-        tqdm.write("Computing {} radius simulations.".format(r))
-
-        data = []
-
-        for _ in tqdm(range(n_simulation)):
-
-            m = model.simulation.Model(r=r, p0_strategy=p0_strategy, p1_strategy=p1_strategy)
-
-            results = m.run()
-
-            game = BackupSimulation(*results)
-
-            data.append(game)
-
-        backup.save(
-            obj=data,
-            file_name="data/simulation_r_{}_{}_vs_{}.p".format(r, p0_strategy, p1_strategy)
-        )
-
-
-def _treat_args(*args):
+def treat_args(*args):
 
     to_return = []
 
@@ -55,9 +29,39 @@ def _treat_args(*args):
         elif a in ("random", ):
             to_return.append("random_strategy")
         else:
-            exit("Please use a valid strategy: random, profit, competition.")
+            exit("Please use a valid strategy (not '{}'): random, profit, competition.".format(a))
 
     return to_return
+
+
+def main(**kwargs):
+
+    p0_strategy, p1_strategy = treat_args(kwargs["p0_strategy"], kwargs["p1_strategy"])
+
+    n_simulation = 100
+
+    data = []
+
+    for r in (0.25, 0.5):
+
+        tqdm.write("Computing {} radius simulations.".format(r))
+
+        for _ in tqdm(range(n_simulation)):
+
+            m = model.simulation.Model(r=r, p0_strategy=p0_strategy, p1_strategy=p1_strategy)
+
+            results = m.run()
+
+            b = BackupSimulation(*results, r)
+
+            data.append(b)
+
+    file_name = "data/simulation_{}_vs_{}.p".format(p0_strategy, p1_strategy)
+
+    backup.save(
+        obj=data,
+        file_name=file_name
+    )
 
 
 if __name__ == "__main__":
@@ -77,5 +81,8 @@ if __name__ == "__main__":
     if None in (parsed_args.p0_strategy, parsed_args.p1_strategy):
         exit("You don't know what you're doing. Run the script with -h flag.")
 
-    main(parsed_args.p0_strategy, parsed_args.p1_strategy)
+    main(
+        p0_strategy=parsed_args.p0_strategy,
+        p1_strategy=parsed_args.p1_strategy
+    )
 

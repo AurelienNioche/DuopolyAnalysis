@@ -5,7 +5,6 @@ import xlsxwriter
 from tqdm import tqdm
 from django.core.wsgi import get_wsgi_application
 
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 # Ensure settings are read
 application = get_wsgi_application()
@@ -20,7 +19,8 @@ def main():
 
     data = get_formatted_data()
 
-    write_table_to_workbook(workbook, data, "all_data")
+    write_data_to_workbook(workbook=workbook, data=data,
+                           worksheet_name="all_data")
 
 
 def get_formatted_data():
@@ -97,7 +97,7 @@ def get_formatted_data():
     return data
 
 
-def write_table_to_workbook(workbook, table, worksheet_name):
+def write_data_to_workbook(workbook, data, worksheet_name):
 
     """
     Write table data to excel workbook (add a worksheet)
@@ -117,8 +117,8 @@ def write_table_to_workbook(workbook, table, worksheet_name):
     align = workbook.add_format()
     align.set_align("left")
 
-    rows = table
-    cols = range(len(table[0]))
+    rows = data
+    cols = range(len(data[0]))
 
     # fit column size to content
     for col_number in cols:
