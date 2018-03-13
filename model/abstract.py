@@ -24,7 +24,7 @@ class AbstractModel:
     p_max = 11
     t_max = 25
 
-    def __init__(self, r):
+    def __init__(self, r, **kwargs):
 
         self.r = r
 

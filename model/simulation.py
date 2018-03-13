@@ -21,10 +21,10 @@ class Model(abstract.AbstractModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.p_strategy = (
+        self.p_strategy = [
             getattr(self, kwargs["p0_strategy"]),
             getattr(self, kwargs["p1_strategy"])
-        )
+        ]
 
     def profit_strategy(self, opp_move):
 
@@ -59,8 +59,8 @@ class Model(abstract.AbstractModel):
 
         return np.random.choice(idx)
 
-    def random_strategy(self):
-        return np.random.randint(self.n_positions), np.random.randint(self.p_min, self.p_max + 1)
+    def random_strategy(self, *args):
+        return np.random.randint(self.n_strategies)
 
     def run(self):
 
@@ -85,7 +85,7 @@ class Model(abstract.AbstractModel):
 
             passive = (active + 1) % 2  # Get passive id
 
-            moves[active] = self.p_strategy[active]()
+            moves[active] = self.p_strategy[active](moves[passive])
 
             move0, move1 = moves  # Useful for call of functions
 
@@ -98,4 +98,4 @@ class Model(abstract.AbstractModel):
 
             active = passive  # Inverse role
 
-        return positions, prices, n_consumers, profits
+        return positions, prices, profits, n_consumers

@@ -1,25 +1,100 @@
 # Django specific settings
 import os
+import numpy as np
+import xlsxwriter
+from tqdm import tqdm
 from django.core.wsgi import get_wsgi_application
+
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 # Ensure settings are read
 application = get_wsgi_application()
 
-from game.models import FirmPosition, FirmPrice, FirmProfit, Room, Round
-
-import xlsxwriter
-import sqlite3
+from game.models import FirmPosition, FirmPrice, FirmProfit, Room, Round, RoundComposition, RoundState
 
 
 def main():
 
-    workbook = xlsxwriter.Workbook(self.save_path)
+    save_path = "data/excel_data.xlsx"
+    workbook = xlsxwriter.Workbook(save_path)
 
     data = get_formatted_data()
 
+    write_table_to_workbook(workbook, data, "all_data")
 
-# def
+
+def get_formatted_data():
+
+    cols = (
+        "room_id",
+        "radius",
+        "opponent_score_displayed",
+        "round_id",
+        "round",
+        "firm0_id",
+        "firm0_price",
+        "firm0_position",
+        "firm0_profit",
+        "firm1_id",
+        "firm1_price",
+        "firm1_position",
+        "firm1_profit",
+        "t",
+    )
+
+    data = [cols, ]
+
+    rooms = Room.objects.filter(state="end").order_by("id")
+
+    for rm in tqdm(rooms):
+
+        for rd in Round.objects.filter(room_id=rm.id):
+
+            pvp = int(rd.pvp)
+
+            firm_ids = [
+                RoundComposition.objects.filter(round_id=rd.id, firm_id=0).first().user_id,
+                RoundComposition.objects.filter(round_id=rd.id, firm_id=1).first().user_id
+            ]
+
+            active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
+
+            if active_player_t0 == 1:
+                cond0 = FirmPosition.objects.get(agent_id=0, t=0, round_id=rd.id).value == 0
+                cond1 = FirmPrice.objects.get(agent_id=0, t=0, round_id=rd.id).value == 5
+            else:
+                cond0 = FirmPosition.objects.get(agent_id=1, t=0, round_id=rd.id).value == 20
+                cond1 = FirmPrice.objects.get(agent_id=1, t=0, round_id=rd.id).value == 5
+
+            if cond0 and cond1:
+                for t in range(rm.ending_t):
+
+                    row = [rm.id, rm.radius, int(rm.display_opponent_score), rd.id, pvp]
+
+                    for firm_id in (0, 1):
+
+                        user_id = firm_ids[firm_id]
+
+                        row.append(user_id)
+
+                        row.append(
+                            FirmPrice.objects.get(agent_id=firm_id, round_id=rd.id, t=t).value
+                        )
+
+                        row.append(
+                            FirmPosition.objects.get(agent_id=firm_id, round_id=rd.id, t=t).value
+                        )
+
+                        row.append(
+                            FirmProfit.objects.get(t=t+1, round_id=rd.id, agent_id=firm_id).value -
+                            FirmProfit.objects.get(t=t, round_id=rd.id, agent_id=firm_id).value
+                        )
+
+                    row.append(t)
+
+                    data.append(row)
+
+    return data
 
 
 def write_table_to_workbook(workbook, table, worksheet_name):
@@ -63,7 +138,6 @@ def write_table_to_workbook(workbook, table, worksheet_name):
             else:
                 worksheet.write(row_number, col_number, row[col_number], align)
 
-    return workbook
-
 
 if __name__ == '__main__':
+    main()

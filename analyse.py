@@ -17,7 +17,7 @@ from analysis.separate import separate
 from analysis.pool import distance, prices_and_profits
 
 
-def load_data_from_db():
+def load_data_from_db(exclude):
 
     backups = []
 
@@ -55,6 +55,11 @@ def load_data_from_db():
             round_composition = RoundComposition.objects.filter(round_id=rd.id).order_by("firm_id")
             user_id = ["bot" if rc.bot else rc.user_id for rc in round_composition]
 
+            # Exclude room with bad players
+            player_id = [rc.firm_id for rc in round_composition if not rc.bot][0]
+            cond0 = exclude and "bot" in user_id
+            cond1 = np.mean(profits[:, player_id]) < _get_mean_profits(r=r)
+
             active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
 
             if active_player_t0 == 1:
@@ -68,7 +73,7 @@ def load_data_from_db():
                     t_max=t_max, r=r, display_opponent_score=display_opponent_score,
                     positions=positions, prices=prices, profits=profits,
                     room_id=rm.id, round_id=rd.id, pvp=rd.pvp, user_id=user_id,
-                    active_player_t0=active_player_t0)
+                    active_player_t0=active_player_t0, exclude=cond0 * cond1)
 
                 backups.append(b)
 
@@ -77,10 +82,10 @@ def load_data_from_db():
     return backups
 
 
-def main(force):
+def main(force, exclude):
 
     if not os.path.exists("data/data.p") or force:
-        backups = load_data_from_db()
+        backups = load_data_from_db(exclude=exclude)
 
     else:
         backups = backup.load()
@@ -167,12 +172,39 @@ def main(force):
         separate.separate(backup=b, fig_name=fig_name)
 
 
+def _get_mean_profits(r):
+
+    obj = backup.load(
+        file_name="data/simulation_r_{}_random_strategy_vs_profit_strategy.p".format(r))
+
+    profits = []
+
+    for i in obj:
+        profits.append(np.mean(i.profits[:, 0]))
+
+    return np.mean(profits)
+
+
+class BackupSimulation:
+
+    def __init__(self, positions, prices, profits, n_consumers):
+
+        self.positions = positions
+        self.prices = prices
+        self.profits = profits
+        self.n_consumers = n_consumers
+
+
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Produce figures.')
     parser.add_argument('-f', '--force', action="store_true", default=False,
                         help="Re-run analysis")
+    parser.add_argument('-e', '--exclude', action="store_true", default=False,
+                        help="Exclude bad players.")
     parsed_args = parser.parse_args()
 
-    main(force=parsed_args.force)
+    main(force=parsed_args.force, exclude=parsed_args.exclude)
 

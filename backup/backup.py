@@ -20,7 +20,7 @@ import os
 class Backup:
 
     def __init__(self, r, t_max, display_opponent_score, positions, prices, profits,
-                 pvp, room_id, round_id, active_player_t0, user_id, n_positions=21, n_prices=11,
+                 pvp, room_id, round_id, active_player_t0, user_id, exclude, n_positions=21, n_prices=11,
                  p_min=0, p_max=11):
 
         # Backup.__init__(self)
@@ -46,6 +46,9 @@ class Backup:
         self.user_id = user_id  # List of 2 users
         self.room_id = room_id
         self.round_id = round_id
+
+        # Exclude or not
+        self.exclude = exclude
 
 
 def save(obj, file_name="data/data.p"):
