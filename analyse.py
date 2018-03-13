@@ -19,11 +19,54 @@ from analysis.separate import separate
 from analysis.pool import distance, prices_and_profits
 
 
+def _filter_with_profit_comparison():
+
+    rms = Room.objects.filter(state="end")
+    filtered_rms = []
+
+    tqdm.write("Filtering rooms containing bad players...")
+
+    for rm in tqdm(rms):
+
+        t_max = rm.ending_t
+        r = rm.radius
+
+        rds = Round.objects.filter(room_id=rm.id).order_by("pvp")
+
+        for rd in rds:
+
+            profits = np.zeros((t_max, 2), dtype=int)
+
+            profits_entries = FirmProfit.objects.filter(round_id=rd.id)
+
+            for t in range(1, t_max + 1):
+                profits[t - 1] = \
+                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t).order_by("agent_id")]) - \
+                    np.array([i[0] for i in profits_entries.values_list("value").filter(t=t - 1).order_by("agent_id")])
+
+            round_composition = RoundComposition.objects.filter(round_id=rd.id).order_by("firm_id")
+            user_id = ["bot" if rc.bot else rc.user_id for rc in round_composition]
+
+            # Exclude room with bad players
+            player_id = [rc.firm_id for rc in round_composition if not rc.bot][0]
+            cond0 = "bot" in user_id
+            cond1 = np.mean(profits[:, player_id]) > _get_mean_profits(r=r)
+
+            if cond0 and cond1:
+                if rm not in filtered_rms:
+                    filtered_rms.append(rm)
+
+    return filtered_rms
+
+
 def load_data_from_db(exclude):
 
     backups = []
 
-    rms = Room.objects.filter(state="end")
+    if exclude:
+        rms = _filter_with_profit_comparison()
+    else:
+        rms = Room.objects.filter(state="end")
 
     for rm in tqdm(rms):
 
@@ -57,11 +100,6 @@ def load_data_from_db(exclude):
             round_composition = RoundComposition.objects.filter(round_id=rd.id).order_by("firm_id")
             user_id = ["bot" if rc.bot else rc.user_id for rc in round_composition]
 
-            # Exclude room with bad players
-            player_id = [rc.firm_id for rc in round_composition if not rc.bot][0]
-            cond0 = exclude and "bot" in user_id
-            cond1 = np.mean(profits[:, player_id]) < _get_mean_profits(r=r)
-
             active_player_t0 = RoundState.objects.filter(round_id=rd.id, t=0).first().firm_active
 
             if active_player_t0 == 1:
@@ -75,7 +113,7 @@ def load_data_from_db(exclude):
                     t_max=t_max, r=r, display_opponent_score=display_opponent_score,
                     positions=positions, prices=prices, profits=profits,
                     room_id=rm.id, round_id=rd.id, pvp=rd.pvp, user_id=user_id,
-                    active_player_t0=active_player_t0, exclude=cond0 * cond1)
+                    active_player_t0=active_player_t0)
 
                 backups.append(b)
 
