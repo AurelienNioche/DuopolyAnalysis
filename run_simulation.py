@@ -2,7 +2,6 @@ import argparse
 import model
 from backup import backup
 from tqdm import tqdm
-import numpy as np
 
 
 class BackupSimulation:
@@ -68,13 +67,14 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Run simulations.')
 
-    parser.add_argument('-p0', action='store',
-                    dest='p0_strategy',
-                    help='Strategy used by player 0 (competition/profit/random)')
+    parser.add_argument(
+        '-p0', action='store',
+        dest='p0_strategy',
+        help='Strategy used by player 0 (competition/profit/random)')
 
     parser.add_argument('-p1', action='store',
-                    dest='p1_strategy',
-                    help='Strategy used by player 1 (competition/profit/random)')
+        dest='p1_strategy',
+        help='Strategy used by player 1 (competition/profit/random)')
 
     parsed_args = parser.parse_args()
 

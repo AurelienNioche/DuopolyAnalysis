@@ -3,8 +3,7 @@ from django.core.wsgi import get_wsgi_application
 from tqdm import tqdm
 import shutil
 
-from analyse import load_data_from_db
-from game.models import User, Room, Round, FirmPosition, FirmPrice, \
+from game.models import Room, Round, FirmPosition, FirmPrice, \
     FirmProfit, RoundComposition, RoundState
 
 
@@ -52,37 +51,11 @@ def merge():
     print("*******************************************")
 
 
-def stats():
-
-    backups = load_data_from_db()
-
-    n = {
-        0.25: {True: 0, False: 0},
-        0.50: {True: 0, False: 0}
-    }
-    for b in backups:
-
-        if b.active_player_t0 == 1:
-            cond = b.positions[0, 0] == 0 and b.prices[0, 0] == 5
-        else:
-            cond = b.positions[0, 1] == 20 and b.prices[0, 1] == 5
-
-        if not cond:
-            print(b.positions[0, :], b.prices[0, :], b.r, b.display_opponent_score)
-
-        if cond and b.pvp:
-            n[b.r][b.display_opponent_score] += 1
-
-    print(n)
-
-
 def main():
 
     merge()
-    # stats()
 
 
 if __name__ == "__main__":
 
     main()
-

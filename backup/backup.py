@@ -59,6 +59,16 @@ class Backup:
         self.round_id = round_id
 
 
+class UserBackup:
+
+    def __init__(self, user_id, nationality, age, gender):
+
+        self.nationality = nationality
+        self.age = age
+        self.gender = gender
+        self.user_id = user_id
+
+
 def save(obj, file_name="data/data.p"):
 
     os.makedirs(os.path.dirname(file_name), exist_ok=True)
@@ -140,12 +150,10 @@ def load_user_data_from_db():
 
     users = User.objects.filter(state="end")
 
-    data = {
-        "gender": {"male": 0, "female": 0},
-        "age": [],
-        "nationality": [],
-        "n": 0
-    }
+    gender = []
+    age = []
+    nationality = []
+    user_id = []
 
     for u in users:
 
@@ -169,40 +177,46 @@ def load_user_data_from_db():
                            FirmPrice.objects.get(round_id=rd.id, t=0, agent_id=1).value == 5
 
                 if not cond:
-                   initial_placement_correct = False
+                    initial_placement_correct = False
 
             if not initial_placement_correct:
                 continue
 
-        data["n"] += 1
+        gender.append(u.gender.lower())
+        age.append(u.age)
+        user_id.append(u.id)
 
-        data["gender"][u.gender.lower()] += 1
-        data["age"].append(u.age)
-        nationality = u.nationality.lower()
+        raw_nationality = u.nationality.lower()
 
-        if "india" in nationality:
-            data["nationality"].append("indian")
+        if "india" in raw_nationality:
+            nationality.append("indian")
 
-        elif "america" in nationality or nationality in (
-                "us", "americian", "united states", "usa", "english/united states", "uniyed states"):
-            data["nationality"].append("american")
+        elif "america" in raw_nationality or raw_nationality in (
+                "us", "americian", "usa", "english/united states",
+                "uniyed states", "united states"):
+            nationality.append("american")
 
-        elif "dominican" in nationality:
-            data["nationality"].append("dominican republic")
+        elif "dominican republic" in raw_nationality:
+            nationality.append("dominican")
 
-        elif nationality in ("black", "european", "White"):
-            data["nationality"].append("undefined")
+        elif "canada" in raw_nationality:
+            nationality.append("canadian")
+
+        elif raw_nationality in ("black", "european", "white"):
+            nationality.append("undefined")
 
         else:
-            data["nationality"].append(u.nationality.lower())
+            nationality.append(raw_nationality)
 
-    data["nationality"] = collections.Counter(data["nationality"])
-    # data["age"] = {"mean": np.mean(data["age"]), "std": np.std(data["age"])}
-    for k, v in data["gender"].items():
-        data["gender"][k] = (v / users.count()) * 100
+    user_data = UserBackup(
+        age=np.array(age),
+        gender=np.array(gender),
+        nationality=np.array(nationality),
+        user_id=np.array(user_id)
+    )
 
-    save(data, "data/user.p")
-    return data
+    save(user_data, "data/user.p")
+    return user_data
 
 
 def get_user_data(force):
