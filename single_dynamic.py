@@ -2,7 +2,7 @@ import argparse
 from tqdm import tqdm
 
 from backup import backup
-from analysis.separate import separate
+from analysis import separate
 
 
 def main(force):
