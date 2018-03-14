@@ -1,10 +1,11 @@
 import argparse
-from backup import backup
+import os
 import contextlib
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec
 
+from backup import backup
 import run_simulation
 from analysis import customized_plot
 
@@ -12,31 +13,17 @@ from analysis import customized_plot
 @contextlib.contextmanager
 def backup_safe_load(file_name, args):
 
-    try:
+    if not os.path.exists(file_name) or args.force:
+        run_simulation.main(
+            p0_strategy=args.p0_strategy,
+            p1_strategy=args.p1_strategy
+        )
 
-        b = None
-
-        if args.force:
-            run_simulation.main(
-                p0_strategy=args.p0_strategy,
-                p1_strategy=args.p1_strategy
-            )
-
-        b = backup.load(file_name=file_name)
-
-    except (RuntimeError, FileNotFoundError):
-
-        if not args.force:
-            exit("File not found, use -f flag to generate new data.")
-        else:
-            exit("Something went wrong, new data were generated, but file loading failed.")
-
-    finally:
-
-        yield b
+    b = backup.load(file_name=file_name)
+    yield b
 
 
-def plot(backups):
+def plot(backups, p0_strategy, p1_strategy):
 
     # ----------------- Data ------------------- #
 
@@ -69,7 +56,7 @@ def plot(backups):
 
     # ---------- Plot ----------------------------- #
 
-    fig = plt.figure(figsize=(4, 6))
+    fig = plt.figure(figsize=(4, 7))
 
     sub_gs = matplotlib.gridspec.GridSpec(nrows=3, ncols=1)
 
@@ -96,9 +83,12 @@ def plot(backups):
 
         customized_plot.violin(ax=ax, data=data, color=color, edgecolor=color, alpha=0.5)
 
-    for ax in (axes[:]):
-        ax.set_xticklabels(["{:.2f}".format(i) for i in (0.25, 0.50)])
-        ax.set_xlabel("r")
+    axes[-1].set_xticklabels(["{:.2f}".format(i) for i in (0.25, 0.50)])
+    axes[-1].set_xlabel("r")
+
+    for ax in (axes[:-1]):
+        ax.set_xticklabels([])
+        ax.tick_params(axis="x", length=0)
 
     for ax, y_label, y_lim in zip(axes[:], y_labels, y_limits):
         ax.set_ylabel(y_label)
@@ -106,7 +96,7 @@ def plot(backups):
 
     plt.tight_layout()
 
-    plt.savefig("fig/main_simulation.pdf")
+    plt.savefig("fig/main_simulation_{}_{}.pdf".format(p0_strategy, p1_strategy))
     plt.show()
 
 
@@ -118,8 +108,7 @@ def main(args):
     file_name = "data/simulation_{}_vs_{}.p".format(p0_strategy, p1_strategy)
 
     with backup_safe_load(file_name=file_name, args=args) as backups:
-
-        plot(backups)
+        plot(backups, p0_strategy, p1_strategy)
 
 
 if __name__ == "__main__":
@@ -128,13 +117,15 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--force', action="store_true", default=False,
                         help="Re-import data")
 
-    parser.add_argument('-p0', action='store',
-                    dest='p0_strategy',
-                    help='Strategy used by player 0 (competition/profit/random)')
+    parser.add_argument(
+        '-p0', action='store',
+        dest='p0_strategy',
+        help='Strategy used by player 0 (competition/profit/random)')
 
-    parser.add_argument('-p1', action='store',
-                    dest='p1_strategy',
-                    help='Strategy used by player 1 (competition/profit/random)')
+    parser.add_argument(
+        '-p1', action='store',
+        dest='p1_strategy',
+        help='Strategy used by player 1 (competition/profit/random)')
 
     parsed_args = parser.parse_args()
 
@@ -143,4 +134,3 @@ if __name__ == "__main__":
         exit("Please run the script with -h flag.")
 
     main(parsed_args)
-
