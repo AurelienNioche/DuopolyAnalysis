@@ -5,7 +5,6 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import matplotlib.gridspec
 from hyperopt import fmin, tpe, hp
-from scipy.stats import mannwhitneyu
 
 from backup import backup
 from model import fit
@@ -76,7 +75,7 @@ def optimize_model(**kwargs):
     return best["temp"]
 
 
-def get_fit(force, p0_strategy, p1_strategy, reversed_strategies):
+def get_fit(force, p0_strategy, p1_strategy, reversed_strategies, optimize_temp=False):
 
     file_name = "data/simulation_{}_vs_{}.p".format(p0_strategy, p1_strategy)
 
@@ -122,22 +121,48 @@ def get_fit(force, p0_strategy, p1_strategy, reversed_strategies):
                 "t_max": b.t_max
             }
 
-            best_temp = optimize_model(**kwargs)
+            if not optimize_temp:
 
-            rm = RunModel(**kwargs)
-            p = rm.run(temp=best_temp) * -1
+                # --- Profit based ---- #
 
-            temp_p.append(best_temp)
-            prediction_accuracy_p.append(p)
+                rm = RunModel(**kwargs)
+                p = rm.run(temp=None) * -1
 
-            kwargs["str_method"] = "p_competition"
+                temp_p.append(-1)
+                prediction_accuracy_p.append(p)
 
-            best_temp = optimize_model(**kwargs)
-            rm = RunModel(**kwargs)
-            c = rm.run(temp=best_temp) * -1
+                # --- Competition based --- #
 
-            temp_c.append(best_temp)
-            prediction_accuracy_c.append(c)
+                kwargs["str_method"] = "p_competition"
+
+                rm = RunModel(**kwargs)
+                c = rm.run(temp=None) * -1
+
+                temp_c.append(-1)
+                prediction_accuracy_c.append(c)
+
+            else:
+
+                # --- Profit based ---- #
+
+                best_temp = optimize_model(**kwargs)
+
+                rm = RunModel(**kwargs)
+                p = rm.run(temp=best_temp) * -1
+
+                temp_p.append(best_temp)
+                prediction_accuracy_p.append(p)
+
+                # --- Competition based --- #
+
+                kwargs["str_method"] = "p_competition"
+
+                best_temp = optimize_model(**kwargs)
+                rm = RunModel(**kwargs)
+                c = rm.run(temp=best_temp) * -1
+
+                temp_c.append(best_temp)
+                prediction_accuracy_c.append(c)
 
             r.append(b.r)
             score.append(np.sum(b.profits[:, player]))
@@ -208,13 +233,13 @@ def plot_all(backups, args, strategies):
             fit_b = next(iter_backups)
             p0_strategy, p1_strategy = strategies[fit_b.idx_strategy[0]]
 
-            xlabel = True if x == nrows - 1 else False
-            ylabel = True if not y else False
+            xlabel = x == nrows - 1
+            ylabel = not y
 
             plot(fit_b, p0_strategy, p1_strategy, xlabel=xlabel, ylabel=ylabel, plot_position=gs[x, y])
 
     plt.tight_layout()
-    plt.savefig("fig/simulation_fit_all.pdf".format(args.p0_strategy, args.p1_strategy))
+    plt.savefig("fig/simulation_fit_all.pdf")
     plt.show()
 
 
