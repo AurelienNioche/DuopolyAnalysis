@@ -3,87 +3,11 @@ from backup import backup
 import contextlib
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec
 
 import run_simulation
+from analysis import customized_plot
 
-
-# def plot_hist_scores_distribution(backups, fig_name):
-#
-#     bins = np.arange(0, 4000, 500)
-#
-#     bounds = ["{}~{}".format(i, j) for i, j in zip(bins[:-1], bins[1:])]
-#
-#     fig = plt.figure(figsize=(12, 8))
-#     axes = fig.add_subplot(211), fig.add_subplot(212)
-#
-#     for r, ax in zip((0.25, 0.5), axes):
-#
-#         scores = {
-#             0:  [],
-#             1: []
-#         }
-#
-#         for b in backups:
-#
-#             for player in (0, 1):
-#                 if b.r == r:
-#                     sum_profit = np.sum(b.profits[:, player])
-#                     scores[player].append(sum_profit)
-#
-#         if np.max([max(i) for i in scores.values()]) > max(bins):
-#             raise Exception("Max bound has been reached")
-#
-#         y_upper_bound = 100
-#
-#         ind = np.arange(len(bins)-1)
-#
-#         rects = [[], []]
-#
-#         for player, color in zip((0,  1), ("C0", "C1")):
-#
-#             sc = np.array(scores[player])
-#
-#             print("Score (r = {:.2f}, player = {}) mean: {:.2f}, std: {:.2f}, min:{}, max: {}"
-#                   .format(r, player, np.mean(sc), np.std(sc), np.min(sc), np.max(sc)))
-#
-#             d = np.digitize(sc, bins=bins)
-#
-#             n = len(sc)
-#
-#             y = []
-#             for i in ind:
-#
-#                 y.append(len(sc[d == i]) / n * 100)
-#
-#             if np.max(y) > y_upper_bound:
-#                 raise Exception("Max bound has been reached ({:.2f} > {})"
-#                                 .format(np.max(y), y_upper_bound))
-#
-#             width = 0.35  # the width of the bars
-#
-#             rect = ax.bar(ind - width / 2 if player == 0 else ind+width/2, y, width,
-#                    label='player = '.format(player), alpha=0.8, edgecolor=color)
-#
-#             rects[player].append(rect)
-#
-#         ax.legend((rects[0][0], rects[1][0]), ('Player 0', 'Player 1'))
-#
-#         ax.set_xticks(ind)
-#         ax.set_xticklabels(bounds, fontsize=8)
-#
-#         ax.set_ylim(0, y_upper_bound)
-#
-#         ax.set_ylabel("Proportion (%)")
-#
-#         ax.spines['top'].set_visible(False)
-#         ax.spines['right'].set_visible(False)
-#         ax.spines['bottom'].set_visible(False)
-#         ax.tick_params(length=0)
-#         ax.set_title('r = {}'.format(r))
-#
-#     plt.tight_layout()
-#     plt.savefig(fig_name)
-#
 
 @contextlib.contextmanager
 def backup_safe_load(file_name, args):
@@ -112,6 +36,80 @@ def backup_safe_load(file_name, args):
         yield b
 
 
+def plot(backups):
+
+    # ----------------- Data ------------------- #
+
+    # Look at the parameters
+    n_simulations = len(backups)
+    n_positions = 21
+
+    # Containers
+    d = np.zeros(n_simulations)
+    prices = np.zeros(n_simulations)
+    scores = np.zeros(n_simulations)
+    r = np.zeros(n_simulations)
+
+    for i, b in enumerate(backups):
+
+        # Compute the mean distance between the two firms
+        data = np.absolute(
+            b.positions[:, 0] -
+            b.positions[:, 1]) / n_positions
+
+        d[i] = np.mean(data)
+
+        # Compute the mean price
+        prices[i] = np.mean(b.prices[:, :])
+
+        # Compute the mean profit
+        scores[i] = np.mean(b.profits[:, :])
+
+        r[i] = b.r
+
+    # ---------- Plot ----------------------------- #
+
+    fig = plt.figure(figsize=(4, 6))
+
+    sub_gs = matplotlib.gridspec.GridSpec(nrows=3, ncols=1)
+
+    axes = (
+        fig.add_subplot(sub_gs[0, 0]),
+        fig.add_subplot(sub_gs[1, 0]),
+        fig.add_subplot(sub_gs[2, 0]),
+    )
+
+    y_labels = "Distance", "Price", "Score"
+    y_limits = (0, 1), (0.9, 11.1), (0, 120)
+
+    arr = (d, prices, scores)
+
+    for idx in range(len(axes)):
+
+        ax = axes[idx]
+
+        ax.set_axisbelow(True)
+
+        # Violin plot
+        data = [arr[idx][r == r_value] for r_value in (0.25, 0.50)]
+        color = ['C0' if r_value == 0.25 else 'C1' for r_value in (0.25, 0.50)]
+
+        customized_plot.violin(ax=ax, data=data, color=color, edgecolor=color, alpha=0.5)
+
+    for ax in (axes[:]):
+        ax.set_xticklabels(["{:.2f}".format(i) for i in (0.25, 0.50)])
+        ax.set_xlabel("r")
+
+    for ax, y_label, y_lim in zip(axes[:], y_labels, y_limits):
+        ax.set_ylabel(y_label)
+        ax.set_ylim(y_lim)
+
+    plt.tight_layout()
+
+    plt.savefig("fig/main_simulation.pdf")
+    plt.show()
+
+
 def main(args):
 
     p0_strategy, p1_strategy = \
@@ -121,7 +119,7 @@ def main(args):
 
     with backup_safe_load(file_name=file_name, args=args) as backups:
 
-        pass
+        plot(backups)
 
 
 if __name__ == "__main__":

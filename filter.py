@@ -13,35 +13,33 @@ import matplotlib.pyplot as plt
 from analysis import customized_plot
 
 from game.models import Room, FirmProfit, RoundComposition, Round
-
 from backup import backup
 
 
-def get_filtered_data():
+def save_filtered_data():
 
     backups = backup.load_data_from_db()
 
-    means = {}
-    means[0.25], means[0.5] = _get_random_bot_mean_profits()
+    means = {
+        k: v for k, v in zip((0.25, 0.5), _get_bot_mean_profits("random", "profit"))
+    }
 
     filtered_backups = []
 
     for b in backups:
-
         for player_id in (0, 1):
-
             cond = np.mean(b.profits[:, player_id]) > means[b.r]
-
             if cond:
                 filtered_backups.append(b)
 
-    return filtered_backups
+    backup.save(obj=filtered_backups, file_name="data/filtered_data.p")
 
 
-def _get_random_bot_mean_profits(strategy0, strategy1):
+def _get_bot_mean_profits(strategy0, strategy1):
 
     backups = backup.load(
-        file_name="data/simulation_{}_strategy_vs_{}_strategy.p".format(strategy0, strategy1))
+        file_name="data/simulation_{}_strategy_vs_{}_strategy.p".format(strategy0, strategy1)
+    )
 
     means = []
 
@@ -58,20 +56,6 @@ def _get_random_bot_mean_profits(strategy0, strategy1):
 def main(force):
 
     plot_violin_with_dashed_mean(force)
-    # excluded_rd = exclude()
-    #
-    # backups = backup.get_data(force)
-    #
-    # filtered_backups = []
-    #
-    # for b in backups:
-    #     if b.round_id in excluded_rd:
-    #         filtered_backups.append(b)
-    #
-    # # plots(filtered_backups)
-    # # prices_and_profits.prices_and_profits(backups=filtered_backups, fig_name="fig/excluded/prices_and_profits.pdf")
-    # print("N excluded players in 0.25 radius condition: ", len([b for b in filtered_backups if b.r == 0.25]))
-    # print("N excluded players in 0.5 radius condition: ", len([b for b in filtered_backups if b.r == 0.5]))
 
 
 def plot_violin_with_dashed_mean(force):
@@ -125,8 +109,8 @@ def plot_violin_with_dashed_mean(force):
 
     arr = (scores, scores)
 
-    mean_025_profit, mean_05_profit = _get_random_bot_mean_profits("profit", "profit")
-    mean_025_comp, mean_05_comp = _get_random_bot_mean_profits("competition", "competition")
+    mean_025_profit, mean_05_profit = _get_bot_mean_profits("profit", "profit")
+    mean_025_comp, mean_05_comp = _get_bot_mean_profits("competition", "competition")
     arr_mean_profit = ((mean_025_profit, mean_05_profit), ) * 2
     arr_mean_comp = ((mean_025_comp, mean_05_comp), ) * 2
     xmins = (0.02, 0.6)
