@@ -32,7 +32,7 @@ class Model(abstract.AbstractModel):
             getattr(self, kwargs["p1_strategy"])
         ]
 
-    def profit_strategy(self, opp_move):
+    def profit(self, opp_move):
 
         """
         Select the move that give the maximum profit at t
@@ -51,7 +51,7 @@ class Model(abstract.AbstractModel):
 
         return np.random.choice(idx)
 
-    def competition_strategy(self, opp_move):
+    def competition(self, opp_move):
 
         exp_profits = np.zeros((self.n_strategies, 2))
 
@@ -65,7 +65,7 @@ class Model(abstract.AbstractModel):
 
         return np.random.choice(idx)
 
-    def random_strategy(self, *args):
+    def random(self, *args):
         return np.random.randint(self.n_strategies)
 
     def run(self):
@@ -80,7 +80,7 @@ class Model(abstract.AbstractModel):
         prices = np.zeros((self.t_max, 2))
         n_consumers = np.zeros((self.t_max, 2))
         profits = np.zeros((self.t_max, 2))
-        active_firm = np.zeros(self.t_max)
+        # active_firm = np.zeros(self.t_max)
 
         moves = np.zeros(2, dtype=int)
 
@@ -102,8 +102,11 @@ class Model(abstract.AbstractModel):
             n_consumers[t, :] = self._get_n_consumers_given_moves(move0=move0, move1=move1)
             profits[t, :] = self._profits_given_position_and_price(
                 move0=move0, move1=move1, n_consumers=n_consumers[t, :])
-            active_firm[t] = active
+
+            if not t:
+                active_player_t0 = active
 
             active = passive  # Inverse role
 
-        return positions, prices, profits, n_consumers, active_firm
+        return positions, prices, profits, n_consumers, active_player_t0,\
+               (self.p_strategy[0].__name__, self.p_strategy[1].__name__), self.t_max
