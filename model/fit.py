@@ -28,29 +28,35 @@ class Model(abstract.AbstractModel):
         dist = e / np.sum(e)
         return dist
 
-    def p_profit(self, player_position, player_price, opp_position, opp_price, temp):
+    def get_expected_profits(self, opp_position, opp_price):
 
-        player_move = self.convert_to_strategies[(player_position, player_price)]
-        opp_move = self.convert_to_strategies[(opp_position, opp_price)]
-
-        exp_profits = np.zeros(self.n_strategies)
-
-        for i in range(self.n_strategies):
-            exp_profits[i] = self._profits_given_position_and_price(i, opp_move)[0]
-
-        return self._softmax(exp_profits/self.max_profit, temp)[player_move]
-
-    def p_competition(self, player_position, player_price, opp_position, opp_price, temp):
-
-        player_move = self.convert_to_strategies[(player_position, player_price)]
         opp_move = self.convert_to_strategies[(opp_position, opp_price)]
 
         exp_profits = np.zeros((self.n_strategies, 2))
 
         for i in range(self.n_strategies):
-            exp_profits[i, :] = self._profits_given_position_and_price(i, opp_move)
+            exp_profits[i] = self._profits_given_position_and_price(i, opp_move)
+
+        return exp_profits
+
+    def p_profit(self, player_position, player_price, opp_position, opp_price, temp=None):
+
+        player_move = self.convert_to_strategies[(player_position, player_price)]
+        exp_profits = self.get_expected_profits(opp_position=opp_position, opp_price=opp_price)
+
+        if temp:
+            return self._softmax(exp_profits[:, 0] / self.max_profit, temp)[player_move]
+        else:
+            return 1 if exp_profits[player_move, 0] == max(exp_profits[:, 0]) else 0
+
+    def p_competition(self, player_position, player_price, opp_position, opp_price, temp=None):
+
+        player_move = self.convert_to_strategies[(player_position, player_price)]
+        exp_profits = self.get_expected_profits(opp_position=opp_position, opp_price=opp_price)
 
         profits_differences = np.array(exp_profits[:, 0] - exp_profits[:, 1])
 
-        return self._softmax(profits_differences/self.max_profit, temp)[player_move]
-
+        if temp:
+            return self._softmax(profits_differences / self.max_profit, temp)[player_move]
+        else:
+            return 1 if profits_differences[player_move] == max(profits_differences) else 0

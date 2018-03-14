@@ -79,7 +79,7 @@ def optimize_model(**kwargs):
     return best["temp"]
 
 
-def get_fit(force):
+def get_fit(force, optimize_temp=False):
 
     backups = backup.get_data(force)
 
@@ -118,22 +118,48 @@ def get_fit(force):
                 "t_max": b.t_max
             }
 
-            best_temp = optimize_model(**kwargs)
+            if not optimize_temp:
 
-            rm = RunModel(**kwargs)
-            p = rm.run(temp=best_temp) * -1
+                # --- Profit based ---- #
 
-            temp_p.append(best_temp)
-            prediction_accuracy_p.append(p)
+                rm = RunModel(**kwargs)
+                p = rm.run(temp=None) * -1
 
-            kwargs["str_method"] = "p_competition"
+                temp_p.append(-1)
+                prediction_accuracy_p.append(p)
 
-            best_temp = optimize_model(**kwargs)
-            rm = RunModel(**kwargs)
-            c = rm.run(temp=best_temp) * -1
+                # --- Competition based --- #
 
-            temp_c.append(best_temp)
-            prediction_accuracy_c.append(c)
+                kwargs["str_method"] = "p_competition"
+
+                rm = RunModel(**kwargs)
+                c = rm.run(temp=None) * -1
+
+                temp_c.append(-1)
+                prediction_accuracy_c.append(c)
+
+            else:
+
+                # --- Profit based ---- #
+
+                best_temp = optimize_model(**kwargs)
+
+                rm = RunModel(**kwargs)
+                p = rm.run(temp=best_temp) * -1
+
+                temp_p.append(best_temp)
+                prediction_accuracy_p.append(p)
+
+                # --- Competition based --- #
+
+                kwargs["str_method"] = "p_competition"
+
+                best_temp = optimize_model(**kwargs)
+                rm = RunModel(**kwargs)
+                c = rm.run(temp=best_temp) * -1
+
+                temp_c.append(best_temp)
+                prediction_accuracy_c.append(c)
 
             display_opponent_score.append(b.display_opponent_score)
             r.append(b.r)
@@ -176,16 +202,11 @@ def main(force, do_it_again):
     colors = np.array(["C0" if i == 0.25 else "C1" for i in fit_b.r])
     markers = np.array(["o" if i else "x" for i in fit_b.display_opponent_score])
 
-    # colors = ["C0" if i is True else "C1" for i in fit_b.display_opponent_score]
-    # markers = ["o" if i == 0.25 else "x" for i in fit_b.r]
     sizes = np.ones(len(colors)) * 25  # np.square(scores / max(scores)) * 100
 
     fig = plt.figure(figsize=(11, 4.5))
 
-    # ax = fig.add_subplot(111)
-    # ax = plt.subplot2grid((3, 2), (0, 0), colspan=2)
-
-    gs = matplotlib.gridspec.GridSpec(1, 2, width_ratios=(1, 1.35))# height_ratios=[1, 0.03, 0.6])
+    gs = matplotlib.gridspec.GridSpec(1, 2, width_ratios=(1, 1.35))
 
     ax = fig.add_subplot(gs[0, 0])
 
@@ -208,7 +229,7 @@ def main(force, do_it_again):
     # --------------------------------------------- #
 
     sub_gs = matplotlib.gridspec.GridSpecFromSubplotSpec(
-        subplot_spec=gs[0, 1], nrows=2, ncols=2, hspace=0, wspace=0.1) #hspace=0.2, wspace=-0.4)
+        subplot_spec=gs[0, 1], nrows=2, ncols=2, hspace=0, wspace=0.1)
 
     ax1 = fig.add_subplot(sub_gs[0, 0])
     ax2 = fig.add_subplot(sub_gs[0, 1])

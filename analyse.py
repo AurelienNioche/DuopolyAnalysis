@@ -3,6 +3,7 @@ import argparse
 import matplotlib.gridspec
 import matplotlib.pyplot as plt
 import scipy.stats
+import statsmodels.stats.multitest
 
 from backup import backup
 from analysis import customized_plot
@@ -107,15 +108,112 @@ def main(force):
 
     # ----------- Stats ----------------- #
 
-    to_compare = {
-        "Distance when s = 0": [d[(r == r_value) * (s == 0)] for r_value in (0.25, 0.50)],
-        "Distance when s = 1": [d[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
-    }
+    to_compare = [
+        {
+            "measure": "distance",
+            "constant": "s = 0",
+            "var": "r",
+            "data": [d[(r == r_value) * (s == 0)] for r_value in (0.25, 0.50)]
+        }, {
+            "measure": "distance",
+            "constant": "s = 1",
+            "var": "r",
+            "data": [d[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
+        }, {
+            "measure": "prices",
+            "constant": "s = 0",
+            "var": "r",
+            "data": [prices[(r == r_value) * (s == 0)] for r_value in (0.25, 0.50)]
+        }, {
+            "measure": "prices",
+            "constant": "s = 1",
+            "var": "r",
+            "data": [prices[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
+        }, {
+            "measure": "scores",
+            "constant": "s = 0",
+            "var": "r",
+            "data": [scores[(r == r_value) * (s == 0)] for r_value in (0.25, 0.50)]
+        }, {
+            "measure": "scores",
+            "constant": "s = 1",
+            "var": "r",
+            "data": [scores[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
+        }, {
+            "measure": "distance",
+            "constant": "r = 0.25",
+            "var": "s",
+            "data": [d[(r == 0.25) * (s == s_value)] for s_value in (0, 1)]
+        }, {
+            "measure": "distance",
+            "constant": "r = 0.50",
+            "var": "s",
+            "data": [d[(r == 0.50) * (s == s_value)] for s_value in (0, 1)]
+        }, {
+            "measure": "prices",
+            "constant": "r = 0.25",
+            "var": "s",
+            "data": [prices[(r == 0.25) * (s == s_value)] for s_value in (0, 1)]
+        }, {
+            "measure": "prices",
+            "constant": "r = 0.50",
+            "var": "s",
+            "data": [prices[(r == 0.50) * (s == s_value)] for s_value in (0, 1)]
+        }, {
+            "measure": "price",
+            "constant": "r = 0.25",
+            "var": "s",
+            "data": [scores[(r == 0.25) * (s == s_value)] for s_value in (0, 1)]
+        }, {
+            "measure": "scores",
+            "constant": "r = 0.50",
+            "var": "s",
+            "data": [scores[(r == 0.50) * (s == s_value)] for s_value in (0, 1)]
+        }
+    ]
 
-    for k, v in to_compare.items():
-        u, p = scipy.stats.mannwhitneyu(v[0], v[1])
-        print("[{}] Mann-Whitney rank test: u {}, p {}".format(k, u, p))
+    ps = []
+    us = []
+
+    for dic in to_compare:
+        u, p = scipy.stats.mannwhitneyu(dic["data"][0], dic["data"][1])
+        ps.append(p)
+        us.append(u)
+
+    valid, p_corr, alpha_c_sidak, alpha_c_bonf = \
+        statsmodels.stats.multitest.multipletests(pvals=ps, alpha=0.01, method="b")
+
+    for p, u, p_c, v, dic in zip(ps, us, p_corr, valid, to_compare):
+        print("[Diff in {} when {} depending on {}-value] "
+              "Mann-Whitney rank test: u {}, p {:.3f}, p corr {:.3f}, significant: {}"
+              .format(dic["measure"], dic["constant"], dic["var"], u, p, p_c, v))
         print()
+
+    table = \
+        r"\begin{table}[htbp]" + "\n" + \
+        r"\begin{center}" + "\n" + \
+        r"\begin{tabular}{llllllll}" + "\n" + \
+        r"Measure & Variable & Constant & $u$ & $p$ (before corr.) " \
+        r"& $p$ (after corr.) & Sign. at 1\% threshold \\" + "\n" + \
+        r"\hline \\" + "\n"
+
+    for p, u, p_c, v, dic in zip(ps, us, p_corr, valid, to_compare):
+
+        p = "{:.3f}".format(p) if p >= 0.001 else "$<$ 0.001"
+        p_c = "{:.3f}".format(p_c) if p_c >= 0.001 else "$<$ 0.001"
+        v = "yes" if v else "no"
+        table += r"{} & ${}$ & ${}$ & {} & {} & {} & {} \\".format(dic["measure"], dic["var"], dic["constant"], u, p, p_c, v) \
+                 + "\n"
+
+    table += \
+        r"\end{tabular}" + "\n" + \
+        r"\end{center}" + "\n" + \
+        r"\caption{Significance tests for comparison using Mann-Withney's u. Bonferroni corrections are applied.}" + "\n" + \
+        r"\label{table:significance_tests}" + "\n" + \
+        r"\end{table}"
+
+    print("*** Latex-formated table ***")
+    print(table)
 
 
 if __name__ == "__main__":
