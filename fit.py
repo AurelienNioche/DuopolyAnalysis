@@ -129,22 +129,29 @@ def main(force, do_it_again):
     else:
         fit_b = backup.load("data/fit.p")
 
-    data = {
-        0.25: {True: [], False: []},
-        0.50: {True: [], False: []}
-    }
+    n_dim = len(fit.Score.names)
 
-    for r_value in data.keys():
+    for r_value in (0.25, 0.50):
 
-        for s_value in data[r_value].keys():
+        for s_value in (True, False):
 
-            for score in fit.Score.names:
-                cond0 = fit_b.r == r_value
-                cond1 = fit_b.display_opponent_score == int(s_value)
+            cond0 = fit_b.r == r_value
+            cond1 = fit_b.display_opponent_score == int(s_value)
 
-                data[r_value][s_value].append(
-                    fit_b.fit_scores[score][cond0 * cond1]
-                )
+            cond = cond0 * cond1
+
+            n = np.sum(cond)
+
+            data = np.zeros((n, n_dim))
+
+            for j, score in enumerate(fit.Score.names):
+
+                data[:, j] = fit_b.fit_scores[score][cond]
+
+            title = "r{}_s{}".format(round(r_value*100), int(s_value))
+            ind_profiles.plot(data, labels=fit.Score.names,
+                              title=title,
+                              n_dim=n_dim)
 
 
 if __name__ == "__main__":
