@@ -31,6 +31,8 @@ def plot(data=np.random.random(size=(60, 5)),
 
     for i, (pos, d) in enumerate(zip(positions, data)):
 
+        print(len(d))
+
         ax = fig.add_subplot(gs[pos[0], pos[1]])
         ax.bar(np.arange(n_dim), d, width=1, color=colors)
         ax.spines['top'].set_visible(False)
