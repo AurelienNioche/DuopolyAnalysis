@@ -16,19 +16,21 @@ import numpy as np
 from . import abstract
 
 
-class Model(abstract.AbstractModel):
+class Score(abstract.AbstractModel):
+
+    names = "profit", "profit_strategic", "competition", "competition_strategic", "equal_sharing"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    @staticmethod
-    def _softmax(values, temp):
+    # @staticmethod
+    # def _softmax(values, temp):
+    #
+    #     e = np.exp(values / temp)
+    #     dist = e / np.sum(e)
+    #     return dist
 
-        e = np.exp(values / temp)
-        dist = e / np.sum(e)
-        return dist
-
-    def get_expected_profits(self, opp_position, opp_price):
+    def _get_expected_profits(self, opp_position, opp_price):
 
         opp_move = self.convert_to_strategies[(opp_position, opp_price)]
 
@@ -39,26 +41,104 @@ class Model(abstract.AbstractModel):
 
         return exp_profits
 
-    def p_profit(self, player_position, player_price, opp_position, opp_price, temp=None):
+    def profit(self, player_position, player_price, opp_position, opp_price):
 
         player_move = self.convert_to_strategies[(player_position, player_price)]
-        exp_profits = self.get_expected_profits(opp_position=opp_position, opp_price=opp_price)
+        exp_profits = self._get_expected_profits(opp_position=opp_position, opp_price=opp_price)[:, 0]
 
-        if temp:
-            return self._softmax(exp_profits[:, 0] / self.max_profit, temp)[player_move]
-        else:
-            return 1 if exp_profits[player_move, 0] == max(exp_profits[:, 0]) else 0
-            # 1 - (max(exp_profits[:, 0]) - exp_profits[player_move, 0]) / max(exp_profits[:, 0])
+        max_value = max(exp_profits)
+        player_value = exp_profits[player_move]
 
-    def p_competition(self, player_position, player_price, opp_position, opp_price, temp=None):
+        score = player_value / max_value if max_value > 0 else 1
+
+        return score
+
+    def competition(self, player_position, player_price, opp_position, opp_price):
 
         player_move = self.convert_to_strategies[(player_position, player_price)]
-        exp_profits = self.get_expected_profits(opp_position=opp_position, opp_price=opp_price)
+        exp_profits = self._get_expected_profits(opp_position=opp_position, opp_price=opp_price)
 
-        profits_differences = np.array(exp_profits[:, 0] - exp_profits[:, 1])
+        profits_differences = exp_profits[:, 0] - exp_profits[:, 1]
 
-        if temp:
-            return self._softmax(profits_differences / self.max_profit, temp)[player_move]
-        else:
-            return 1 if profits_differences[player_move] == max(profits_differences) else 0
-            # 1 - (max(profits_differences) - profits_differences[player_move]) / self.max_profit
+        max_value = max(profits_differences)
+        player_value = max(0, profits_differences[player_move])
+
+        return player_value / max_value if max_value > 0 else 1
+
+    def profit_strategic(self, player_position, player_price, opp_position, opp_price):
+
+        player_move = self.convert_to_strategies[(player_position, player_price)]
+        opp_move = self.convert_to_strategies[(opp_position, opp_price)]
+
+        values = np.zeros(self.n_strategies)
+
+        exp_profits_t_plus = np.zeros((self.n_strategies, 2))
+
+        for i in range(self.n_strategies):
+            exp_profits_t = self._profits_given_position_and_price(i, opp_move)[0]
+            for j in range(self.n_strategies):
+                exp_profits_t_plus[j] = self._profits_given_position_and_price(i, j)
+
+            max_profits_opp = max(exp_profits_t_plus[:, 1])
+            values[i] = \
+                exp_profits_t + np.mean(exp_profits_t_plus[exp_profits_t_plus[:, 1] == max_profits_opp, 0])
+
+        max_value = max(values)
+        player_value = values[player_move]
+
+        return player_value / max_value if max_value > 0 else 1
+
+    def competition_strategic(self, player_position, player_price, opp_position, opp_price):
+
+        player_move = self.convert_to_strategies[(player_position, player_price)]
+        opp_move = self.convert_to_strategies[(opp_position, opp_price)]
+
+        values = np.zeros(self.n_strategies)
+
+        profits_t_plus = np.zeros((self.n_strategies, 2))
+        delta_t_plus = np.zeros((self.n_strategies, 2))
+
+        for i in range(self.n_strategies):
+
+            profits_t = self._profits_given_position_and_price(i, opp_move)
+            delta_t = profits_t[0] - profits_t[1]
+
+            # print("delta t", delta_t)
+
+            for j in range(self.n_strategies):
+                profits_t_plus[j] = self._profits_given_position_and_price(i, j)
+                delta_t_plus[j, 1] = profits_t_plus[j, 1] - profits_t_plus[j, 0]
+                delta_t_plus[j, 0] = profits_t_plus[j, 0] - profits_t_plus[j, 1]
+
+            max_delta_opp = max(delta_t_plus[:, 1])
+            mean_delta_t_plus = np.mean(delta_t_plus[delta_t_plus[:, 1] == max_delta_opp, 0])
+
+            #  print("mean delta t plus", mean_delta_t_plus)
+
+            values[i] = delta_t + mean_delta_t_plus
+
+        max_value = max(values)
+        print("values", values)
+        print("max value", max_value)
+        player_value = max(0, values[player_move])
+
+        return player_value / max_value if max_value > 0 else 1
+
+    def equal_sharing(self, player_position, player_price, opp_position, opp_price):
+
+        player_move = self.convert_to_strategies[(player_position, player_price)]
+
+        exp_profits = self._get_expected_profits(opp_position, opp_price)
+
+        max_profits_0 = max(exp_profits[:, 0])
+        max_profits_1 = max(exp_profits[:, 1])
+
+        diff_max_0 = exp_profits[:, 0] - max_profits_0
+        diff_max_1 = exp_profits[:, 1] - max_profits_1
+
+        diff = diff_max_0 + diff_max_1
+
+        max_value = max(diff)
+        player_value = diff[player_move]
+
+        return player_value / max_value if max_value > 0 else 1
