@@ -9,7 +9,9 @@ from hyperopt import fmin, tpe, hp
 from backup import backup
 from model import fit
 import run_simulation
-from analysis import n
+
+from analysis import ind_profiles
+from analysis import customized_plot
 
 
 class RoundProfiler:
@@ -77,14 +79,14 @@ class BackupRoundProfiler:
     def __init__(self, size, strategies):
 
         self.display_opponent_score = np.zeros(size, dtype=bool)
-        self.r = np.zeros(size)
+        self.r = np.zeros(int(size/2))
         self.firm_id = np.zeros(size, dtype=int)
         self.user_id = np.zeros(size, dtype=int)
         self.room_id = np.zeros(size, dtype=int)
         self.round_id = np.zeros(size, dtype=int)
         self.score = np.zeros(size, dtype=int)
 
-        self.fit_scores = {i: np.zeros(size, dtype=float) for i in strategies.values()}
+        self.fit_scores = np.zeros((int(size/2), len(strategies)), dtype=float)
 
 
 def get_all_backup_round_profiler(force, strategies):
@@ -102,13 +104,12 @@ def get_all_backup_round_profiler(force, strategies):
 
         i = 0
 
-        for idx, b in enumerate(backups):
+        for rd_idx, b in enumerate(backups):
 
             for player in (0, 1):
 
                 # Register information
                 profiler_backup.display_opponent_score[i] = b.display_opponent_score
-                profiler_backup.r[i] = b.r
                 profiler_backup.score[i] = np.sum(b.profits[:, player])
                 profiler_backup.user_id[i] = b.user_id[player]
                 profiler_backup.room_id[i] = b.room_id
@@ -119,6 +120,10 @@ def get_all_backup_round_profiler(force, strategies):
 
                 pbar.update()
 
+            # save round's radius
+            profiler_backup.r[rd_idx] = b.r
+
+            # Prepare means to compare
             means = {
                 "price": np.mean(b.prices[:, :]),
                 "score": np.mean(b.profits[:, :]),
@@ -129,9 +134,9 @@ def get_all_backup_round_profiler(force, strategies):
                 )
             }
 
-            for strategy in strategies.values():
-                profiler_backup.fit_scores[strategy][idx] = \
-                    profiler.score(r=b.r, means=means, strategy=strategy)
+            # Compare means with each strategies means
+            for k, v in strategies.items():
+                profiler_backup.fit_scores[rd_idx, k] = profiler.score(r=b.r, means=means, strategy=v)
 
     backup.save(profiler_backup, "data/round_profiler_all.p")
 
@@ -143,7 +148,7 @@ def get_profile_all(args):
     # get all strategies
     s = list(run_simulation.treat_args("all"))
     # store strategies
-    strategies = {k: v for k, v in zip(range(len(s)), s)}
+    strategies = {k: v for k, v in zip(range(len(s)), s) if v in [("profit", "profit"), ("profit", "competition")]}
 
     file_name = "data/round_profiler_all.p"
 
@@ -155,13 +160,49 @@ def get_profile_all(args):
     else:
         backups = backup.load(file_name=file_name)
 
-    return backups
+    return backups, strategies
 
 
 def main(args):
 
-    backups = get_profile_all(args)
-    plot_all(backups)
+    bkup, strategies = get_profile_all(args)
+    individual_plot(bkup, strategies)
+
+    # general_plot(bkup, strategies)
+
+
+def individual_plot(bkup, strategies):
+
+    labels = [v for k, v in sorted(strategies.items())]
+
+    data = bkup.fit_scores[bkup.r == 0.25]
+
+    n_cols = 10
+    n_rows = len(data) / n_cols
+
+    assert n_cols * n_rows == len(data)
+
+    n_rows = int(n_rows)
+
+    ind_profiles.plot(
+        data=data,
+        labels=labels,
+        n_dim=len(labels),
+        n_cols=n_cols,
+        n_rows=n_rows,
+        title="0.25",
+        colors=["C{}".format(i) for i in range(len(labels))]
+    )
+
+    ind_profiles.save("fig/rounds_over_strategies.pdf")
+
+
+# def general_plot(bkup, strategies):
+
+
+
+
+
 
 
 if __name__ == "__main__":

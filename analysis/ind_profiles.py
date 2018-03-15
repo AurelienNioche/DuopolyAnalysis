@@ -48,7 +48,14 @@ def plot(data=np.random.random(size=(60, 5)),
             break
 
     plt.tight_layout()
+
+
+def show():
     plt.show()
+
+
+def save(file_name):
+    plt.savefig(file_name)
 
 
 if __name__ == "__main__":
