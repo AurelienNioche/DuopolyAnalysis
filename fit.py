@@ -74,7 +74,7 @@ def optimize_model(**kwargs):
     best = fmin(fn=run_model.run,
                 space=hp.uniform('temp', 0.0015, 0.2),
                 algo=tpe.suggest,
-                max_evals=200)
+                max_evals=100)
 
     return best["temp"]
 
@@ -129,6 +129,8 @@ def get_fit(force, softmax):
                     temp_p.append(-1)
                     prediction_accuracy_p.append(p)
 
+                    tqdm.write("[Profit-based] p: {}".format(p))
+
                     # --- Competition based --- #
 
                     kwargs["str_method"] = "p_competition"
@@ -136,8 +138,20 @@ def get_fit(force, softmax):
                     rm = RunModel(**kwargs)
                     c = rm.run(temp=None) * -1
 
+                    tqdm.write("[Competition-based] c: {}".format(c))
+
                     temp_c.append(-1)
                     prediction_accuracy_c.append(c)
+
+                    # ---- Profit strategic -------- #
+
+                    kwargs["str_method"] = "p_profit_strategic"
+
+                    rm = RunModel(**kwargs)
+                    p = rm.run(temp=None) * -1
+
+                    tqdm.write("[Profit strategic-based] p: {}".format(p))
+                    tqdm.write("***\n")
 
                 else:
 

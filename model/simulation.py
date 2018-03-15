@@ -22,11 +22,6 @@ class Model(abstract.AbstractModel):
 
         super().__init__(**kwargs)
 
-        self.initial_strategies = (
-            self.convert_to_strategies[(0, 6)],
-            self.convert_to_strategies[(20, 6)]
-        )
-
         self.p_strategy = [
             getattr(self, kwargs["p0_strategy"]),
             getattr(self, kwargs["p1_strategy"])
@@ -87,7 +82,10 @@ class Model(abstract.AbstractModel):
         active = 0
         active_player_t0 = active
 
-        moves[:] = self.initial_strategies
+        moves[:] = (
+            self.convert_to_strategies[(0, 5)],
+            self.convert_to_strategies[(20, 5)]
+        )
 
         for t in range(self.t_max):
 
@@ -106,5 +104,5 @@ class Model(abstract.AbstractModel):
 
             active = passive  # Inverse role
 
-        return positions, prices, profits, n_consumers, active_player_t0,\
-               (self.p_strategy[0].__name__, self.p_strategy[1].__name__), self.t_max
+        return positions, prices, profits, n_consumers, active_player_t0, \
+            (self.p_strategy[0].__name__, self.p_strategy[1].__name__), self.t_max

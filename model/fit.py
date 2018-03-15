@@ -62,3 +62,29 @@ class Model(abstract.AbstractModel):
         else:
             return 1 if profits_differences[player_move] == max(profits_differences) else 0
             # 1 - (max(profits_differences) - profits_differences[player_move]) / self.max_profit
+
+    def p_profit_strategic(self, player_position, player_price, opp_position, opp_price, temp=None):
+
+        player_move = self.convert_to_strategies[(player_position, player_price)]
+        opp_move = self.convert_to_strategies[(opp_position, opp_price)]
+
+        exp_profits = np.zeros(self.n_strategies)
+
+        exp_profits_t = np.zeros(self.n_strategies)
+        exp_profits_t_plus = np.zeros((self.n_strategies, 2))
+
+        for i in range(self.n_strategies):
+            exp_profits_t[i] = self._profits_given_position_and_price(i, opp_move)[0]
+            for j in range(self.n_strategies):
+                exp_profits_t_plus[j] = self._profits_given_position_and_price(i, j)
+
+            max_profits_opp = max(exp_profits_t_plus[:, 1])
+            # idx = np.flatnonzero(exp_profits_t_plus[:, 1] == max_profits_opp)
+            exp_profits[i] = \
+                exp_profits_t[i] + np.mean(exp_profits_t_plus[exp_profits_t_plus[:, 1] == max_profits_opp, 0])
+
+        if temp:
+            return self._softmax(exp_profits / self.max_profit, temp)[player_move]
+        else:
+            return 1 if exp_profits[player_move] == max(exp_profits[:]) else 0
+            # 1 - (max(exp_profits[:, 0]) - exp_profits[player_move, 0]) / max(exp_profits[:, 0])
