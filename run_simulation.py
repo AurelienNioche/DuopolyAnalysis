@@ -25,7 +25,7 @@ class BackupSimulation:
 
 def treat_args(*args):
 
-    s = "profit", "competition", "random"
+    s = "profit", "competition", "random", "equal"
 
     for a in args:
         if a in ("all", ):
@@ -33,7 +33,7 @@ def treat_args(*args):
         elif a in s:
             pass
         else:
-            exit("Please use a valid strategy (not '{}'): random, profit, competition.".format(a))
+            exit("Please use a valid strategy (not '{}'): {}".format(a, s))
 
 
 def backup_simulation(file_name, args):
