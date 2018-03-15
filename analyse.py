@@ -62,7 +62,7 @@ def main(force):
     )
 
     y_labels = "Distance", "Price", "Score"
-    y_limits = (0, 1), (0.9, 11.1), (0, 120)
+    y_limits = (0, 1), (0.95, 11.05), (0, 120)
 
     s_values = (0, 1, ) * 3
 
@@ -82,9 +82,15 @@ def main(force):
         data = [arr[idx][(r == r_value) * (s == s_values[idx])] for r_value in (0.25, 0.50)]
         color = ['C0' if r_value == 0.25 else 'C1' for r_value in (0.25, 0.50)]
 
-        customized_plot.violin(ax=ax, data=data, color=color, edgecolor=color, alpha=0.5)
+        customized_plot.violin(ax=ax, data=data, color=color, edgecolor="black")# color, alpha=0.5)
 
-    for ax in (axes[-2:]):
+    for ax in axes[0:2]:
+        ax.set_yticks(np.arange(0, 1.1, 0.25))
+
+    for ax in axes[2:4]:
+        ax.set_yticks(np.arange(1, 11.1, 2))
+
+    for ax in axes[-2:]:
         ax.set_xticklabels(["{:.2f}".format(i) for i in (0.25, 0.50)])
         ax.set_xlabel("r")
 

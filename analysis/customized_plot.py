@@ -16,6 +16,7 @@ def adjacent_values(x):
 
 def violin(ax, data, color="white", edgecolor=None, alpha=1, grid=True):
 
+    data = list(data)
     n = len(data)
 
     if type(color) == str:
@@ -29,15 +30,7 @@ def violin(ax, data, color="white", edgecolor=None, alpha=1, grid=True):
 
     if grid is True:
         ax.yaxis.grid(True, ls=":")
-
-    parts = ax.violinplot(
-        data, showmeans=False, showmedians=False,
-        showextrema=False)
-
-    for pc, fc, ec in zip(parts['bodies'], color, edgecolor):
-        pc.set_facecolor(fc)
-        pc.set_edgecolor(ec)
-        pc.set_alpha(alpha)
+        ax.set_axisbelow(True)
 
     quartile1, medians, quartile3, whiskers_min, whiskers_max = [], [], [], [], []
 
@@ -53,6 +46,15 @@ def violin(ax, data, color="white", edgecolor=None, alpha=1, grid=True):
         whiskers_max.append(w_max)
 
     ind = np.arange(1, len(medians) + 1)
+
+    parts = ax.violinplot(
+        dataset=data, positions=ind, showmeans=False, showmedians=False,
+        showextrema=False)
+
+    for pc, fc, ec in zip(parts['bodies'], color, edgecolor):
+        pc.set_facecolor(fc)
+        pc.set_edgecolor(ec)
+        pc.set_alpha(alpha)
 
     ax.scatter(ind, medians, marker='o', color='white', s=10, zorder=3)
     ax.vlines(ind, quartile1, quartile3, color='k', linestyle='-', lw=5)

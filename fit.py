@@ -2,15 +2,16 @@ import os
 import numpy as np
 import argparse
 from tqdm import tqdm
-# import matplotlib.pyplot as plt
-# import matplotlib.gridspec
+import matplotlib.pyplot as plt
+import matplotlib.gridspec
+import itertools as it
 # from hyperopt import fmin, tpe, hp
 from scipy.stats import mannwhitneyu
 
 from backup import backup
 from model import fit
 from analysis import ind_profiles
-# from analysis import customized_plot
+from analysis import customized_plot
 
 
 class BackupFit:
@@ -129,7 +130,11 @@ def main(force, do_it_again):
     else:
         fit_b = backup.load("data/fit.p")
 
-    n_dim = len(fit.Score.names)
+    # --------- ind plot
+
+    scores_to_plot = ["profit", "competition"]  # fit.Score.names
+    n_dim = len(scores_to_plot)
+    colors = ["C{}".format(i + 2) for i in range(n_dim)]
 
     for r_value in (0.25, 0.50):
 
@@ -144,14 +149,114 @@ def main(force, do_it_again):
 
             data = np.zeros((n, n_dim))
 
-            for j, score in enumerate(fit.Score.names):
+            for j, score in enumerate(scores_to_plot):
 
                 data[:, j] = fit_b.fit_scores[score][cond]
 
-            title = "r{}_s{}".format(round(r_value*100), int(s_value))
-            ind_profiles.plot(data, labels=fit.Score.names,
-                              title=title,
-                              n_dim=n_dim)
+            idx = np.argsort(data[:, 1])[::-1]
+
+            data = data[idx]
+
+            title = "r = {:.2f} s = {}".format(r_value, int(s_value))
+            ind_profiles.plot(data, labels=scores_to_plot, fig_size=(10, 3),
+                              title=title, colors=colors,
+                              n_dim=n_dim, n_cols=20)
+
+    # ------------------------------------ #
+
+    # colors = np.array(["C0" if i == 0.25 else "C1" for i in fit_b.r])
+    # markers = np.array(["o" if i else "x" for i in fit_b.display_opponent_score])
+    #
+    # x = fit_b.fit_scores["profit"]
+    # y = fit_b.fit_scores["competition"]
+    #
+    # sizes = np.ones(len(colors)) * 25  # np.square(scores / max(scores)) * 100
+    #
+    # fig = plt.figure(figsize=(4.5, 4.5))
+    #
+    # #gs = matplotlib.gridspec.GridSpec(1, 2, width_ratios=(1, 1.35))
+    #
+    # ax = fig.add_subplot(111)
+    #
+    # for m in np.unique(markers):
+    #     ax.scatter(x[markers == m], y[markers == m],
+    #                alpha=0.5, c=colors[markers == m],
+    #                s=sizes[markers == m], marker=m)
+    #
+    # ax.scatter((-1, ), (-1, ), alpha=0.5, c="C0", marker="o", label="r = .25, s = 1")
+    # ax.scatter((-1, ), (-1, ), alpha=0.5, c="C0", marker="x", label="r = .25, s = 0")
+    # ax.scatter((-1, ), (-1, ), alpha=0.5, c="C1", marker="o", label="r = .50, s = 1")
+    # ax.scatter((-1, ), (-1, ), alpha=0.5, c="C1", marker="x", label="r = .50, s = 0")
+    # plt.xlabel("Profit-based fit accuracy")
+    # plt.ylabel("Competition-based fit accuracy")
+    # ax.set_xlim(-0.02, 1.02)
+    # ax.set_ylim(-0.02, 1.02)
+    # ax.set_aspect(1)
+    # ax.legend(bbox_to_anchor=(0.65, 0.6))
+    #
+    # plt.show()
+
+    # ------------------------------------ #
+    plt.close()
+
+    fig = plt.figure(figsize=(11, 5))
+
+    gs = matplotlib.gridspec.GridSpec(2, 2)
+
+    positions = it.product(range(2), repeat=2)
+
+    scores_to_plot = ["profit", "competition"]  # fit.Score.names
+    n_dim = len(scores_to_plot)
+
+    colors = ["C{}".format(i+2) for i in range(n_dim)]
+
+    axes = []
+
+    for r_value in (0.25, 0.50):
+
+        for s_value in (True, False):
+
+            pos = next(positions)
+            ax = fig.add_subplot(gs[pos[0], pos[1]])
+
+            cond0 = fit_b.r == r_value
+            cond1 = fit_b.display_opponent_score == int(s_value)
+
+            cond = cond0 * cond1
+
+            n = np.sum(cond)
+
+            data = np.zeros((n_dim, n))
+
+            for i, score in enumerate(scores_to_plot):
+                data[i] = fit_b.fit_scores[score][cond]
+
+            ax.set_title("r = {:.2f}, s = {}".format(r_value, int(s_value)))
+            customized_plot.violin(data=data, ax=ax, color=colors,
+                                   edgecolor="black")
+            ax.set_ylim(0, 1)
+            ax.set_yticks(np.arange(0, 1.1, 0.25))
+
+            ax.tick_params(length=0, axis='x')
+            axes.append(ax)
+
+    for ax in axes[:-2]:
+        ax.set_xticklabels([])
+
+    for ax in axes[-2:]:
+        ax.set_xticklabels(["Profit-maximization", "Difference-maximization"])
+
+    for ax in axes[1::2]:
+        ax.set_yticklabels([])
+        ax.tick_params(length=0, axis="y")
+
+    for ax in axes[0::2]:
+        ax.set_ylabel("Score")
+
+    plt.tight_layout()
+
+    plt.savefig("fig/fit.pdf")
+    plt.show()
 
 
 if __name__ == "__main__":
