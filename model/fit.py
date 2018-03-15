@@ -61,7 +61,7 @@ class Score(abstract.AbstractModel):
         profits_differences = exp_profits[:, 0] - exp_profits[:, 1]
 
         max_value = max(profits_differences)
-        player_value = profits_differences[player_move]
+        player_value = max(0, profits_differences[player_move])
 
         return player_value / max_value if max_value > 0 else 1
 
@@ -70,22 +70,21 @@ class Score(abstract.AbstractModel):
         player_move = self.convert_to_strategies[(player_position, player_price)]
         opp_move = self.convert_to_strategies[(opp_position, opp_price)]
 
-        exp_profits = np.zeros(self.n_strategies)
+        values = np.zeros(self.n_strategies)
 
-        exp_profits_t = np.zeros(self.n_strategies)
         exp_profits_t_plus = np.zeros((self.n_strategies, 2))
 
         for i in range(self.n_strategies):
-            exp_profits_t[i] = self._profits_given_position_and_price(i, opp_move)[0]
+            exp_profits_t = self._profits_given_position_and_price(i, opp_move)[0]
             for j in range(self.n_strategies):
                 exp_profits_t_plus[j] = self._profits_given_position_and_price(i, j)
 
             max_profits_opp = max(exp_profits_t_plus[:, 1])
-            exp_profits[i] = \
-                exp_profits_t[i] + np.mean(exp_profits_t_plus[exp_profits_t_plus[:, 1] == max_profits_opp, 0])
+            values[i] = \
+                exp_profits_t + np.mean(exp_profits_t_plus[exp_profits_t_plus[:, 1] == max_profits_opp, 0])
 
-        max_value = max(exp_profits)
-        player_value = exp_profits[player_move]
+        max_value = max(values)
+        player_value = values[player_move]
 
         return player_value / max_value if max_value > 0 else 1
 
@@ -94,31 +93,34 @@ class Score(abstract.AbstractModel):
         player_move = self.convert_to_strategies[(player_position, player_price)]
         opp_move = self.convert_to_strategies[(opp_position, opp_price)]
 
-        profits_differences = np.zeros(self.n_strategies)
+        values = np.zeros(self.n_strategies)
 
-        exp_profits_t = np.zeros((self.n_strategies, 2))
-        profits_differences_t = np.zeros(self.n_strategies)
-        exp_profits_t_plus = np.zeros((self.n_strategies, 2))
-        profits_differences_t_plus = np.zeros((self.n_strategies, 2))
+        profits_t_plus = np.zeros((self.n_strategies, 2))
+        delta_t_plus = np.zeros((self.n_strategies, 2))
 
         for i in range(self.n_strategies):
 
-            exp_profits_t[i] = self._profits_given_position_and_price(i, opp_move)
-            profits_differences_t[i] = exp_profits_t[i, 0] - exp_profits_t[i, 1]
+            profits_t = self._profits_given_position_and_price(i, opp_move)
+            delta_t = profits_t[0] - profits_t[1]
+
+            # print("delta t", delta_t)
 
             for j in range(self.n_strategies):
-                exp_profits_t_plus[j] = self._profits_given_position_and_price(i, j)
-                profits_differences_t_plus[j, 1] = exp_profits_t_plus[j, 1] - exp_profits_t_plus[j, 0]
-                profits_differences_t_plus[j, 0] = exp_profits_t_plus[j, 0] - exp_profits_t_plus[j, 1]
+                profits_t_plus[j] = self._profits_given_position_and_price(i, j)
+                delta_t_plus[j, 1] = profits_t_plus[j, 1] - profits_t_plus[j, 0]
+                delta_t_plus[j, 0] = profits_t_plus[j, 0] - profits_t_plus[j, 1]
 
-            max_diff_opp = max(profits_differences_t_plus[:, 1])
+            max_delta_opp = max(delta_t_plus[:, 1])
+            mean_delta_t_plus = np.mean(delta_t_plus[delta_t_plus[:, 1] == max_delta_opp, 0])
 
-            profits_differences[i] = \
-                profits_differences[i] + \
-                np.mean(profits_differences_t_plus[profits_differences_t_plus[:, 1] == max_diff_opp, 0])
+            #  print("mean delta t plus", mean_delta_t_plus)
 
-        max_value = max(profits_differences)
-        player_value = profits_differences[player_move]
+            values[i] = delta_t + mean_delta_t_plus
+
+        max_value = max(values)
+        print("values", values)
+        print("max value", max_value)
+        player_value = max(0, values[player_move])
 
         return player_value / max_value if max_value > 0 else 1
 
