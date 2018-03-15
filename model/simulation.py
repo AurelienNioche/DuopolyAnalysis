@@ -85,6 +85,7 @@ class Model(abstract.AbstractModel):
         moves = np.zeros(2, dtype=int)
 
         active = 0
+        active_player_t0 = active
 
         moves[:] = self.initial_strategies
 
@@ -102,9 +103,6 @@ class Model(abstract.AbstractModel):
             n_consumers[t, :] = self._get_n_consumers_given_moves(move0=move0, move1=move1)
             profits[t, :] = self._profits_given_position_and_price(
                 move0=move0, move1=move1, n_consumers=n_consumers[t, :])
-
-            if not t:
-                active_player_t0 = active
 
             active = passive  # Inverse role
 
