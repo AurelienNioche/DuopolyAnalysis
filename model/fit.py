@@ -72,16 +72,16 @@ class Score(abstract.AbstractModel):
 
         values = np.zeros(self.n_strategies)
 
-        exp_profits_t_plus = np.zeros((self.n_strategies, 2))
+        profits_t_plus = np.zeros((self.n_strategies, 2))
 
         for i in range(self.n_strategies):
-            exp_profits_t = self._profits_given_position_and_price(i, opp_move)[0]
+            profits_t = self._profits_given_position_and_price(i, opp_move)[0]
             for j in range(self.n_strategies):
-                exp_profits_t_plus[j] = self._profits_given_position_and_price(i, j)
+                profits_t_plus[j] = self._profits_given_position_and_price(i, j)
 
-            max_profits_opp = max(exp_profits_t_plus[:, 1])
-            values[i] = \
-                exp_profits_t + np.mean(exp_profits_t_plus[exp_profits_t_plus[:, 1] == max_profits_opp, 0])
+            max_profits_opp = max(profits_t_plus[:, 1])
+            mean_profits_t_plus = np.mean(profits_t_plus[profits_t_plus[:, 1] == max_profits_opp, 0])
+            values[i] = profits_t + mean_profits_t_plus
 
         max_value = max(values)
         player_value = values[player_move]
@@ -117,9 +117,7 @@ class Score(abstract.AbstractModel):
 
             values[i] = delta_t + mean_delta_t_plus
 
-        max_value = max(values)
-        print("values", values)
-        print("max value", max_value)
+        max_value = max(values)  # Why always 21?
         player_value = max(0, values[player_move])
 
         return player_value / max_value if max_value > 0 else 1
@@ -133,12 +131,12 @@ class Score(abstract.AbstractModel):
         max_profits_0 = max(exp_profits[:, 0])
         max_profits_1 = max(exp_profits[:, 1])
 
-        diff_max_0 = exp_profits[:, 0] - max_profits_0
-        diff_max_1 = exp_profits[:, 1] - max_profits_1
+        diff_max_0 = max_profits_0 - exp_profits[:, 0]
+        diff_max_1 = max_profits_1 - exp_profits[:, 1]
 
         diff = diff_max_0 + diff_max_1
 
         max_value = max(diff)
-        player_value = diff[player_move]
+        player_value = max_value - diff[player_move]
 
         return player_value / max_value if max_value > 0 else 1

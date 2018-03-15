@@ -9,6 +9,7 @@ from scipy.stats import mannwhitneyu
 
 from backup import backup
 from model import fit
+from analysis import ind_profiles
 # from analysis import customized_plot
 
 
@@ -127,6 +128,23 @@ def main(force, do_it_again):
 
     else:
         fit_b = backup.load("data/fit.p")
+
+    data = {
+        0.25: {True: [], False: []},
+        0.50: {True: [], False: []}
+    }
+
+    for r_value in data.keys():
+
+        for s_value in data[r_value].keys():
+
+            for score in fit.Score.names:
+                cond0 = fit_b.r == r_value
+                cond1 = fit_b.display_opponent_score == int(s_value)
+
+                data[r_value][s_value].append(
+                    fit_b.fit_scores[score][cond0 * cond1]
+                )
 
 
 if __name__ == "__main__":
