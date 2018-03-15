@@ -74,12 +74,12 @@ def optimize_model(**kwargs):
     best = fmin(fn=run_model.run,
                 space=hp.uniform('temp', 0.0015, 0.2),
                 algo=tpe.suggest,
-                max_evals=100)
+                max_evals=200)
 
     return best["temp"]
 
 
-def get_fit(force, optimize_temp=False):
+def get_fit(force, softmax):
 
     backups = backup.get_data(force)
 
@@ -104,70 +104,77 @@ def get_fit(force, optimize_temp=False):
     round_id = []
     user_id = []
 
-    for b in tqdm(backups):
+    with tqdm(total=len(backups*2)) as pbar:
+        for b in backups:
 
-        for player in (0, 1):
+            for player in (0, 1):
 
-            kwargs = {
-                "dm_model": m[b.r],
-                "str_method": "p_profit",
-                "firm_id": player,
-                "active_player_t0": b.active_player_t0,
-                "positions": b.positions,
-                "prices": b.prices,
-                "t_max": b.t_max
-            }
+                kwargs = {
+                    "dm_model": m[b.r],
+                    "str_method": "p_profit",
+                    "firm_id": player,
+                    "active_player_t0": b.active_player_t0,
+                    "positions": b.positions,
+                    "prices": b.prices,
+                    "t_max": b.t_max
+                }
 
-            if not optimize_temp:
+                if not softmax:
 
-                # --- Profit based ---- #
+                    # --- Profit based ---- #
 
-                rm = RunModel(**kwargs)
-                p = rm.run(temp=None) * -1
+                    rm = RunModel(**kwargs)
+                    p = rm.run(temp=None) * -1
 
-                temp_p.append(-1)
-                prediction_accuracy_p.append(p)
+                    temp_p.append(-1)
+                    prediction_accuracy_p.append(p)
 
-                # --- Competition based --- #
+                    # --- Competition based --- #
 
-                kwargs["str_method"] = "p_competition"
+                    kwargs["str_method"] = "p_competition"
 
-                rm = RunModel(**kwargs)
-                c = rm.run(temp=None) * -1
+                    rm = RunModel(**kwargs)
+                    c = rm.run(temp=None) * -1
 
-                temp_c.append(-1)
-                prediction_accuracy_c.append(c)
+                    temp_c.append(-1)
+                    prediction_accuracy_c.append(c)
 
-            else:
+                else:
 
-                # --- Profit based ---- #
+                    # --- Profit based ---- #
 
-                best_temp = optimize_model(**kwargs)
+                    best_temp = optimize_model(**kwargs)
 
-                rm = RunModel(**kwargs)
-                p = rm.run(temp=best_temp) * -1
+                    rm = RunModel(**kwargs)
+                    p = rm.run(temp=best_temp) * -1
 
-                temp_p.append(best_temp)
-                prediction_accuracy_p.append(p)
+                    temp_p.append(best_temp)
+                    prediction_accuracy_p.append(p)
 
-                # --- Competition based --- #
+                    tqdm.write("[Profit-based] temp: {}, p: {}".format(best_temp, p))
 
-                kwargs["str_method"] = "p_competition"
+                    # --- Competition based --- #
 
-                best_temp = optimize_model(**kwargs)
-                rm = RunModel(**kwargs)
-                c = rm.run(temp=best_temp) * -1
+                    kwargs["str_method"] = "p_competition"
 
-                temp_c.append(best_temp)
-                prediction_accuracy_c.append(c)
+                    best_temp = optimize_model(**kwargs)
+                    rm = RunModel(**kwargs)
+                    c = rm.run(temp=best_temp) * -1
 
-            display_opponent_score.append(b.display_opponent_score)
-            r.append(b.r)
-            score.append(np.sum(b.profits[:, player]))
-            firm_id.append(player)
-            room_id.append(b.room_id)
-            round_id.append(b.round_id)
-            user_id.append(b.user_id[player])
+                    temp_c.append(best_temp)
+                    prediction_accuracy_c.append(c)
+
+                    tqdm.write("[Competition-based] temp: {}, c: {}".format(best_temp, c))
+
+                display_opponent_score.append(b.display_opponent_score)
+                r.append(b.r)
+                score.append(np.sum(b.profits[:, player]))
+                firm_id.append(player)
+                room_id.append(b.room_id)
+                round_id.append(b.round_id)
+                user_id.append(b.user_id[player])
+
+                pbar.update(1)
 
     fit_b = BackupFit(
         temp_c=np.array(temp_c),
@@ -188,10 +195,10 @@ def get_fit(force, optimize_temp=False):
     return fit_b
 
 
-def main(force, do_it_again):
+def main(force, do_it_again, softmax):
 
     if not os.path.exists("data/fit.p") or do_it_again or force:
-        fit_b = get_fit(force)
+        fit_b = get_fit(force, softmax)
 
     else:
         fit_b = backup.load("data/fit.p")
@@ -298,6 +305,8 @@ if __name__ == "__main__":
                         help="Re-import data")
     parser.add_argument('-d', '--do_it_again', action="store_true", default=False,
                         help="Re-do fit")
+    parser.add_argument('-s', '--softmax', action="store_true", default=False,
+                        help="Optmize using a softmax function")
     parsed_args = parser.parse_args()
 
-    main(force=parsed_args.force, do_it_again=parsed_args.do_it_again)
+    main(force=parsed_args.force, do_it_again=parsed_args.do_it_again, softmax=parsed_args.softmax)
