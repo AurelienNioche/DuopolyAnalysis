@@ -136,7 +136,7 @@ def all_plot(backups, strategies, reversed_strategies):
 
     y_limits = ((0, 1), ) * ncols + ((0.9, 11.1), ) * ncols + ((0, 120), ) * ncols
     arr = (d, ) * ncols + (prices, ) * ncols + (scores, ) * ncols
-    strategies_to_display = list(range(ncols)) * nrows
+    strategies_to_display = tuple(range(ncols)) * nrows
 
     for idx in range(len(axes)):
 
@@ -207,7 +207,7 @@ def main(args):
 
                 args.p0_strategy, args.p1_strategy = strategy
                 file_name = "data/simulation_{}_vs_{}.p".format(args.p0_strategy, args.p1_strategy)
-                backups += backup_simulation(file_name=file_name, args=args)
+                backups += run_simulation.backup_simulation(file_name=file_name, args=args)
 
             backup.save(obj=backups, file_name=file_name)
 

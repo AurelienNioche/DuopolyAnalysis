@@ -14,7 +14,7 @@ import run_simulation
 class BackupFit:
 
     def __init__(self, temp_c, temp_p, prediction_accuracy_c,
-                 prediction_accuracy_p, r, score, strategy, opp_strategy, idx_strategy):
+                 prediction_accuracy_p, r, score, strategy, idx_strategy):
 
         self.temp_c = temp_c
         self.prediction_accuracy_c = prediction_accuracy_c
@@ -25,7 +25,6 @@ class BackupFit:
         self.r = r
         self.score = score
         self.strategy = strategy
-        self.opp_strategy = opp_strategy
         self.idx_strategy = idx_strategy
 
 
@@ -75,7 +74,7 @@ def optimize_model(**kwargs):
     return best["temp"]
 
 
-def get_fit(force, p0_strategy, p1_strategy, reversed_strategies, optimize_temp=False):
+def get_fit(force, p0_strategy, p1_strategy, reversed_strategies=None, optimize_temp=False):
 
     file_name = "data/simulation_{}_vs_{}.p".format(p0_strategy, p1_strategy)
 
@@ -102,7 +101,6 @@ def get_fit(force, p0_strategy, p1_strategy, reversed_strategies, optimize_temp=
     r = []
     score = []
     strategy = []
-    opp_strategy = []
     idx_strategy = []
 
     tqdm.write("Creating fit backup file...")
@@ -167,8 +165,8 @@ def get_fit(force, p0_strategy, p1_strategy, reversed_strategies, optimize_temp=
             r.append(b.r)
             score.append(np.sum(b.profits[:, player]))
             strategy.append(p0_strategy if not player else p1_strategy)
-            opp_strategy.append(p1_strategy if player else p0_strategy)
-            idx_strategy.append(reversed_strategies[(p0_strategy, p1_strategy)])
+            if reversed_strategies:
+                idx_strategy.append(reversed_strategies[(p0_strategy, p1_strategy)])
 
     fit_b = BackupFit(
         temp_c=np.array(temp_c),
@@ -178,7 +176,6 @@ def get_fit(force, p0_strategy, p1_strategy, reversed_strategies, optimize_temp=
         r=np.array(r),
         score=np.array(score),
         strategy=np.array(strategy),
-        opp_strategy=np.array(opp_strategy),
         idx_strategy=np.array(idx_strategy)
     )
 
@@ -206,7 +203,9 @@ def get_fit_b_all(args):
         for strategy in strategies.values():
 
             args.p0_strategy, args.p1_strategy = strategy
-            backups.append(get_fit(args.force, args.p0_strategy, args.p1_strategy, reversed_strategies))
+            backups.append(
+                get_fit(args.force, args.p0_strategy, args.p1_strategy, reversed_strategies)
+            )
 
         backup.save(obj=backups, file_name=file_name)
 
@@ -216,15 +215,16 @@ def get_fit_b_all(args):
     return backups, strategies
 
 
-def plot_all(backups, args, strategies):
+def plot_all(backups, strategies):
 
     iter_backups = iter(backups)
+
+    plt.figure(figsize=(6, 10))
 
     nrows = 3
     ncols = 2
 
     gs = matplotlib.gridspec.GridSpec(nrows=nrows, ncols=ncols)
-    plt.figure(figsize=(6, 10))
 
     for x in range(nrows):
 
@@ -314,8 +314,9 @@ def main(args):
 
     if args.all:
         backups, strategies = get_fit_b_all(args)
-        plot_all(backups, args, strategies)
+        plot_all(backups, strategies)
     else:
+        run_simulation.treat_args(args.p0_strategy, args.p1_strategy)
         fit_b = get_fit_b_ind(args)
         plot_individual(fit_b, args)
 
