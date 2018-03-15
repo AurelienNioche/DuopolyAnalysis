@@ -48,6 +48,7 @@ class Model(abstract.AbstractModel):
             return self._softmax(exp_profits[:, 0] / self.max_profit, temp)[player_move]
         else:
             return 1 if exp_profits[player_move, 0] == max(exp_profits[:, 0]) else 0
+            # 1 - (max(exp_profits[:, 0]) - exp_profits[player_move, 0]) / max(exp_profits[:, 0])
 
     def p_competition(self, player_position, player_price, opp_position, opp_price, temp=None):
 
@@ -60,3 +61,4 @@ class Model(abstract.AbstractModel):
             return self._softmax(profits_differences / self.max_profit, temp)[player_move]
         else:
             return 1 if profits_differences[player_move] == max(profits_differences) else 0
+            # 1 - (max(profits_differences) - profits_differences[player_move]) / self.max_profit
