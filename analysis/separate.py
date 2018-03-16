@@ -28,7 +28,7 @@ def eeg_like(backup, subplots_positions):
 
     t = np.arange(1, t_max)
 
-    position_max = backup.n_positions - 1  # -1 as idx start at 0
+    position_max = backup.n_positions - 1
 
     position_A = pst[1:t_max, 0] / position_max
     position_B = pst[1:t_max, 1] / position_max
@@ -50,10 +50,14 @@ def eeg_like(backup, subplots_positions):
     ax.spines['bottom'].set_color('none')
     ax.set_xticks([])
     ax.set_yticks([0, 1])
-    ax.set_ylabel('Position $a$', labelpad=16)
+    ax.set_ylabel('Pos. A', labelpad=16)
+    for tick in ax.get_xticklabels():
+        tick.set_fontsize("small")
+    for tick in ax.get_yticklabels():
+        tick.set_fontsize("small")
 
     # Add title
-    plt.title("$r={}$".format(backup.r))
+    # plt.title("$r={}$".format(backup.parameters.r))
 
     # Position firm B
     ax = plt.subplot(subplots_positions[1])
@@ -64,7 +68,11 @@ def eeg_like(backup, subplots_positions):
     ax.spines['bottom'].set_color('none')
     ax.set_xticks([])
     ax.set_yticks([0, 1])
-    ax.set_ylabel('Position $b$', labelpad=16)
+    ax.set_ylabel('Pos. B', labelpad=16)
+    for tick in ax.get_xticklabels():
+        tick.set_fontsize("small")
+    for tick in ax.get_yticklabels():
+        tick.set_fontsize("small")
 
     # Price firm A
     ax = plt.subplot(subplots_positions[2])
@@ -74,8 +82,12 @@ def eeg_like(backup, subplots_positions):
     ax.spines['bottom'].set_color('none')
     ax.set_xticks([])
     ax.set_yticks([price_min, price_max])
-    ax.set_ylabel('Price $a$', labelpad=10)  # , rotation=0)
+    ax.set_ylabel('Price A', labelpad=10)  # , rotation=0)
     ax.set_ylim([price_min, price_max])
+    for tick in ax.get_xticklabels():
+        tick.set_fontsize("small")
+    for tick in ax.get_yticklabels():
+        tick.set_fontsize("small")
 
     # Price firm B
     ax = plt.subplot(subplots_positions[3])
@@ -85,10 +97,14 @@ def eeg_like(backup, subplots_positions):
     ax.spines['bottom'].set_color('none')
     ax.set_xticks([])
     ax.set_yticks([price_min, price_max])
-    ax.set_ylabel('Price $b$', labelpad=10)  # , rotation=0)
+    ax.set_ylabel('Price B', labelpad=10)  # , rotation=0)
     ax.set_ylim([price_min, price_max])
 
     ax.set_xlabel("Time", labelpad=10)
+    for tick in ax.get_xticklabels():
+        tick.set_fontsize("small")
+    for tick in ax.get_yticklabels():
+        tick.set_fontsize("small")
 
 
 def pos_firmA_over_pos_firmB(backup, subplot_position):
@@ -108,25 +124,24 @@ def pos_firmA_over_pos_firmB(backup, subplot_position):
     plt.xticks((0, 0.5, 1))
     plt.yticks((0, 0.5, 1))
 
-    plt.xlabel("Position $a$")
-    plt.ylabel("Position $b$")
+    plt.xlabel("Position A")
+    plt.ylabel("Position B")
 
     for tick in ax.get_xticklabels():
         tick.set_fontsize("small")
     for tick in ax.get_yticklabels():
         tick.set_fontsize("small")
 
-    plt.title("$r={:.2f}$".format(backup.r))
+    # plt.title("$r={:.2f}$".format(backup.parameters.r))
     ax.set_aspect(1)
 
+    return ax
 
-def separate(backup, fig_name):
 
-    # Create directories if not already existing
-    os.makedirs(os.path.dirname(fig_name), exist_ok=True)
+def plot(backup, fig_name=None):
 
     # Create the figure object
-    plt.figure(figsize=(13, 6), subplotpars=SubplotParams(left=0.075, right=1, bottom=0.05, top=0.95))
+    plt.figure(figsize=(6, 3.5))  # subplotpars=SubplotParams(left=0.075, right=1, bottom=0.05, top=0.95))
 
     # Width ratios of the two columns (we expect the right column to be twice larger than the left one)
     width_ratios = [1, 2]
@@ -136,11 +151,11 @@ def separate(backup, fig_name):
         1,
         2,
         width_ratios=width_ratios,
-        wspace=0.4
+        # wspace=0.4
     )
 
     # Plot the sub-figure on left
-    pos_firmA_over_pos_firmB(backup, subplot_position=gs0[0])
+    ax = pos_firmA_over_pos_firmB(backup, subplot_position=gs0[0])
 
     # Create sub-rows on the right
     n_sub_row = 4
@@ -150,7 +165,19 @@ def separate(backup, fig_name):
     # Plot the 4 sub-figures on the right
     eeg_like(backup=backup, subplots_positions=subplots_positions)
 
-    # Save fig
-    plt.savefig(fig_name)
+    ax.text(0.5, 1.5, '$r$ = {:.2f}'.format(backup.r), horizontalalignment='center',
+            verticalalignment='center', transform=ax.transAxes)
+
+    plt.tight_layout()
+
+    if fig_name is not None:
+
+        # Create directories if not already existing
+        os.makedirs(os.path.dirname(fig_name), exist_ok=True)
+
+        # Save fig
+        plt.savefig(fig_name)
+    else:
+        plt.show()
 
     plt.close()

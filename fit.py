@@ -327,6 +327,18 @@ def main(force, do_it_again, ind_profiles):
     print("*** Latex-formated table ***")
     print(table)
 
+    # ------------------------------------------------------------------------------------------------------- #
+
+    for r in (0.25, 0.5):
+        for score in "profit", "competition":
+            idx = np.argmax(fit_b.fit_scores[score][fit_b.r == r])
+            print(fit_b.user_id[fit_b.r == r])
+            print(fit_b.firm_id[fit_b.r == r])
+            print(fit_b.room_id[fit_b.r == r])
+            print(fit_b.round_id)
+
+            print(r, score, idx)
+
 
 if __name__ == "__main__":
 

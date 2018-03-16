@@ -88,7 +88,7 @@ def main(force):
         ax.set_yticks(np.arange(0, 1.1, 0.25))
 
     for ax in axes[2:4]:
-        ax.set_yticks(np.arange(1, 11/1, 2))
+        ax.set_yticks(np.arange(1, 11.1, 2))
 
     for ax in axes[-2:]:
         ax.set_xticklabels(["{:.2f}".format(i) for i in (0.25, 0.50)])
@@ -211,13 +211,15 @@ def main(force):
         p = "{:.3f}".format(p) if p >= 0.001 else "$<$ 0.001"
         p_c = "{:.3f}".format(p_c) if p_c >= 0.001 else "$<$ 0.001"
         v = "yes" if v else "no"
-        table += r"{} & ${}$ & ${}$ & {} & {} & {} & {} \\".format(dic["measure"], dic["var"], dic["constant"], u, p, p_c, v) \
+        table += r"{} & ${}$ & ${}$ & {} & {} & {} & {} \\"\
+            .format(dic["measure"], dic["var"], dic["constant"], u, p, p_c, v) \
                  + "\n"
 
     table += \
         r"\end{tabular}" + "\n" + \
         r"\end{center}" + "\n" + \
-        r"\caption{Significance tests for comparison using Mann-Withney's u. Bonferroni corrections are applied.}" + "\n" + \
+        r"\caption{Significance tests for comparison using Mann-Withney's u. " \
+        r"Bonferroni corrections are applied.}" + "\n" + \
         r"\label{table:significance_tests}" + "\n" + \
         r"\end{table}"
 
@@ -233,4 +235,3 @@ if __name__ == "__main__":
     parsed_args = parser.parse_args()
 
     main(force=parsed_args.force)
-

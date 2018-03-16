@@ -30,7 +30,7 @@ def main(force):
         fig_name_args = "separate", str_os, str_pvp, b.room_id, b.round_id, str_os, str_pvp
 
         fig_name = "fig/{}/{}/{}/room{}_round{}_{}_{}_separate.pdf".format(*fig_name_args)
-        separate.separate(backup=b, fig_name=fig_name)
+        separate.plot(backup=b, fig_name=fig_name)
 
 
 if __name__ == "__main__":
