@@ -203,8 +203,8 @@ def main(force, do_it_again, ind_profiles):
             data[i] = fit_b.fit_scores[score][cond]
 
         # ax.set_title("r = {:.2f}, s = {}".format(r_value, int(s_value)))
-        customized_plot.violin(data=data, ax=ax, color=colors,
-                               edgecolor="black")
+        customized_plot.violin(data=data, ax=ax, color=colors, alpha=0.8)
+
         ax.set_ylim(0, 1)
         ax.set_yticks(np.arange(0, 1.1, 0.25))
         ax.tick_params(labelsize=8, axis="y")
