@@ -19,10 +19,10 @@ def violin(ax, data, color="white", edgecolor=None, alpha=1, grid=True):
     data = list(data)
     n = len(data)
 
-    if type(color) == str:
+    if isinstance(color, str):
         color = [color, ] * n
 
-    elif type(edgecolor) == str:
+    elif isinstance(edgecolor, str) or edgecolor is None:
         edgecolor = [edgecolor, ] * n
 
     if grid is True:
