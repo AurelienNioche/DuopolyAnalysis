@@ -61,7 +61,7 @@ def plot(data):
         ax.text(v + 1, i - 0.05, "{:.2f}%".format(v))
 
     # create
-    ax.barh(labels_pos, values, edgecolor="white", align="center")
+    ax.barh(labels_pos, values, edgecolor="white", align="center", alpha=0.5)
 
     # -------------------------- Gender pie ---------------------------------- #
 
@@ -103,7 +103,7 @@ def plot(data):
     ax.text(3.5, 20, "Mean: {:.2f} $\pm$ {:.2f} (SD)".format(np.mean(data.age), np.std(data.age)))
 
     # create
-    ax.bar(decades_pos, values, edgecolor="white", align="center")
+    ax.bar(decades_pos, values, edgecolor="white", align="center", alpha=0.5)
 
     plt.tight_layout()
 

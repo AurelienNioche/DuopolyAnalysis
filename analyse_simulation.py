@@ -147,6 +147,7 @@ def all_plot(backups, strategies, reversed_strategies):
         # Violin plot
 
         data = [arr[idx][(r == r_value) * (p == strategies_to_display[idx])] for r_value in (0.25, 0.50)]
+        print(data)
         color = ['C0' if r_value == 0.25 else 'C1' for r_value in (0.25, 0.50)]
 
         customized_plot.violin(ax=ax, data=data, color=color, edgecolor=color, alpha=0.5)
