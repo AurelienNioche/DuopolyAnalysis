@@ -1,20 +1,11 @@
 import os
 import numpy as np
 import argparse
-from tqdm import tqdm
-import matplotlib.pyplot as plt
-import matplotlib.gridspec
-import itertools as it
-import scipy.stats
-import statsmodels.stats.multitest
 
 from backup import backup
-from model import fit
-from analysis import ind_profiles
-from analysis import customized_plot
 from analysis import separate
 
-from fit import get_fit, BackupFit
+from fit import get_fit, BackupFit  # Important for pickle loading
 
 
 def d(positions):
@@ -39,14 +30,11 @@ def main(force, do_it_again):
         fit_b = backup.load("data/fit.p")
 
     r_values = np.sort(np.unique(fit_b.r))
-    # s_values = (False, True)
 
     it = (j for j in range(100))
 
     # --------------- #
 
-    idx = np.zeros(len(backups))
-    value = np.zeros(len(backups))
     user_id = np.zeros(len(backups), dtype=int)
     firm_id = np.zeros(len(backups), dtype=int)
     room_id = np.zeros(len(backups), dtype=int)
@@ -54,12 +42,6 @@ def main(force, do_it_again):
     profit = np.zeros(len(backups))
     compet = np.zeros(len(backups))
     r = np.zeros(len(backups))
-
-    # value = fit_b.fit_scores[score][fit_b.r == r][idx]
-    # user_id = fit_b.user_id[fit_b.r == r][idx]
-    # firm_id = fit_b.firm_id[fit_b.r == r][idx]
-    # room_id = fit_b.room_id[fit_b.r == r][idx]
-    # round_id = fit_b.round_id[fit_b.r == r][idx]
 
     for i, idx in enumerate(range(0, len(backups) * 2, 2)):
         print(i)
@@ -116,12 +98,10 @@ def main(force, do_it_again):
 
             print(info_room(b))
             separate.plot(b)
-            # print(b.room_id, b.round_id)
             print()
 
             print("********************************************************************************")
 
-    # comp_score = fit_b.fit_scores["competition"] / (fit_b.fit_scores["profit"] + fit_b.fit_scores["competition"])
     comp_score = fit_b.fit_scores["competition"] - fit_b.fit_scores["profit"]  # + fit_b.fit_scores["competition"]
 
     for r in r_values:
@@ -149,7 +129,7 @@ def main(force, do_it_again):
 
             print(info_room(b))
             separate.plot(b)
-            # print(b.room_id, b.round_id)
+
             print()
             print("********************************************************************************")
 

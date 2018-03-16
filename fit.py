@@ -327,18 +327,6 @@ def main(force, do_it_again, ind_profiles):
     print("*** Latex-formated table ***")
     print(table)
 
-    # ------------------------------------------------------------------------------------------------------- #
-
-    for r in (0.25, 0.5):
-        for score in "profit", "competition":
-            idx = np.argmax(fit_b.fit_scores[score][fit_b.r == r])
-            print(fit_b.user_id[fit_b.r == r])
-            print(fit_b.firm_id[fit_b.r == r])
-            print(fit_b.room_id[fit_b.r == r])
-            print(fit_b.round_id)
-
-            print(r, score, idx)
-
 
 if __name__ == "__main__":
 
@@ -350,8 +338,7 @@ if __name__ == "__main__":
 
     parser.add_argument('-i', '--ind_profiles', action="store_true", default=False,
                         help="Draw individual profiles")
-    # parser.add_argument('-s', '--softmax', action="store_true", default=False,
-    #                     help="Optmize using a softmax function")
+
     parsed_args = parser.parse_args()
 
     main(force=parsed_args.force, do_it_again=parsed_args.do_it_again, ind_profiles=parsed_args.ind_profiles)
