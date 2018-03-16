@@ -328,7 +328,6 @@ def main(force, do_it_again, ind_profiles):
     print(table)
 
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Produce figures.')

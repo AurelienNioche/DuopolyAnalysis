@@ -22,9 +22,6 @@ def violin(ax, data, color="white", edgecolor=None, alpha=1, grid=True):
     if type(color) == str:
         color = [color, ] * n
 
-    if edgecolor is None:
-        edgecolor = ["black", ] * n
-
     elif type(edgecolor) == str:
         edgecolor = [edgecolor, ] * n
 
@@ -53,7 +50,7 @@ def violin(ax, data, color="white", edgecolor=None, alpha=1, grid=True):
 
     for pc, fc, ec in zip(parts['bodies'], color, edgecolor):
         pc.set_facecolor(fc)
-        pc.set_edgecolor(ec)
+        pc.set_edgecolor(None)
         pc.set_alpha(alpha)
 
     ax.scatter(ind, medians, marker='o', color='white', s=10, zorder=3)

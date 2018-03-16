@@ -48,7 +48,7 @@ def main(force):
 
     # ---------- Plot ----------------------------- #
 
-    fig = plt.figure(figsize=(10, 7))
+    fig = plt.figure(figsize=(4, 7), dpi=200)
 
     sub_gs = matplotlib.gridspec.GridSpec(nrows=3, ncols=2)
 
@@ -61,16 +61,16 @@ def main(force):
         fig.add_subplot(sub_gs[2, 1])
     )
 
-    y_labels = "Distance", "Price", "Score"
-    y_limits = (0, 1), (0.95, 11.05), (0, 120)
+    y_labels = "Distance", "Price", "Profit"
+    y_limits = (0, 1), (1, 11), (0, 120)
 
     s_values = (0, 1, ) * 3
 
     arr = (d, d, prices, prices, scores, scores)
 
-    axes[0].text(2, 1.3, "Display opponent score", fontsize=12)
-    axes[0].set_title("\n\nFalse")
-    axes[1].set_title("True")
+    # axes[0].text(2, 1.3, "Display opponent score", fontsize=12)
+    axes[0].set_title("$s = 0$")
+    axes[1].set_title("$s = 1$")
 
     for idx in range(len(axes)):
 
@@ -82,29 +82,32 @@ def main(force):
         data = [arr[idx][(r == r_value) * (s == s_values[idx])] for r_value in (0.25, 0.50)]
         color = ['C0' if r_value == 0.25 else 'C1' for r_value in (0.25, 0.50)]
 
-        customized_plot.violin(ax=ax, data=data, color=color, edgecolor="black")# color, alpha=0.5)
+        customized_plot.violin(ax=ax, data=data, color=color, edgecolor="white", alpha=0.8)  # color, alpha=0.5)
 
     for ax in axes[0:2]:
         ax.set_yticks(np.arange(0, 1.1, 0.25))
 
     for ax in axes[2:4]:
-        ax.set_yticks(np.arange(1, 11.1, 2))
+        ax.set_yticks(np.arange(1, 11/1, 2))
 
     for ax in axes[-2:]:
         ax.set_xticklabels(["{:.2f}".format(i) for i in (0.25, 0.50)])
-        ax.set_xlabel("r")
+        ax.set_xlabel("$r$")
 
     for ax in axes[:4]:
-        ax.tick_params(length=0)
+        ax.tick_params(length=0, axis="x")
         ax.set_xticklabels([])
 
     for ax, y_label, y_lim in zip(axes[0::2], y_labels, y_limits):
-        ax.set_ylabel(y_label)
+        ax.text(-0.35, 0.5, y_label, rotation="vertical", verticalalignment='center',
+                horizontalalignment='center', transform=ax.transAxes, fontsize=12)
+        ax.set_ylabel(" ")
+        ax.tick_params(axis="y", labelsize=9)
         ax.set_ylim(y_lim)
 
     for ax, y_lim in zip(axes[1::2], y_limits):
         ax.set_ylim(y_lim)
-        ax.tick_params(length=0)
+        ax.tick_params(length=0, axis="y")
         ax.set_yticklabels([])
 
     plt.tight_layout()
@@ -126,22 +129,22 @@ def main(force):
             "var": "r",
             "data": [d[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
         }, {
-            "measure": "prices",
+            "measure": "price",
             "constant": "s = 0",
             "var": "r",
             "data": [prices[(r == r_value) * (s == 0)] for r_value in (0.25, 0.50)]
         }, {
-            "measure": "prices",
+            "measure": "price",
             "constant": "s = 1",
             "var": "r",
             "data": [prices[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
         }, {
-            "measure": "scores",
+            "measure": "profit",
             "constant": "s = 0",
             "var": "r",
             "data": [scores[(r == r_value) * (s == 0)] for r_value in (0.25, 0.50)]
         }, {
-            "measure": "scores",
+            "measure": "profit",
             "constant": "s = 1",
             "var": "r",
             "data": [scores[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
@@ -156,22 +159,22 @@ def main(force):
             "var": "s",
             "data": [d[(r == 0.50) * (s == s_value)] for s_value in (0, 1)]
         }, {
-            "measure": "prices",
+            "measure": "price",
             "constant": "r = 0.25",
             "var": "s",
             "data": [prices[(r == 0.25) * (s == s_value)] for s_value in (0, 1)]
         }, {
-            "measure": "prices",
+            "measure": "price",
             "constant": "r = 0.50",
             "var": "s",
             "data": [prices[(r == 0.50) * (s == s_value)] for s_value in (0, 1)]
         }, {
-            "measure": "price",
+            "measure": "profit",
             "constant": "r = 0.25",
             "var": "s",
             "data": [scores[(r == 0.25) * (s == s_value)] for s_value in (0, 1)]
         }, {
-            "measure": "scores",
+            "measure": "profit",
             "constant": "r = 0.50",
             "var": "s",
             "data": [scores[(r == 0.50) * (s == s_value)] for s_value in (0, 1)]
