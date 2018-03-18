@@ -6,6 +6,7 @@ import matplotlib.gridspec
 
 from backup import backup
 import run_simulation
+from run_simulation import BackupSimulation
 from analysis import customized_plot
 
 
@@ -121,7 +122,7 @@ def all_plot(backups, strategies, reversed_strategies):
 
     # ---------- Plot ----------------------------- #
 
-    fig = plt.figure(figsize=(15, 6))
+    fig = plt.figure(figsize=(25, 13))
 
     y_labels = "Distance", "Price", "Score"
 
@@ -147,7 +148,6 @@ def all_plot(backups, strategies, reversed_strategies):
         # Violin plot
 
         data = [arr[idx][(r == r_value) * (p == strategies_to_display[idx])] for r_value in (0.25, 0.50)]
-        print(data)
         color = ['C0' if r_value == 0.25 else 'C1' for r_value in (0.25, 0.50)]
 
         customized_plot.violin(ax=ax, data=data, color=color, edgecolor=color, alpha=0.5)
@@ -213,7 +213,6 @@ def main(args):
             backup.save(obj=backups, file_name=file_name)
 
         else:
-
             backups = backup.load(file_name=file_name)
 
         # Finally plot all the data

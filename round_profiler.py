@@ -202,7 +202,7 @@ def individual_bar(bkup):
         gs[0, 1]
     ])
 
-    # ----------------------  0.25 --------------------- #
+    # ---------------------- 0.25 --------------------- #
 
     for r in (0.25, 0.5):
 
@@ -210,8 +210,6 @@ def individual_bar(bkup):
 
         ids = bkup.round_id[bkup.r == r]
         fit_scores = bkup.fit_scores[bkup.r == r]
-
-        values = np.zeros(len(ids))
 
         values = (fit_scores[:, 0] / (fit_scores[:, 0] + fit_scores[:, 1])) - 0.5
 
@@ -232,6 +230,13 @@ def individual_bar(bkup):
         ax.spines["left"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
+        # Color for each profile
+        color = ("C0", "C1")
+        colors = np.zeros(len(values), dtype=(str, 2))
+        colors[:] = color[0]
+        colors[values > 0] = color[1]
+
+        # Add text (player's profiles)
         ax.text(
             0.25,
             1,
@@ -239,7 +244,7 @@ def individual_bar(bkup):
             horizontalalignment='center',
             verticalalignment='center',
             transform=ax.transAxes,
-            color="C0",
+            color=color[0],
             fontweight="bold"
         )
 
@@ -250,19 +255,15 @@ def individual_bar(bkup):
             horizontalalignment='center',
             verticalalignment='center',
             transform=ax.transAxes,
-            color="C1",
+            color=color[1],
             fontweight="bold"
         )
 
-        ax.set_title("r = {}".format(r), y=1.05)
-
-        colors = np.zeros(len(values), dtype=(str, 2))
-        colors[:] = "C0"
-        colors[values > 0] = "C1"
-
+        # Set round id color depending of player's profile
         for l, color in zip(ax.get_yticklabels(), colors):
             l.set_color(color)
 
+        ax.set_title("r = {}".format(r), y=1.05)
         ax.barh(labels_pos, values, color=colors, edgecolor="white", alpha=0.8)
 
     plt.tight_layout()

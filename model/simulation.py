@@ -60,6 +60,26 @@ class Model(abstract.AbstractModel):
 
         return np.random.choice(idx)
 
+    def equal(self, opp_move):
+
+        exp_profits = np.zeros((self.n_strategies, 2))
+
+        for i in range(self.n_strategies):
+            exp_profits[i, :] = self._profits_given_position_and_price(i, opp_move)
+
+        max_profits_0 = max(exp_profits[:, 0])
+        max_profits_1 = max(exp_profits[:, 1])
+
+        diff_max_0 = max_profits_0 - exp_profits[:, 0]
+        diff_max_1 = max_profits_1 - exp_profits[:, 1]
+
+        diff = diff_max_0 + diff_max_1
+        diff_max = max(diff)
+
+        idx = np.flatnonzero(diff == diff_max)
+
+        return np.random.choice(idx)
+
     def random(self, *args):
         return np.random.randint(self.n_strategies)
 

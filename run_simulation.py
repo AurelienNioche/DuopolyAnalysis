@@ -39,12 +39,12 @@ def treat_args(*args):
 def backup_simulation(file_name, args):
 
     if not os.path.exists(file_name) or args.force:
-        main(p0_strategy=args.p0_strategy, p1_strategy=args.p1_strategy)
+        run(p0_strategy=args.p0_strategy, p1_strategy=args.p1_strategy)
 
     return backup.load(file_name=file_name)
 
 
-def main(p0_strategy, p1_strategy):
+def run(p0_strategy, p1_strategy):
 
     n_simulation = 30
 
@@ -73,6 +73,21 @@ def main(p0_strategy, p1_strategy):
     )
 
 
+def main(args):
+
+    if args.all:
+
+        # get all strategies
+        strategies = list(treat_args("all"))
+
+        for p0_strategy, p1_strategy in strategies:
+
+            run(p0_strategy=p0_strategy, p1_strategy=p1_strategy)
+
+    else:
+        run(p0_strategy=args.p0_strategy, p1_strategy=args.p1_strategy)
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Run simulations.')
@@ -87,15 +102,15 @@ if __name__ == "__main__":
         dest='p1_strategy',
         help='Strategy used by player 1 (competition/profit/random)')
 
+    parser.add_argument(
+        '-a', '--all',
+        action='store_true',
+        default=False,
+        dest='all',
+        help='Compute all combined strategies.')
+
     parsed_args = parser.parse_args()
 
-    if None in (parsed_args.p0_strategy, parsed_args.p1_strategy):
-        exit("You don't know what you're doing. Run the script with -h flag.")
 
-    treat_args(parsed_args.p0_strategy, parsed_args.p1_strategy)
-
-    main(
-        p0_strategy=parsed_args.p0_strategy,
-        p1_strategy=parsed_args.p1_strategy
-    )
+    main(parsed_args)
 
