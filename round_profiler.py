@@ -10,10 +10,13 @@ from backup import backup
 from analysis import ind_profiles
 from analysis import customized_plot
 
+import run_simulation
+from run_simulation import BackupSimulation
+
 
 class RoundProfiler:
 
-    def __init__(self, strategies, const):
+    def __init__(self, strategies, const, force):
 
         self.const = const
         self.strategies = strategies
@@ -27,7 +30,15 @@ class RoundProfiler:
 
         self.n_positions = 21
 
+        if force:
+            self.run_simulations()
+
         self.compute_means()
+
+    def run_simulations(self):
+
+        for p0_strategy, p1_strategy in self.strategies.values():
+            run_simulation.run(p0_strategy=p0_strategy, p1_strategy=p1_strategy)
 
     def compute_means(self):
 
@@ -102,7 +113,7 @@ def get_all_backup_round_profiler(force, strategies):
 
     backups = [b for b in backups if b.pvp]
 
-    profiler = RoundProfiler(strategies=strategies, const=200)
+    profiler = RoundProfiler(strategies=strategies, const=200, force=force)
 
     profiler_backup = BackupRoundProfiler(
         size_player=len(backups*2),
@@ -174,21 +185,21 @@ def get_profile_all(args):
     return backups, strategies
 
 
-def individual_plot(bkup, strategies):
-
-    labels = [v for k, v in sorted(strategies.items())]
-
-    data = bkup.fit_scores[bkup.r == 0.25]
-    n_cols = 1
-
-    ind_profiles.plot(
-        data=data,
-        labels=labels,
-        n_dim=len(labels),
-        n_cols=n_cols,
-        title="0.25",
-        colors=["C{}".format(i) for i in range(len(labels))]
-    )
+# def individual_plot(bkup, strategies):
+#
+#     labels = [v for k, v in sorted(strategies.items())]
+#
+#     data = bkup.fit_scores[bkup.r == 0.25]
+#     n_cols = 1
+#
+#     ind_profiles.plot(
+#         data=data,
+#         labels=labels,
+#         n_dim=len(labels),
+#         n_cols=n_cols,
+#         title="0.25",
+#         colors=["C{}".format(i) for i in range(len(labels))]
+#     )
 
 
 def individual_bar(bkup):
@@ -279,9 +290,7 @@ def general_plot(bkup, strategies):
 
     gs = matplotlib.gridspec.GridSpec(nrows, ncols)
 
-    axes = [
-        fig.add_subplot(gs[x, y]) for x in range(nrows) for y in range(ncols)
-    ]
+    axes = [fig.add_subplot(gs[x, y]) for x in range(nrows) for y in range(ncols)]
 
     display_score = (False, True, ) * ncols
     radius = (0.25, ) * ncols + (0.5, ) * ncols
@@ -336,7 +345,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--do_it_again', action="store_true", default=False,
                         help="Re-do fit")
 
-    parser.add_argument('-id', action="store", default=None, help="Select round ids", nargs="+", type=int)
+    # parser.add_argument('-id', action="store", default=None, help="Select round ids", nargs="+", type=int)
 
     parsed_args = parser.parse_args()
 
