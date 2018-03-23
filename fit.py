@@ -156,6 +156,146 @@ def ind_plots(fit_b):
                               n_dim=n_dim, n_cols=20)
 
 
+def plot_scores_distribution(data, subplot_spec):
+
+    n_rows, n_cols = 2, 2
+
+    if not subplot_spec:
+
+        plt.figure(figsize=(5.5, 5.5))
+
+        gs = matplotlib.gridspec.GridSpec(nrows=n_rows, ncols=n_cols)
+
+    else:
+        gs = matplotlib.gridspec.GridSpecFromSubplotSpec(nrows=n_rows, ncols=n_cols,
+                                                         subplot_spec=subplot_spec)
+
+    positions = it.product(range(2), repeat=2)
+
+    scores_to_plot = ["profit", "competition", "equal_sharing"]  # fit.Score.names
+    n_dim = len(scores_to_plot)
+
+    colors = ["C{}".format(i + 2) for i in range(n_dim)]
+
+    axes = []
+
+    for d in data:
+
+        pos = next(positions)
+        ax = plt.subplot(gs[pos[0], pos[1]])
+
+        customized_plot.violin(data=d, ax=ax, color=colors, alpha=0.8)
+
+        ax.set_ylim(0, 1)
+        ax.set_yticks(np.arange(0, 1.1, 0.25))
+        ax.tick_params(labelsize=8, axis="y")
+        ax.tick_params(length=0, axis='x')
+        axes.append(ax)
+
+    for i, ax in enumerate(axes[:-2]):
+        ax.set_title(["$s = 0$", "$s = 1$"][i], fontsize=14)
+        ax.set_xticklabels([])
+
+    for ax in axes[-2:]:
+        ax.set_xticklabels(["Profit\nmax.", "Difference\nmax.", "Tacit\ncollusion"])
+
+    for ax in axes[1::2]:
+        ax.set_yticklabels([])
+        ax.tick_params(length=0, axis="y")
+
+    for i, ax in enumerate(axes[0::2]):
+        ax.text(-0.32, 0.5, ["$r = 0.25$", "$r = 0.50$"][i], rotation="vertical", verticalalignment='center',
+                horizontalalignment='center', transform=ax.transAxes, fontsize=14)
+        ax.set_ylabel("\nScore")
+
+    if not subplot_spec:
+
+        plt.tight_layout()
+
+        plt.savefig("fig/fit.pdf")
+        plt.show()
+
+
+def plot_correlations(data, subplot_spec=None):
+
+    n_rows, n_cols = 2, 3
+
+    width_ratios = [1, 1, 0.15]
+
+    if not subplot_spec:
+
+        plt.figure(figsize=(6.9, 5.5))
+
+        gs = matplotlib.gridspec.GridSpec(nrows=n_rows, ncols=n_cols, width_ratios=width_ratios)
+
+    else:
+        gs = matplotlib.gridspec.GridSpecFromSubplotSpec(nrows=n_rows, ncols=n_cols,
+                                                         subplot_spec=subplot_spec,
+                                                         width_ratios=width_ratios)
+
+    positions = it.product(range(2), repeat=2)
+
+    scores_to_plot = ["profit", "competition", "equal_sharing"]  # fit.Score.names
+    n_dim = len(scores_to_plot)
+
+    # colors = ["C{}".format(i + 2) for i in range(n_dim)]
+
+    axes = []
+
+    im = None
+
+    for d in data:
+
+        pos = next(positions)
+        ax = plt.subplot(gs[pos[0], pos[1]])
+
+        im = ax.imshow(d, vmin=-1, vmax=1, cmap="bwr", origin='lower')
+
+        # ax.set_ylim(0, 1)
+        # ax.set_yticks(np.arange(0, 1.1, 0.25))
+        # ax.tick_params(labelsize=8, axis="y")
+        # ax.tick_params(length=0, axis='x')
+        ax.set_aspect(1)
+        axes.append(ax)
+
+    for i, ax in enumerate(axes[:-2]):
+        ax.set_title(["$s = 0$", "$s = 1$"][i], fontsize=14)
+        ax.set_xticks([])
+
+    for ax in axes[-2:]:
+        ax.set_xticks(np.arange(3))
+        ax.set_xticklabels(["Profit\nmax.", "Difference\nmax.", "Tacit\ncollusion"], rotation="vertical")
+
+    for ax in axes[1::2]:
+        ax.set_yticklabels([])
+        ax.tick_params(length=0, axis="y")
+
+    for i, ax in enumerate(axes[0::2]):
+        ax.set_yticks(np.arange(3))
+
+        ax.set_yticklabels(["Profit\nmax.", "Difference\nmax.", "Tacit\ncollusion"])
+        ax.set_ylabel(["$r = 0.25$", "$r = 0.50$"][i], fontsize=14)
+        #ax.text(-0.32, 0.5, ["$r = 0.25$", "$r = 0.50$"][i], rotation="vertical", verticalalignment='center',
+        #        horizontalalignment='center', transform=ax.transAxes, fontsize=14)
+        # ax.set_ylabel("\nScore")
+
+    g = matplotlib.gridspec.GridSpecFromSubplotSpec(nrows=3, ncols=3, subplot_spec=gs[:, 2],
+                                                    height_ratios=[0.2, 1, 0.2],
+                                                    width_ratios=[0.2, 0.8, 0.1])
+
+    cax = plt.subplot(g[1, 1])
+    plt.colorbar(im, ticks=(-1, 0, 1), cax=cax),  # cax=cax)
+    cax.tick_params(labelsize=10)
+    cax.set_ylabel(ylabel="$R_{Pearson}$", fontsize=12)
+
+    if not subplot_spec:
+
+        plt.tight_layout()
+
+        plt.savefig("fig/fit.pdf")
+        plt.show()
+
+
 def main(force, do_it_again, ind_profiles):
 
     if not os.path.exists("data/fit.p") or do_it_again or force:
@@ -172,23 +312,12 @@ def main(force, do_it_again, ind_profiles):
 
     exp_conditions = list(it.product(r_values, s_values))
 
-    fig = plt.figure(figsize=(5.5, 5.5))
+    data = []
 
-    gs = matplotlib.gridspec.GridSpec(2, 2)
-
-    positions = it.product(range(2), repeat=2)
-
-    scores_to_plot = ["profit", "competition"]  # fit.Score.names
+    scores_to_plot = ["profit", "competition", "equal_sharing"]  # fit.Score.names
     n_dim = len(scores_to_plot)
 
-    colors = ["C{}".format(i+2) for i in range(n_dim)]
-
-    axes = []
-
     for r_value, s_value in exp_conditions:
-
-        pos = next(positions)
-        ax = fig.add_subplot(gs[pos[0], pos[1]])
 
         cond0 = fit_b.r == r_value
         cond1 = fit_b.display_opponent_score == int(s_value)
@@ -197,37 +326,43 @@ def main(force, do_it_again, ind_profiles):
 
         n = np.sum(cond)
 
-        data = np.zeros((n_dim, n))
+        d = np.zeros((n_dim, n))
 
         for i, score in enumerate(scores_to_plot):
-            data[i] = fit_b.fit_scores[score][cond]
+            d[i] = fit_b.fit_scores[score][cond]
 
-        # ax.set_title("r = {:.2f}, s = {}".format(r_value, int(s_value)))
-        customized_plot.violin(data=data, ax=ax, color=colors, alpha=0.8)
+        data.append(d)
 
-        ax.set_ylim(0, 1)
-        ax.set_yticks(np.arange(0, 1.1, 0.25))
-        ax.tick_params(labelsize=8, axis="y")
-        ax.tick_params(length=0, axis='x')
-        axes.append(ax)
+    # ----- Clustered figure -------- #
 
-    for i, ax in enumerate(axes[:-2]):
-        ax.set_title(["$s = 0$", "$s = 1$"][i], fontsize=14)
-        ax.set_xticklabels([])
+    n_rows, n_cols = 1, 2
 
-    for ax in axes[-2:]:
-        ax.set_xticklabels(["Profit\nmaximization", "Difference\nmaximization"])
+    fig = plt.figure(figsize=(11, 4), dpi=200)
+    gs = matplotlib.gridspec.GridSpec(nrows=n_rows, ncols=n_cols, width_ratios=[1, 0.7])
 
-    for ax in axes[1::2]:
-        ax.set_yticklabels([])
-        ax.tick_params(length=0, axis="y")
+    # --------- Score distribution ---------------- #
 
-    for i, ax in enumerate(axes[0::2]):
-        ax.text(-0.32, 0.5, ["$r = 0.25$", "$r = 0.50$"][i], rotation="vertical", verticalalignment='center',
-                horizontalalignment='center', transform=ax.transAxes, fontsize=14)
-        ax.set_ylabel("\nScore")
+    plot_scores_distribution(data, subplot_spec=gs[0, 0])
+
+    # --------- Correlations --------------- #
+
+    corr = [np.corrcoef(d) for d in data]
+
+    plot_correlations(corr, subplot_spec=gs[0, 1])
+
+    # ----------- Fig ------------------ #
 
     plt.tight_layout()
+
+    ax = fig.add_subplot(gs[:, :], zorder=-10)
+
+    plt.axis("off")
+    ax.text(
+        s="A", x=-0.06, y=-0.1, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
+    ax.text(
+        s="B", x=0.55, y=-0.1, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
 
     plt.savefig("fig/fit.pdf")
     plt.show()
@@ -239,50 +374,38 @@ def main(force, do_it_again, ind_profiles):
 
     p = fit_b.fit_scores["profit"]
     d = fit_b.fit_scores["competition"]
+    e = fit_b.fit_scores["equal_sharing"]
 
-    to_compare = [
-        {
-            "measure": "Difference maximization",
+    to_compare = []
+
+    for name, score in [("Profit maximization", p),
+                        ("Difference maximization", d),
+                        ("Tacit collusion", e)]:
+
+        to_compare.append({
+            "measure": name,
             "constant": "s = 0",
             "var": "r",
-            "data": [d[(r == r_value) * (s == 0)] for r_value in (0.25, 0.50)]
-        }, {
-            "measure": "Difference maximization",
+            "data": [score[(r == r_value) * (s == 0)] for r_value in (0.25, 0.50)]
+        })
+        to_compare.append({
+            "measure": name,
             "constant": "s = 1",
             "var": "r",
-            "data": [d[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
-        }, {
-            "measure": "Profit maximization",
-            "constant": "s = 0",
-            "var": "r",
-            "data": [p[(r == r_value) * (s == 0)] for r_value in (0.25, 0.50)]
-        }, {
-            "measure": "Profit maximization",
-            "constant": "s = 1",
-            "var": "r",
-            "data": [p[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
-        }, {
-            "measure": "Difference maximization",
+            "data": [score[(r == r_value) * (s == 1)] for r_value in (0.25, 0.50)]
+        })
+        to_compare.append({
+            "measure": name,
             "constant": "r = 0.25",
             "var": "s",
-            "data": [d[(r == 0.25) * (s == s_value)] for s_value in (0, 1)]
-        }, {
-            "measure": "Difference maximization",
+            "data": [score[(r == 0.25) * (s == s_value)] for s_value in (0, 1)]
+        })
+        to_compare.append({
+            "measure": name,
             "constant": "r = 0.50",
             "var": "s",
-            "data": [d[(r == 0.50) * (s == s_value)] for s_value in (0, 1)]
-        }, {
-            "measure": "Profit maximization",
-            "constant": "r = 0.25",
-            "var": "s",
-            "data": [p[(r == 0.25) * (s == s_value)] for s_value in (0, 1)]
-        }, {
-            "measure": "Profit maximization",
-            "constant": "r = 0.50",
-            "var": "s",
-            "data": [p[(r == 0.50) * (s == s_value)] for s_value in (0, 1)]
-        }
-    ]
+            "data": [score[(r == 0.50) * (s == s_value)] for s_value in (0, 1)]
+        })
 
     ps = []
     us = []
@@ -341,4 +464,5 @@ if __name__ == "__main__":
 
     parsed_args = parser.parse_args()
 
-    main(force=parsed_args.force, do_it_again=parsed_args.do_it_again, ind_profiles=parsed_args.ind_profiles)
+    main(force=parsed_args.force, do_it_again=parsed_args.do_it_again,
+         ind_profiles=parsed_args.ind_profiles)

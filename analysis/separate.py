@@ -138,37 +138,47 @@ def pos_firmA_over_pos_firmB(backup, subplot_position):
     return ax
 
 
-def plot(backup, fig_name=None):
+def plot(backup, fig_name=None, subplot_spec=None):
 
-    # Create the figure object
-    plt.figure(figsize=(6, 3.5))  # subplotpars=SubplotParams(left=0.075, right=1, bottom=0.05, top=0.95))
+    n_rows, n_cols = 1, 2
 
     # Width ratios of the two columns (we expect the right column to be twice larger than the left one)
     width_ratios = [1, 2]
 
-    # Separate the frame in two columns (1: 1 row, 2: 2 columns)
-    gs0 = gridspec.GridSpec(
-        1,
-        2,
-        width_ratios=width_ratios,
-        # wspace=0.4
-    )
+    if not subplot_spec:
+
+        # Create the figure object
+        plt.figure(figsize=(6, 3.5))
+
+        # Separate the frame in two columns (1: 1 row, 2: 2 columns)
+        gs = gridspec.GridSpec(
+            1,
+            2,
+            width_ratios=width_ratios,
+            # wspace=0.4
+        )
+
+    else:
+        gs = gridspec.GridSpecFromSubplotSpec(
+            nrows=n_rows, ncols=n_cols, subplot_spec=subplot_spec,
+            width_ratios=width_ratios, wspace=0.4)
 
     # Plot the sub-figure on left
-    ax = pos_firmA_over_pos_firmB(backup, subplot_position=gs0[0])
+    ax = pos_firmA_over_pos_firmB(backup, subplot_position=gs[0])
 
     # Create sub-rows on the right
     n_sub_row = 4
-    gs = gridspec.GridSpecFromSubplotSpec(n_sub_row, 1, subplot_spec=gs0[1])
+    gs = gridspec.GridSpecFromSubplotSpec(n_sub_row, 1, subplot_spec=gs[1])
     subplots_positions = [gs[j, 0] for j in range(n_sub_row)]
 
     # Plot the 4 sub-figures on the right
     eeg_like(backup=backup, subplots_positions=subplots_positions)
 
-    ax.text(0.5, 1.5, '$r$ = {:.2f}'.format(backup.r), horizontalalignment='center',
-            verticalalignment='center', transform=ax.transAxes)
+    if not subplot_spec:
+        ax.text(0.5, 1.5, '$r$ = {:.2f}'.format(backup.r), horizontalalignment='center',
+                verticalalignment='center', transform=ax.transAxes)
 
-    plt.tight_layout()
+        plt.tight_layout()
 
     if fig_name is not None:
 
@@ -177,7 +187,9 @@ def plot(backup, fig_name=None):
 
         # Save fig
         plt.savefig(fig_name)
-    else:
-        plt.show()
+        plt.close()
 
-    plt.close()
+    else:
+        if not subplot_spec:
+            plt.show()
+            plt.close()
