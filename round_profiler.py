@@ -4,17 +4,19 @@ import argparse
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import matplotlib.gridspec
-import operator
 
 from backup import backup
 
 from analysis import ind_profiles
 from analysis import customized_plot
 
+import run_simulation
+from run_simulation import BackupSimulation
+
 
 class RoundProfiler:
 
-    def __init__(self, strategies, const):
+    def __init__(self, strategies, const, force):
 
         self.const = const
         self.strategies = strategies
@@ -28,7 +30,15 @@ class RoundProfiler:
 
         self.n_positions = 21
 
+        if force:
+            self.run_simulations()
+
         self.compute_means()
+
+    def run_simulations(self):
+
+        for p0_strategy, p1_strategy in self.strategies.values():
+            run_simulation.run(p0_strategy=p0_strategy, p1_strategy=p1_strategy)
 
     def compute_means(self):
 
@@ -103,7 +113,7 @@ def get_all_backup_round_profiler(force, strategies):
 
     backups = [b for b in backups if b.pvp]
 
-    profiler = RoundProfiler(strategies=strategies, const=200)
+    profiler = RoundProfiler(strategies=strategies, const=200, force=force)
 
     profiler_backup = BackupRoundProfiler(
         size_player=len(backups*2),
@@ -175,21 +185,21 @@ def get_profile_all(args):
     return backups, strategies
 
 
-def individual_plot(bkup, strategies):
-
-    labels = [v for k, v in sorted(strategies.items())]
-
-    data = bkup.fit_scores[bkup.r == 0.25]
-    n_cols = 1
-
-    ind_profiles.plot(
-        data=data,
-        labels=labels,
-        n_dim=len(labels),
-        n_cols=n_cols,
-        title="0.25",
-        colors=["C{}".format(i) for i in range(len(labels))]
-    )
+# def individual_plot(bkup, strategies):
+#
+#     labels = [v for k, v in sorted(strategies.items())]
+#
+#     data = bkup.fit_scores[bkup.r == 0.25]
+#     n_cols = 1
+#
+#     ind_profiles.plot(
+#         data=data,
+#         labels=labels,
+#         n_dim=len(labels),
+#         n_cols=n_cols,
+#         title="0.25",
+#         colors=["C{}".format(i) for i in range(len(labels))]
+#     )
 
 
 def individual_bar(bkup):
@@ -198,114 +208,76 @@ def individual_bar(bkup):
 
     gs = matplotlib.gridspec.GridSpec(1, 2)
 
-    # ----------------------  0.25 --------------------- #
+    pos = iter([
+        gs[0, 0],
+        gs[0, 1]
+    ])
 
-    ax = plt.subplot(gs[0, 0])
+    # ---------------------- 0.25 --------------------- #
 
-    backups = bkup.round_id[bkup.r == 0.25]
+    for r in (0.25, 0.5):
 
-    values = np.zeros(len(backups))
+        ax = plt.subplot(next(pos))
 
-    for i, round_id in enumerate(backups):
+        ids = bkup.round_id[bkup.r == r]
+        fit_scores = bkup.fit_scores[bkup.r == r]
 
-        scores = bkup.fit_scores[bkup.round_id == round_id][0]
-        score = ((scores[0] / (scores[0] + scores[1])) - 0.5) * 2
+        values = (fit_scores[:, 0] / (fit_scores[:, 0] + fit_scores[:, 1])) - 0.5
 
-        values[i] = score
+        # Set ticks
+        idx = np.argsort(values)
+        values = values[idx]
+        rd_id = ids[idx]
+        labels_pos = np.arange(len(idx))
+        ax.set_yticks(labels_pos)
+        ax.set_yticklabels(rd_id)
 
-    idx = np.argsort(values)
-    values = values[idx]
+        # Params
+        ax.tick_params(length=0, axis="y")
+        ax.set_xlim(-0.25, 0.25)
 
-    colors = ["C0" if v < 0 else "C1" for v in values]
+        # Hide frame
+        ax.spines["top"].set_visible(False)
+        ax.spines["left"].set_visible(False)
+        ax.spines["right"].set_visible(False)
 
-    rd_id = backups[idx]
+        # Color for each profile
+        color = ("C0", "C1")
+        colors = np.zeros(len(values), dtype=(str, 2))
+        colors[:] = color[0]
+        colors[values > 0] = color[1]
 
-    pos = np.arange(len(idx))
+        # Add text (player's profiles)
+        ax.text(
+            0.25,
+            1,
+            'Difference maximizer',
+            horizontalalignment='center',
+            verticalalignment='center',
+            transform=ax.transAxes,
+            color=color[0],
+            fontweight="bold"
+        )
 
-    ax.set_yticks(pos)
-    ax.set_yticklabels(rd_id)
+        ax.text(
+            0.75,
+            1,
+            'Profit maximizer',
+            horizontalalignment='center',
+            verticalalignment='center',
+            transform=ax.transAxes,
+            color=color[1],
+            fontweight="bold"
+        )
 
-    ax.tick_params(length=0, axis="y")
-    ax.set_xlim(-0.5, 0.5)
-    ax.spines["top"].set_visible(False)
-    ax.spines["left"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+        # Set round id color depending of player's profile
+        for l, color in zip(ax.get_yticklabels(), colors):
+            l.set_color(color)
 
-    ax.text(
-        0.25,
-        1,
-        'Difference maximizer',
-        horizontalalignment='center',
-        verticalalignment='center',
-        transform=ax.transAxes
-    )
+        ax.set_title("r = {}".format(r), y=1.05)
+        ax.barh(labels_pos, values, color=colors, edgecolor="white", alpha=0.8)
 
-    ax.text(
-        0.75,
-        1,
-        'Profit maximizer',
-        horizontalalignment='center',
-        verticalalignment='center',
-        transform=ax.transAxes
-    )
-
-    ax.set_title("r = .25", y=1.3)
-
-    ax.barh(pos, values, color=colors, height=0.95)
-
-    # -------- 0 5 ---------------------------------------------- #
-
-    ax = plt.subplot(gs[0, 1])
-
-    backups = bkup.round_id[bkup.r == 0.5]
-
-    values = np.zeros(len(backups))
-
-    for i, round_id in enumerate(backups):
-
-        scores = bkup.fit_scores[bkup.round_id == round_id][0]
-        score = ((scores[0] / (scores[0] + scores[1])) - 0.5) * 2
-
-        values[i] = score
-
-    idx = np.argsort(values)
-    values = values[idx]
-
-    rd_id = backups[idx]
-
-    pos = np.arange(len(idx))
-    ax.set_yticks(pos)
-    ax.set_yticklabels(rd_id)
-
-    ax.tick_params(length=0, axis="y")
-    ax.set_xlim(-0.5, 0.5)
-    ax.spines["top"].set_visible(False)
-    ax.spines["left"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-
-    ax.text(
-        0.25,
-        1,
-        'Difference maximizer',
-        horizontalalignment='center',
-        verticalalignment='center',
-        transform=ax.transAxes
-    )
-
-    ax.text(
-        0.75,
-        1,
-        'Profit maximizer',
-        horizontalalignment='center',
-        verticalalignment='center',
-        transform=ax.transAxes
-    )
-
-    colors = ["C0" if v < 0 else "C1" for v in values]
-
-    ax.set_title("r = .5", y=2)
-    ax.barh(pos, values, color=colors, height=0.95)
-
+    plt.tight_layout()
     plt.show()
 
 
@@ -318,9 +290,7 @@ def general_plot(bkup, strategies):
 
     gs = matplotlib.gridspec.GridSpec(nrows, ncols)
 
-    axes = [
-        fig.add_subplot(gs[x, y]) for x in range(nrows) for y in range(ncols)
-    ]
+    axes = [fig.add_subplot(gs[x, y]) for x in range(nrows) for y in range(ncols)]
 
     display_score = (False, True, ) * ncols
     radius = (0.25, ) * ncols + (0.5, ) * ncols
@@ -375,7 +345,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--do_it_again', action="store_true", default=False,
                         help="Re-do fit")
 
-    parser.add_argument('-id', action="store", default=None, help="Select round ids", nargs="+", type=int)
+    # parser.add_argument('-id', action="store", default=None, help="Select round ids", nargs="+", type=int)
 
     parsed_args = parser.parse_args()
 
