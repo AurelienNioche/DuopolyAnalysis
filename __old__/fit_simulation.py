@@ -7,8 +7,8 @@ import matplotlib.gridspec
 from hyperopt import fmin, tpe, hp
 
 from backup import backup
-from model import fit
-import run_simulation
+from fit import fit
+from __old__ import run_simulation
 
 
 class BackupFit:

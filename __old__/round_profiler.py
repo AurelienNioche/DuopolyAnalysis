@@ -7,11 +7,9 @@ import matplotlib.gridspec
 
 from backup import backup
 
-from analysis import ind_profiles
 from analysis import customized_plot
 
-import run_simulation
-from run_simulation import BackupSimulation
+from __old__ import run_simulation
 
 
 class RoundProfiler:

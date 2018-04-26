@@ -5,7 +5,6 @@ from tqdm import tqdm
 import itertools
 
 from backup import backup
-import model
 
 
 class BackupSimulation:
@@ -58,7 +57,7 @@ def run(p0_strategy, p1_strategy):
 
         for _ in tqdm(range(n_simulation)):
 
-            m = model.simulation.Model(r=r, p0_strategy=p0_strategy, p1_strategy=p1_strategy)
+            m = __old__.model.simulation.Model(r=r, p0_strategy=p0_strategy, p1_strategy=p1_strategy)
             results = m.run()
             b = BackupSimulation(*results, r)
             data.append(b)

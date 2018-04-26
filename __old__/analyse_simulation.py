@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec
 
 from backup import backup
-import run_simulation
-from run_simulation import BackupSimulation
+from __old__ import run_simulation
 from analysis import customized_plot
 
 
