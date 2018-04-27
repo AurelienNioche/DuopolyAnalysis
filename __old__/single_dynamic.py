@@ -1,8 +1,8 @@
 import argparse
 from tqdm import tqdm
 
-from backup import backup
-from analysis import separate
+from behavior import backup
+from analysis.dynamics import separate
 
 
 def main(force):

@@ -6,14 +6,12 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
 import numpy as np
-from tqdm import tqdm
 import argparse
 import matplotlib.gridspec
 import matplotlib.pyplot as plt
-from analysis import customized_plot
+from analysis.batch import customized_plot
 
-from game.models import Room, FirmProfit, RoundComposition, Round
-from backup import backup
+from behavior import backup
 
 
 def save_filtered_data():

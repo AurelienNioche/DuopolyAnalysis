@@ -1,8 +1,40 @@
 import scipy.stats
 import statsmodels.stats.multitest
 
+from behavior import backup, data
 
-def stats(r, s, dist, prices, scores):
+
+def count(force=False):
+
+    backups = backup.get_data(force)
+
+    n = {
+        0.25: {True: 0, False: 0},
+        0.50: {True: 0, False: 0}
+    }
+    for b in backups:
+        if b.pvp:
+            n[b.r][b.display_opponent_score] += 1
+
+    print(
+        "Rooms 0.25 with opp score:    {}\n"
+        "Rooms 0.25 without opp score: {}\n"
+        "Rooms 0.50 with opp score:    {}\n"
+        "Rooms 0.50 without opp score: {}\n"
+        "N subjects:                   {}\n".format(
+            n[0.25][True],
+            n[0.25][False],
+            n[0.50][True],
+            n[0.50][False],
+            (n[0.25][True] + n[0.25][False] + n[0.50][True] + n[0.50][False]) * 2,
+
+        )
+    )
+
+
+def stats(force=False):
+
+    r, s, dist, prices, scores = data.get(force)
 
     to_compare = [
         {

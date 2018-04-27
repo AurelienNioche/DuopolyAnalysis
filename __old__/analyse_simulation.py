@@ -4,9 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec
 
-from backup import backup
+from behavior import backup
 from __old__ import run_simulation
-from analysis import customized_plot
+from analysis.batch import customized_plot
 
 
 def individual_plot(backups, p0_strategy, p1_strategy):

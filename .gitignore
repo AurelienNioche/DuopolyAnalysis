@@ -107,9 +107,5 @@ venv.bak/
 .idea/
 fig/
 duopoly.sqlite3
-data/simulation_competition_strategy_vs_competition_strategy.p
-data/simulation_competition_strategy_vs_random_strategy.p
-data/simulation_profit_strategy_vs_competition_strategy.p
-data/simulation_profit_strategy_vs_profit_strategy.p
-data/simulation_profit_strategy_vs_random_strategy.p
-data/simulation_random_strategy_vs_random_strategy.p
+simulation/results/
+__old__/

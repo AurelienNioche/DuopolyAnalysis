@@ -5,9 +5,9 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import matplotlib.gridspec
 
-from backup import backup
+from behavior import backup
 
-from analysis import customized_plot
+from analysis.batch import customized_plot
 
 from __old__ import run_simulation
 

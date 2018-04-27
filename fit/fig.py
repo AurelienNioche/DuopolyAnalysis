@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec
 import itertools as it
 
-from analysis import ind_profiles
-from analysis import customized_plot
+from analysis.profiling import ind_profiles
+from analysis.batch import customized_plot
 
 
 def ind_plots(fit_b):

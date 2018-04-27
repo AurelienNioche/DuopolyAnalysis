@@ -1,7 +1,7 @@
 from pylab import np, plt
 import argparse
 
-from backup import backup
+from behavior import backup
 
 
 def main(force):

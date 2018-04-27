@@ -41,7 +41,7 @@ class AbstractModel:
         # Prepare useful arrays
         self.n_consumers, self.max_n = self.compute_n_consumers()
 
-        self.max_profit = self.p_max * self.max_n
+        # self.maximum_profit = self.p_max * self.max_n
 
     def get_strategies(self):
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from backup import backup
+from behavior import backup
 
 
 def get(force=False):

@@ -6,28 +6,7 @@ import operator
 import itertools
 import argparse
 
-from backup import backup
-
-
-def main(force):
-
-    data = backup.get_user_data(force)
-
-    print("\nThere is a total of {} users.".format(len(data.age)))
-
-    print("******* Age ********")
-    print("Average age: {:.2f} ".format(np.mean(data.age)))
-    print("Std age: {:.2f}".format(np.std(data.age)))
-    print("Min age: {}".format(np.min(data.age)))
-    print("Max age: {}".format(np.max(data.age)))
-    print("******* Nationalities ********")
-    for n in np.unique(data.nationality):
-        print(n, np.sum(data.nationality == n))
-    print("******* Gender ********")
-    for g in np.unique(data.gender):
-        print("{}: {}".format(g, np.sum(data.gender == g)))
-
-    plot(data)
+from behavior import backup
 
 
 def plot(data):
@@ -111,11 +90,22 @@ def plot(data):
     plt.show()
 
 
-if __name__ == "__main__":
+def run(force):
 
-    parser = argparse.ArgumentParser(description='Produce figures.')
-    parser.add_argument('-f', '--force', action="store_true", default=False,
-                        help="Re-import data")
-    parsed_args = parser.parse_args()
+    data = backup.get_user_data(force)
 
-    main(force=parsed_args.force)
+    print("\nThere is a total of {} users.".format(len(data.age)))
+
+    print("******* Age ********")
+    print("Average age: {:.2f} ".format(np.mean(data.age)))
+    print("Std age: {:.2f}".format(np.std(data.age)))
+    print("Min age: {}".format(np.min(data.age)))
+    print("Max age: {}".format(np.max(data.age)))
+    print("******* Nationalities ********")
+    for n in np.unique(data.nationality):
+        print(n, np.sum(data.nationality == n))
+    print("******* Gender ********")
+    for g in np.unique(data.gender):
+        print("{}: {}".format(g, np.sum(data.gender == g)))
+
+    plot(data)

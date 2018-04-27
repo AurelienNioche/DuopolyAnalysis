@@ -4,8 +4,9 @@ import os
 import itertools as it
 
 from fit import compute
+from fit import score
 
-from backup import backup
+from behavior import backup
 
 
 def get(force=False):
@@ -23,7 +24,7 @@ def get(force=False):
 
     data = []
 
-    scores_to_plot = ["profit", "competition", "equal_sharing"]  # fit.Score.names
+    scores_to_plot = score.Score.names  # fit.Score.names
     n_dim = len(scores_to_plot)
 
     for r_value, s_value in exp_conditions:
@@ -37,8 +38,8 @@ def get(force=False):
 
         d = np.zeros((n_dim, n))
 
-        for i, score in enumerate(scores_to_plot):
-            d[i] = fit_b.fit_scores[score][cond]
+        for i, sc in enumerate(scores_to_plot):
+            d[i] = fit_b.fit_scores[sc][cond]
 
         data.append(d)
 

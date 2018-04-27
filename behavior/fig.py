@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.gridspec
 import matplotlib.pyplot as plt
 
-from analysis import customized_plot
+from analysis.batch import customized_plot
 
 
 def plot(data, subplot_spec):

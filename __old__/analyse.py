@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import scipy.stats
 import statsmodels.stats.multitest
 
-from backup import backup
-from analysis import customized_plot
+from behavior import backup
+from analysis.batch import customized_plot
 
 
 def main(force):

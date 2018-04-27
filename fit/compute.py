@@ -1,11 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 
-import os
-import itertools as it
-
-
-from backup import backup
+from behavior import backup
 from fit import score
 
 

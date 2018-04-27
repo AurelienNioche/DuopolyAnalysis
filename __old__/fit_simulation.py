@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec
 from hyperopt import fmin, tpe, hp
 
-from backup import backup
+from behavior import backup
 from fit import fit
 from __old__ import run_simulation
 
