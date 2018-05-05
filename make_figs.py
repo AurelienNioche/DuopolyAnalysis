@@ -143,7 +143,7 @@ def dynamics_fig():
     )
 
     analysis.dynamics.separate.eeg_like(
-        backup=xp_examples["max_profit"]["25"], subplot_spec=gs[1, 2], letter='B'
+        backup=xp_examples["max_profit"]["25"], subplot_spec=gs[1, 2], letter=''
     )
 
     analysis.dynamics.separate.eeg_like(
@@ -151,25 +151,25 @@ def dynamics_fig():
     )
 
     analysis.dynamics.separate.eeg_like(
-        backup=xp_examples["max_diff"]["25"], subplot_spec=gs[1, 4], letter='D'
+        backup=xp_examples["max_diff"]["25"], subplot_spec=gs[1, 4], letter=''
     )
 
     # Second row
 
     analysis.dynamics.separate.eeg_like(
-        backup=sim_examples["max_profit"]["50"], subplot_spec=gs[3, 1], letter='E'
+        backup=sim_examples["max_profit"]["50"], subplot_spec=gs[3, 1], letter='B'
     )
 
     analysis.dynamics.separate.eeg_like(
-        backup=xp_examples["max_profit"]["50"], subplot_spec=gs[3, 2], letter='F'
+        backup=xp_examples["max_profit"]["50"], subplot_spec=gs[3, 2], letter=''
     )
 
     analysis.dynamics.separate.eeg_like(
-        backup=sim_examples["equal_sharing"]["50"], subplot_spec=gs[3, 3], letter='G'
+        backup=sim_examples["equal_sharing"]["50"], subplot_spec=gs[3, 3], letter='D'
     )
 
     analysis.dynamics.separate.eeg_like(
-        backup=xp_examples["equal_sharing"]["50"], subplot_spec=gs[3, 4], letter='H'
+        backup=xp_examples["equal_sharing"]["50"], subplot_spec=gs[3, 4], letter=''
     )
 
     ax = fig.add_subplot(gs[:, :], zorder=-10)
@@ -187,7 +187,7 @@ def dynamics_fig():
         s="Sim.", x=L-shift, y=0.95, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
     ax.text(
-        s="Best fit", x=L+shift, y=0.95, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
+        s="Exp.", x=L+shift, y=0.95, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
 
     # Top right
@@ -199,7 +199,7 @@ def dynamics_fig():
         s="Sim.", x=R-shift, y=0.95, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
     ax.text(
-        s="Best fit", x=R+shift, y=0.95, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
+        s="Exp.", x=R+shift, y=0.95, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
 
     # Bottom left
@@ -211,7 +211,7 @@ def dynamics_fig():
         s="Sim.", x=L-shift, y=0.4, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
     ax.text(
-        s="Best fit", x=L+shift, y=0.4, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
+        s="Exp.", x=L+shift, y=0.4, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
 
     # Bottom right
@@ -223,7 +223,7 @@ def dynamics_fig():
         s="Sim.", x=R-shift, y=0.4, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
     ax.text(
-        s="Best fit", x=R+shift, y=0.4, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
+        s="Exp.", x=R+shift, y=0.4, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
 
     # Side
