@@ -39,16 +39,16 @@ def plot(batch_backup, subplot_spec):
 
     # ---------- Plot ----------------------------- #
 
-    n_rows, n_cols = 1, 3
+    n_rows, n_cols = 3, 1
 
     gs = matplotlib.gridspec.GridSpecFromSubplotSpec(
         nrows=n_rows, ncols=n_cols, subplot_spec=subplot_spec, wspace=0.5)
 
     ax_distance = plt.subplot(gs[0, 0])
-    ax_price = plt.subplot(gs[0, 1])
-    ax_profit = plt.subplot(gs[0, 2])
+    ax_price = plt.subplot(gs[1, 0])
+    ax_profit = plt.subplot(gs[2, 0])
 
-    y_labels = "Distance", "Price", "Profit"
+    # y_labels = "Distance", "Price", "Profit"
     y_limits = (0, 1), (1, 11), (0, 120)
     arr = (d, prices, scores)
     axes = [ax_distance, ax_price, ax_profit]
@@ -65,14 +65,25 @@ def plot(batch_backup, subplot_spec):
         # ax.text(-0.35, 0.5, y_labels[i], rotation="vertical", verticalalignment='center',
         #         horizontalalignment='center', transform=ax.transAxes, fontsize=12)
 
-        ax.set_ylabel(y_labels[i])
+        # ax.set_ylabel(y_labels[i])
 
-        ax.tick_params(axis="y", labelsize=9)
+        # ax.set
+        # ax.tick_params(axis="y", labelsize=9)
         ax.set_ylim(*y_limits[i])
 
         ax.set_xticklabels(["{:.2f}".format(i) for i in (0.25, 0.50)])
-        ax.set_xlabel("$r$")
+        # ax.set_xlabel("$r$")
 
     axes[0].set_yticks(np.arange(0, 1.1, 0.25))
     axes[1].set_yticks(np.arange(1, 11.1, 2))
+
+    for ax in axes[:2]:
+        ax.tick_params(length=0, axis="x")
+        ax.set_xticklabels([])
+
+    for ax in axes:
+        ax.tick_params(length=0, axis='y')
+        ax.set_yticklabels([])
+
+    axes[2].set_xlabel("$r$")
 

@@ -21,117 +21,117 @@ import analysis.dynamics.separate
 import fit.exemplary_cases
 
 
-def presentation_fig():
-
-    behavior_data = behavior.data.get()
-
-    n_rows, n_cols = 2, 1
-
-    fig = plt.figure(figsize=(10, 8), dpi=200)
-    gs = matplotlib.gridspec.GridSpec(nrows=n_rows, ncols=n_cols, height_ratios=[2, 1.])
-
-    gs_behavior = matplotlib.gridspec.GridSpecFromSubplotSpec(subplot_spec=gs[0, 0], ncols=1, nrows=1)
-    behavior.fig.plot(data=behavior_data, subplot_spec=gs_behavior[0, 0])
-
-
 def xp_fig():
 
-    fit_data = fit.data.get()
+    # fit_data = fit.data.get()
     behavior_data = behavior.data.get()
+    batch_bkp = simulation.data.batch()
 
     # --------- Clustered figure ------------------ #
 
-    n_rows, n_cols = 2, 1
+    n_rows, n_cols = 1, 4
 
-    fig = plt.figure(figsize=(10, 8), dpi=200)
-    gs = matplotlib.gridspec.GridSpec(nrows=n_rows, ncols=n_cols, height_ratios=[2, 1.])
+    fig = plt.figure(figsize=(8, 6), dpi=200)
+    gs = matplotlib.gridspec.GridSpec(nrows=n_rows, ncols=n_cols)
 
     # ------------------ BEHAVIOR ---------------------- #
 
-    gs_behavior = matplotlib.gridspec.GridSpecFromSubplotSpec(subplot_spec=gs[0, 0], ncols=1, nrows=1)
-    behavior.fig.plot(data=behavior_data, subplot_spec=gs_behavior[0, 0])
+    # gs_behavior = matplotlib.gridspec.GridSpecFromSubplotSpec(subplot_spec=gs[0, 0], ncols=1, nrows=1)
 
-    # ------------------- FIT ------------------------------ #
+    behavior.fig.plot(data=behavior_data, subplot_spec=gs[0, 0])
 
-    gs_fit = matplotlib.gridspec.GridSpecFromSubplotSpec(subplot_spec=gs[1, 0], ncols=2, nrows=1, width_ratios=[1.1, 1])
-    # GridSpec(nrows=n_rows, ncols=n_cols, width_ratios=[1, 0.7])
+    heuristics = simulation.data.get_heutistics()
 
-    # --------- Score distribution ---------------- #
+    for i, h in enumerate(heuristics):
 
-    fit.fig.scores_distribution(fit_data, subplot_spec=gs_fit[0, 0])
+        # gs_h = matplotlib.gridspec.GridSpecFromSubplotSpec(nrows=1, ncols=1,# width_ratios=[1.5, 1],
+        #                                                    subplot_spec=gs[i, 0])
 
-    # --------- Correlations --------------- #
+        analysis.batch.simulation.plot(batch_backup=batch_bkp[h], subplot_spec=gs[0, i+1])
 
-    corr = [np.corrcoef(d) for d in fit_data]
-
-    fit.fig.correlations(corr, subplot_spec=gs_fit[0, 1])
-
-    # --------- Numbering ------------------ #
+    # # ------------------- FIT ------------------------------ #
+    #
+    # gs_fit = matplotlib.gridspec.GridSpecFromSubplotSpec(subplot_spec=gs[1, 0], ncols=2, nrows=1, width_ratios=[1.1, 1])
+    # # GridSpec(nrows=n_rows, ncols=n_cols, width_ratios=[1, 0.7])
+    #
+    # # --------- Score distribution ---------------- #
+    #
+    # fit.fig.scores_distribution(fit_data, subplot_spec=gs_fit[0, 0])
+    #
+    # # --------- Correlations --------------- #
+    #
+    # corr = [np.corrcoef(d) for d in fit_data]
+    #
+    # fit.fig.correlations(corr, subplot_spec=gs_fit[0, 1])
+    #
+    # # --------- Numbering ------------------ #
 
     plt.tight_layout()
     # gs.tight_layout(fig)
 
-    ax = fig.add_subplot(gs[:, :], zorder=-10)
+    # ax = fig.add_subplot(gs[:, :], zorder=-10)
+    #
+    # plt.axis("off")
+    # ax.text(
+    #     s="A", x=-0.06, y=0.4, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+    #     fontsize=20)
+    #
+    # ax.text(
+    #     s="B", x=-0.06, y=-0.1, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+    #     fontsize=20)
+    #
+    # ax.text(
+    #     s="C", x=0.55, y=-0.1, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+    #     fontsize=20)
 
-    plt.axis("off")
-    ax.text(
-        s="A", x=-0.06, y=0.4, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
+    fig_name = "fig/xp.pdf"
 
-    ax.text(
-        s="B", x=-0.06, y=-0.1, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
-
-    ax.text(
-        s="C", x=0.55, y=-0.1, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
-
-    plt.savefig("fig/xp.pdf")
+    plt.savefig(fig_name)
     plt.show()
 
 
 def simulation_fig():
 
     pool_bkp = simulation.data.pool()
-    batch_bkp = simulation.data.batch()
+    # batch_bkp = simulation.data.batch()
 
     heuristics = simulation.data.get_heutistics()
 
-    fig = plt.figure(figsize=(13.5, 7))
+    fig = plt.figure(figsize=(10, 10))
 
     gs = matplotlib.gridspec.GridSpec(nrows=len(heuristics), ncols=1)
 
     for i, h in enumerate(heuristics):
 
-        gs_h = matplotlib.gridspec.GridSpecFromSubplotSpec(nrows=1, ncols=2, width_ratios=[1.5, 1],
-                                                           subplot_spec=gs[i, 0])
+        # gs_h = matplotlib.gridspec.GridSpecFromSubplotSpec(nrows=1, ncols=1, width_ratios=[1.5, 1],
+        #                                                    subplot_spec=gs[i, 0])
 
-        analysis.simulation.distance_price_and_profit(pool_backup=pool_bkp[h], subplot_spec=gs_h[0, 0])
-        analysis.batch.simulation.plot(batch_backup=batch_bkp[h], subplot_spec=gs_h[0, 1])
+        analysis.simulation.distance_price_and_profit(pool_backup=pool_bkp[h], subplot_spec=gs[i, 0])#gs_h[0, 0])
+        # analysis.batch.simulation.plot(batch_backup=batch_bkp[h], subplot_spec=gs_h[0, 1])
 
     plt.tight_layout()
 
-    ax = fig.add_subplot(gs[:, :], zorder=-10)
-
-    plt.axis("off")
-    ax.text(
-        s="A", x=-0.05, y=0.7, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
-    ax.text(
-        s="B", x=0.58, y=0.7, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
-    ax.text(
-        s="C", x=-0.05, y=0.3, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
-    ax.text(
-        s="D", x=0.58, y=0.3, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
-    ax.text(
-        s="E", x=-0.05, y=-0.05, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
-    ax.text(
-        s="F", x=0.58, y=-0.05, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
+    # ax = fig.add_subplot(gs[:, :], zorder=-10)
+    #
+    # plt.axis("off")
+    # ax.text(
+    #     s="A", x=-0.05, y=0.7, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+    #     fontsize=20)
+    # ax.text(
+    #     s="B", x=0.58, y=0.7, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+    #     fontsize=20)
+    # ax.text(
+    #     s="C", x=-0.05, y=0.3, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+    #     fontsize=20)
+    # ax.text(
+    #     s="D", x=0.58, y=0.3, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+    #     fontsize=20)
+    # ax.text(
+    #     s="E", x=-0.05, y=-0.05, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+    #     fontsize=20)
+    # ax.text(
+    #     s="F", x=0.58, y=-0.05, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+    #     fontsize=20)
 
     fig_name = "fig/simulation.pdf"
     plt.savefig(fig_name)
@@ -257,8 +257,8 @@ def main():
 
     os.makedirs('fig', exist_ok=True)
     # dynamics_fig()
-    simulation_fig()
-    # xp_fig()
+    # simulation_fig()
+    xp_fig()
 
 
 if __name__ == "__main__":
