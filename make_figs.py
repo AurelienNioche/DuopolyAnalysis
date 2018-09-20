@@ -256,9 +256,9 @@ def dynamics_fig():
 def main():
 
     os.makedirs('fig', exist_ok=True)
-    dynamics_fig()
+    # dynamics_fig()
     simulation_fig()
-    xp_fig()
+    # xp_fig()
 
 
 if __name__ == "__main__":

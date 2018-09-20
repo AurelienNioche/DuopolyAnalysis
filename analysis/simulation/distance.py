@@ -63,13 +63,13 @@ def distance(pool_backup, fig_name=None, ax=None):
         ax = fig.add_subplot()
 
     # Enhance aesthetics
-    ax.set_xlim(-0.009, 1.005)
+    ax.set_xlim(-0.009, 0.51)
     ax.set_ylim(-0.009, 1.005)
     # if max(y) < 0.5:
     #     ax.set_ylim(-0.01, 0.51)
 
-    ax.set_xticks(np.arange(0, 1.1, 0.25))
-    ax.set_yticks(np.arange(0, 1.1, 0.25))
+    ax.set_xticks(np.arange(0., 0.55, 0.25))
+    ax.set_yticks(np.arange(0., 1.1, 0.25))
 
     ax.set_xlabel("$r$")
     ax.set_ylabel("Distance")
