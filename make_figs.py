@@ -21,6 +21,19 @@ import analysis.dynamics.separate
 import fit.exemplary_cases
 
 
+def presentation_fig():
+
+    behavior_data = behavior.data.get()
+
+    n_rows, n_cols = 2, 1
+
+    fig = plt.figure(figsize=(10, 8), dpi=200)
+    gs = matplotlib.gridspec.GridSpec(nrows=n_rows, ncols=n_cols, height_ratios=[2, 1.])
+
+    gs_behavior = matplotlib.gridspec.GridSpecFromSubplotSpec(subplot_spec=gs[0, 0], ncols=1, nrows=1)
+    behavior.fig.plot(data=behavior_data, subplot_spec=gs_behavior[0, 0])
+
+
 def xp_fig():
 
     fit_data = fit.data.get()
