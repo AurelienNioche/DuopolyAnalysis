@@ -37,7 +37,7 @@ def run_simulations():
         t_max_pool=100,
         t_max_xp=25,
         random_params=False,
-        force_params=True,
+        force_params=False,
     )
 
 
