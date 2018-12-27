@@ -24,18 +24,21 @@ import simulation.backup as backup
 import simulation.parameters as parameters
 
 
-def get_heutistics():
+def get_heuristics():
     return model.get_heuristics()
 
 
 def run(param):
-
     m = model.Model(param)
     return m.run()
 
 
-def produce_data(parameters_file, data_file):
+def modify_t_max(params, t_max):
+    params['t_max'] = t_max
+    return params
 
+
+def produce_data(parameters_file, data_file, t_max, random, force_params):
     """
     Produce data for 'pooled' condition using multiprocessing
     :param parameters_file: Path to parameters file (string)
@@ -43,7 +46,10 @@ def produce_data(parameters_file, data_file):
     :return: a 'pool backup' (arbitrary Python object)
     """
 
-    json_parameters = parameters.load(parameters_file)
+    json_parameters = parameters.load(parameters_file, random=random, force_params=force_params)
+
+    if t_max != json_parameters['t_max']:
+        json_parameters = modify_t_max(params=json_parameters, t_max=t_max)
 
     pool_parameters = parameters.extract_parameters(json_parameters)
 
@@ -63,7 +69,6 @@ def produce_data(parameters_file, data_file):
 
 
 def data_already_produced(*args):
-
     """
     If data files already exist, return True
     :param args: Path to data files
@@ -72,19 +77,32 @@ def data_already_produced(*args):
     return np.all([os.path.exists(i) for i in args])
 
 
-def pool(force=False):
-
+def pool(force, t_max, random, force_params):
     heuristics = model.get_heuristics()
 
     backups = {}
 
+    if random:
+        # get index of the new random parameters
+        i = parameters.add_new_random_parameters(
+            json_file="simulation/results/json/pool_max_diff_random.json"
+        )
+    else:
+        i = 0
+
     for h in heuristics:
 
-        parameters_file = "simulation/results/json/pool_{}.json".format(h)
-        data_file = "simulation/results/pickle/pool_{}.p".format(h)
+        parameters_file = "simulation/results/json/pool_{}{}{}.json".format(
+            h, ('', '_random')[random], ('', i)[random]
+        )
+
+        data_file = "simulation/results/pickle/pool_{}{}{}.p".format(
+            h, ('', '_random')[random], ('', i)[random]
+        )
 
         if not data_already_produced(data_file) or force:
-            pool_backup = produce_data(parameters_file, data_file)
+            pool_backup = produce_data(parameters_file, data_file,
+                                       t_max=t_max, random=random, force_params=force_params)
 
         else:
             pool_backup = backup.PoolBackup.load(data_file)
@@ -94,19 +112,32 @@ def pool(force=False):
     return backups
 
 
-def batch(force=False):
-
+def batch(force, t_max, random, force_params):
     heuristics = model.get_heuristics()
 
     backups = {}
 
+    if random:
+        # get index of the random parameters
+        i = parameters.get_last_random_parameters(
+            json_file="simulation/results/json/batch_max_diff_random.json"
+        )
+    else:
+        i = 0
+
     for h in heuristics:
 
-        parameters_file = "simulation/results/json/batch_{}.json".format(h)
-        data_file = "simulation/results/pickle/batch_{}.p".format(h)
+        parameters_file = "simulation/results/json/batch_{}{}{}.json".format(
+            h, ('', '_random')[random], ('', i)[random]
+        )
+
+        data_file = "simulation/results/pickle/batch_{}{}{}.p".format(
+            h, ('', '_random')[random], ('', i)[random]
+        )
 
         if not data_already_produced(data_file) or force:
-            batch_backup = produce_data(parameters_file, data_file)
+            batch_backup = produce_data(parameters_file, data_file,
+                                        t_max=t_max, random=random, force_params=force_params)
 
         else:
             batch_backup = backup.PoolBackup.load(data_file)
@@ -116,8 +147,7 @@ def batch(force=False):
     return backups
 
 
-def individual(force=False):
-
+def individual(force=False, force_params=False):
     heuristics = model.get_heuristics()
 
     backups = {i: dict() for i in heuristics}
@@ -131,7 +161,7 @@ def individual(force=False):
 
             if not data_already_produced(parameters_file, data_file) or force:
 
-                json_parameters = parameters.load(parameters_file)
+                json_parameters = parameters.load(parameters_file, force_params)
                 param = parameters.extract_parameters(json_parameters)
                 run_backup = run(param)
                 run_backup.save(parameters_file, data_file)

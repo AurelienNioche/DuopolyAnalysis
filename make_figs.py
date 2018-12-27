@@ -21,10 +21,10 @@ import analysis.dynamics.separate
 import fit.exemplary_cases
 
 
-def xp_fig():
+def xp_fig(force=True):
 
-    fit_data = fit.data.get()
-    behavior_data = behavior.data.get()
+    fit_data = fit.data.get(force=force)
+    behavior_data = behavior.data.get(force=force)
 
     # --------- Clustered figure ------------------ #
 
@@ -77,12 +77,12 @@ def xp_fig():
     plt.show()
 
 
-def simulation_fig():
+def simulation_fig(force=False, span_pool=1, t_max_pool=100, t_max_xp=25, random_params=False, force_params=False):
 
-    pool_bkp = simulation.data.pool()
-    batch_bkp = simulation.data.batch()
+    pool_bkp = simulation.data.pool(force=force, t_max=t_max_pool, random=random_params, force_params=force_params)
+    batch_bkp = simulation.data.batch(force=force, t_max=t_max_xp, random=random_params, force_params=force_params)
 
-    heuristics = simulation.data.get_heutistics()
+    heuristics = simulation.data.get_heuristics()
 
     fig = plt.figure(figsize=(13.5, 7))
 
@@ -93,7 +93,7 @@ def simulation_fig():
         gs_h = matplotlib.gridspec.GridSpecFromSubplotSpec(nrows=1, ncols=2, width_ratios=[1.5, 1],
                                                            subplot_spec=gs[i, 0])
 
-        analysis.simulation.distance_price_and_profit(pool_backup=pool_bkp[h], subplot_spec=gs_h[0, 0])
+        analysis.simulation.distance_price_and_profit(pool_backup=pool_bkp[h], subplot_spec=gs_h[0, 0], span=span_pool)
         analysis.batch.simulation.plot(batch_backup=batch_bkp[h], subplot_spec=gs_h[0, 1])
 
     plt.tight_layout()
@@ -125,10 +125,10 @@ def simulation_fig():
     plt.show()
 
 
-def dynamics_fig():
+def dynamics_fig(force=False):
 
-    xp_examples = fit.exemplary_cases.get()
-    sim_examples = simulation.data.individual()
+    xp_examples = fit.exemplary_cases.get(force=force)
+    sim_examples = simulation.data.individual(force=force)
 
     fig = plt.figure(figsize=(10, 8), dpi=200)
     gs = matplotlib.gridspec.GridSpec(
@@ -243,8 +243,8 @@ def dynamics_fig():
 def main():
 
     os.makedirs('fig', exist_ok=True)
-    dynamics_fig()
-    simulation_fig()
+    # dynamics_fig()
+    # simulation_fig()
     xp_fig()
 
 

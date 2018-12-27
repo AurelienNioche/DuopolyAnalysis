@@ -16,6 +16,7 @@
 import os
 import json
 import numpy as np
+import re
 
 from simulation import model
 
@@ -24,7 +25,6 @@ class Parameters:
 
     def __init__(self, r=0.5, seed=0, n_positions=20, n_prices=10, p_min=1, p_max=2, t_max=25,
                  move=model.Move.max_profit):
-
         self.r = r
         self.seed = seed
 
@@ -41,12 +41,11 @@ class Parameters:
         self.check()
 
     def check(self):
-
         assert self.p_min < self.p_max, "'p_min' have to be inferior to 'p_max'."
         assert self.n_positions > 2, "'n_positions' have to be superior to 2."
         assert self.n_prices > 2, "'n_prices' have to be superior to 2."
         assert self.t_max > 2, "'t_max' have to be superior to 2."
-        assert 0 < self.seed < 2**32-1, "'seed' have to be comprised between 0 and 2^32 - 1."
+        assert 0 < self.seed < 2 ** 32 - 1, "'seed' have to be comprised between 0 and 2^32 - 1."
         assert 0 < self.r <= 1, "'r' have to be comprised between 0 and 1."
 
     def dict(self):
@@ -55,10 +54,51 @@ class Parameters:
         return dic
 
 
-def load(json_file):
+def add_new_random_parameters(json_file):
+    # find last random file and increment
+    files = os.listdir('/'.join(json_file.split('/')[:-1]))
+    fname = json_file.split('/')[-1].replace('.json', '')
 
-    if not os.path.exists(json_file):
-        generate_new_parameters_files()
+    numbers = [
+        int(re.search('(\d)(?:.json)', f).group(1))
+        for f in files if fname in f and f.replace('.json', '')[-1].isdigit()
+    ]
+
+    if not numbers:
+        return 0
+
+    i = max(numbers) + 1
+
+    return i
+
+
+def get_last_random_parameters(json_file):
+
+    # find last random file
+    files = os.listdir('/'.join(json_file.split('/')[:-1]))
+    fname = json_file.split('/')[-1].replace('.json', '')
+
+    numbers = [
+        int(re.search('(\d)(?:.json)', f).group(1))
+        for f in files if fname in f and f.replace('.json', '')[-1].isdigit()
+    ]
+
+    if not numbers:
+        return 0
+
+    i = max(numbers)
+
+    return i
+
+
+def load(json_file, force_params, random):
+
+    if not os.path.exists(json_file) and random:
+
+        generate_new_random_parameters_files(json_file)
+
+    elif not random and not os.path.exists(json_file) or not random and force_params:
+            generate_new_parameters_files()
 
     with open(json_file, "r") as f:
         j_param = json.load(f)
@@ -67,7 +107,6 @@ def load(json_file):
 
 
 def extract_parameters(j_param):
-
     if type(j_param["seed"]) == list:
         return [
             Parameters(
@@ -85,33 +124,114 @@ def extract_parameters(j_param):
 
     else:
         return Parameters(
-                p_min=j_param["p_min"],
-                p_max=j_param["p_max"],
-                n_prices=j_param["n_prices"],
-                n_positions=j_param["n_positions"],
-                t_max=j_param["t_max"],
-                r=j_param["r"],
-                seed=j_param["seed"],
-                move=getattr(model.Move, j_param["move"])
+            p_min=j_param["p_min"],
+            p_max=j_param["p_max"],
+            n_prices=j_param["n_prices"],
+            n_positions=j_param["n_positions"],
+            t_max=j_param["t_max"],
+            r=j_param["r"],
+            seed=j_param["seed"],
+            move=getattr(model.Move, j_param["move"])
         )
+
+
+def generate_new_random_parameters_files(json_file):
+
+    idx = re.search('(\d)(?:.json)', json_file).group(1)
+    n_pool = 1000
+    n_batch = 50
+
+    initial_seed = int(idx)
+    np.random.seed(initial_seed)
+
+    p_min = 1
+    p_max = np.random.randint(5, 25)
+    n_prices = p_max
+    n_positions = np.random.randint(5, 25)
+    t_max = 25
+
+    to_create = []
+
+    # ------ Pool ---------- #
+    for move in (
+            model.Move.max_profit, model.Move.strategic, model.Move.max_diff,
+            model.Move.equal_sharing
+    ):
+        str_move = str(move).replace("Move.", "")
+
+        # ------ Pool ---------- #
+
+        for_pool = {
+            "initial_seed": initial_seed,
+            "p_min": p_min,
+            "p_max": p_max,
+            "n_prices": n_prices,
+            "n_positions": n_positions,
+            "t_max": t_max,
+            "seed": [int(i) for i in np.random.randint(low=0, high=2 ** 32 - 1, size=n_pool)],
+            "r": [float(i) for i in np.random.uniform(low=0, high=1, size=n_pool)],
+            "move": str_move,
+        }
+
+        to_create.append(("simulation/results/json/pool_{}_random{}.json".format(str_move, idx), for_pool))
+
+        # ------ Batch --------- #
+
+        assert n_batch % 2 == 0, "Number of batch should be a pair number"
+
+        for_batch = {
+            "initial_seed": initial_seed,
+            "p_min": p_min,
+            "p_max": p_max,
+            "n_prices": n_prices,
+            "n_positions": n_positions,
+            "t_max": t_max,
+            "seed": [int(i) for i in np.random.randint(low=0, high=2 ** 32 - 1, size=n_batch)],
+            "r": [0.25, ] * (n_batch // 2) + [0.50, ] * (n_batch // 2),
+            "move": str_move,
+        }
+
+        to_create.append(("simulation/results/json/batch_{}_random{}.json".format(str_move, idx), for_batch))
+
+        # ---- Separate -------- #
+
+        for r in (25, 50):
+            for_ind = {
+                "initial_seed": initial_seed,
+                "p_min": p_min,
+                "p_max": p_max,
+                "n_prices": n_prices,
+                "n_positions": n_positions,
+                "t_max": t_max,
+                "seed": np.random.randint(low=0, high=2 ** 32),
+                "r": r / 100,
+                "move": str_move
+            }
+
+            to_create.append(("simulation/results/json/{}_{}_random{}.json".format(r, str_move, idx), for_ind))
+
+    for f_name, content in to_create:
+        with open(f_name, "w") as f:
+            json.dump(content, f, sort_keys=True, indent=4)
 
 
 def generate_new_parameters_files():
 
     n_pool = 1000
-    n_batch = 50
+    n_batch = 400
 
     p_min = 1
     p_max = 11
-    n_prices = 11
+    n_prices = p_max
     n_positions = 21
     t_max = 25
 
     to_create = []
 
+    # ------ Pool ---------- #
     for move in (
-        model.Move.max_profit, model.Move.strategic, model.Move.max_diff,
-        model.Move.equal_sharing
+            model.Move.max_profit, model.Move.strategic, model.Move.max_diff,
+            model.Move.equal_sharing
     ):
         str_move = str(move).replace("Move.", "")
 
@@ -123,7 +243,7 @@ def generate_new_parameters_files():
             "n_prices": n_prices,
             "n_positions": n_positions,
             "t_max": t_max,
-            "seed": [int(i) for i in np.random.randint(low=0, high=2**32-1, size=n_pool)],
+            "seed": [int(i) for i in np.random.randint(low=0, high=2 ** 32 - 1, size=n_pool)],
             "r": [float(i) for i in np.random.uniform(low=0, high=1, size=n_pool)],
             "move": str_move,
         }
@@ -140,8 +260,8 @@ def generate_new_parameters_files():
             "n_prices": n_prices,
             "n_positions": n_positions,
             "t_max": t_max,
-            "seed": [int(i) for i in np.random.randint(low=0, high=2**32-1, size=n_batch)],
-            "r": [0.25, ] * (n_batch//2) + [0.50, ] * (n_batch//2),
+            "seed": [int(i) for i in np.random.randint(low=0, high=2 ** 32 - 1, size=n_batch)],
+            "r": [0.25, ] * (n_batch // 2) + [0.50, ] * (n_batch // 2),
             "move": str_move,
         }
 
@@ -156,12 +276,16 @@ def generate_new_parameters_files():
                 "n_prices": n_prices,
                 "n_positions": n_positions,
                 "t_max": t_max,
-                "seed": np.random.randint(low=0, high=2**32),
-                "r": i/100,
+                "seed": np.random.randint(low=0, high=2 ** 32),
+                "r": i / 100,
                 "move": str_move
             }
 
             to_create.append(("simulation/results/json/{}_{}.json".format(i, str_move), for_ind))
+
+    for f_name, content in to_create:
+        with open(f_name, "w") as f:
+            json.dump(content, f, sort_keys=True, indent=4)
 
     for f_name, content in to_create:
         with open(f_name, "w") as f:

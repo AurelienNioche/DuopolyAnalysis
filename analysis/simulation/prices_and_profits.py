@@ -16,7 +16,7 @@ from pylab import plt, np
 import os
 
 
-def prices_over_fov(pool_backup, ax):
+def prices_over_fov(pool_backup, ax, span):
 
     # Shortcuts
     parameters = pool_backup.parameters
@@ -32,7 +32,7 @@ def prices_over_fov(pool_backup, ax):
     boundaries = np.linspace(0, 1, (n_bins + 1))
 
     # How many time steps from the end of the simulation are included in analysis
-    span_ratio = 0.33  # Take last third
+    span_ratio = span  # Take last third
     span = int(span_ratio * t_max)
 
     # Container for data
@@ -70,7 +70,7 @@ def prices_over_fov(pool_backup, ax):
            edgecolor='white', linewidth=2, facecolor="0.75")
 
 
-def profits_over_fov(pool_backup, ax):
+def profits_over_fov(pool_backup, ax, span):
 
     # Shortcuts
     parameters = pool_backup.parameters
@@ -80,7 +80,7 @@ def profits_over_fov(pool_backup, ax):
     t_max = parameters["t_max"]
 
     # How many time steps from the end of the simulation are included in analysis
-    span_ratio = 0.33  # Take last third
+    span_ratio = span  # Take last third
     span = int(span_ratio * t_max)
 
     # Number of bins for the barplot
@@ -125,7 +125,7 @@ def profits_over_fov(pool_backup, ax):
            edgecolor='white', linewidth=2, facecolor="0.75")
 
 
-def prices_and_profits(pool_backup, fig_name=None, ax_price=None, ax_profit=None):
+def prices_and_profits(pool_backup, fig_name=None, ax_price=None, ax_profit=None, span=1):
 
     # Create figure and axes if not given in args
     if ax_price is None or ax_profit is None:
@@ -138,8 +138,8 @@ def prices_and_profits(pool_backup, fig_name=None, ax_price=None, ax_profit=None
         ax_price = fig.add_subplot(n_rows, n_cols, 1)
         ax_profit = fig.add_subplot(n_rows, n_cols, 2)
 
-    prices_over_fov(pool_backup, ax_price)
-    profits_over_fov(pool_backup, ax_profit)
+    prices_over_fov(pool_backup, ax_price, span)
+    profits_over_fov(pool_backup, ax_profit, span)
 
     if fig_name is not None:
 

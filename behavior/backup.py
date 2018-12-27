@@ -89,6 +89,7 @@ def load_data_from_db():
     backups = []
 
     rms = Room.objects.filter(state="end")
+    print(str(rms.count()))
 
     for rm in tqdm(rms):
 
@@ -130,7 +131,6 @@ def load_data_from_db():
                 cond = positions[0, 1] == 20 and prices[0, 1] == 5
 
             if cond:
-
                 b = Backup(
                     t_max=t_max, r=r, display_opponent_score=display_opponent_score,
                     positions=positions, prices=prices, profits=profits,
@@ -293,7 +293,6 @@ def get_data(force):
 
     if not os.path.exists("data/data.p") or force:
         backups = load_data_from_db()
-
     else:
         backups = load()
 

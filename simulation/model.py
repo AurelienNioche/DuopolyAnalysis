@@ -12,7 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import numpy as np
 import itertools
 import enum
@@ -262,7 +261,6 @@ class Model:
         moves = np.zeros(2, dtype=int)
 
         active = 0
-
         moves[:] = -99, np.random.randint(low=0, high=self.n_prices * self.n_positions)
 
         for t in range(self.t_max):

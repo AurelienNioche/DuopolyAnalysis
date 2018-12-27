@@ -6,7 +6,7 @@ from . distance import distance
 from . prices_and_profits import prices_and_profits
 
 
-def distance_price_and_profit(pool_backup, fig_name=None, subplot_spec=None):
+def distance_price_and_profit(pool_backup, fig_name=None, subplot_spec=None, span=1):
 
     nrows, ncols = 1, 2
 
@@ -25,8 +25,8 @@ def distance_price_and_profit(pool_backup, fig_name=None, subplot_spec=None):
     ax_price = plt.subplot(gs2[0, 0])
     ax_profit = plt.subplot(gs2[1, 0])
 
-    distance(pool_backup=pool_backup, ax=ax_distance)
-    prices_and_profits(pool_backup=pool_backup, ax_price=ax_price, ax_profit=ax_profit)
+    distance(pool_backup=pool_backup, ax=ax_distance, span=span)
+    prices_and_profits(pool_backup=pool_backup, ax_price=ax_price, ax_profit=ax_profit, span=span)
 
     if fig_name:
 

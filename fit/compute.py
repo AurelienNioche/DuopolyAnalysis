@@ -18,6 +18,7 @@ class BackupFit:
         self.score = np.zeros(size, dtype=int)
 
         self.fit_scores = {i: np.zeros(size) for i in score.Score.names}
+        self.t_fit_scores = {i: [] for i in score.Score.names}
 
 
 class RunModel:
@@ -51,7 +52,7 @@ class RunModel:
 
             player_active = (player_active + 1) % 2
 
-        return np.mean(scores)
+        return np.mean(scores), np.asarray(scores)
 
 
 def get_fit(force):
@@ -97,8 +98,9 @@ def get_fit(force):
                 for str_method in score.Score.names:
 
                     rm = RunModel(**kwargs, str_method=str_method)
-                    sc = rm.run()
+                    sc, t_sc = rm.run()
                     fit_backup.fit_scores[str_method][i] = sc
+                    fit_backup.t_fit_scores[str_method].append(t_sc)
 
                     tqdm.write("[id={}, r={:.2f}, s={}] [{}] score: {:.2f}".format(
                         i, b.r, int(b.display_opponent_score), str_method, sc))

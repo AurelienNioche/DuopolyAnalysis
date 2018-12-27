@@ -67,6 +67,10 @@ class Score(abstract.AbstractModel):
     
     def equal_sharing(self, player_position, player_price, opp_position, opp_price):
 
+        """
+        TODO: Make this code more explicit
+        """
+
         player_move = self.convert_to_strategies[(player_position, player_price)]
 
         exp_profits = self._get_expected_profits(opp_position, opp_price)
@@ -79,10 +83,11 @@ class Score(abstract.AbstractModel):
 
         diff = diff_max_0 + diff_max_1
 
-        max_value = max(diff)
-        player_value = max_value - diff[player_move]
+        max_value = min(diff)
 
-        return player_value / max_value if max_value > 0 else 1
+        player_value = max_value / diff[player_move] if diff[player_move] > 0 else 1
+
+        return player_value
 
     # def max_profit_strategic(self, player_position, player_price, opp_position, opp_price):
     #

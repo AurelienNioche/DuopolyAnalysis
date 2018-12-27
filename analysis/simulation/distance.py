@@ -17,7 +17,7 @@ from pylab import plt, np
 import os
 
 
-def distance(pool_backup, fig_name=None, ax=None):
+def distance(pool_backup, fig_name=None, ax=None, span=1.):
 
     # Shortcuts
     parameters = pool_backup.parameters
@@ -35,7 +35,7 @@ def distance(pool_backup, fig_name=None, ax=None):
     y_err = np.zeros(n_simulations)
 
     # How many time steps from the end of the simulation are included in analysis
-    span_ratio = 0.33  # Take last third
+    span_ratio = span  # Take last third
     span = int(span_ratio * t_max)
 
     for i, b in enumerate(backups):

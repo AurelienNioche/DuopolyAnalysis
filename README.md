@@ -7,7 +7,7 @@ Analysis part of Duopoly project
 ### With raw data
 
 * Put the sqlite database ('duopoly.sqlite3')in the data folder ('data')
-* Run 
+* Run
     
     ``` 
     python make_figs.py

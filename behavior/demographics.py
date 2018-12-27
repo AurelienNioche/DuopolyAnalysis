@@ -109,3 +109,4 @@ def run(force):
         print("{}: {}".format(g, np.sum(data.gender == g)))
 
     plot(data)
+
