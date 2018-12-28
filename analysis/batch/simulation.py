@@ -24,6 +24,7 @@ def plot(batch_backup, subplot_spec):
     for i, b in enumerate(batch_backup.backups):
 
         # Compute the mean distance between the two firms
+        # If data are generated based on random parameter sets
         if parameters.get('param_set_idx'):
 
             data = np.absolute(
@@ -34,9 +35,7 @@ def plot(batch_backup, subplot_spec):
             d[i] = np.mean(data)
 
             # Compute the mean profit
-            print(np.max(b.profits[:, :]), b.parameters.p_max*b.parameters.n_positions)
-            assert np.max(b.profits[:, :]) <= b.parameters.p_max*b.parameters.n_positions
-            scores[i] = np.mean(b.profits[:, :] * 1/b.parameters.p_max*b.parameters.n_positions)
+            scores[i] = np.mean(b.profits[:, :] * (1/b.parameters.p_max*b.parameters.n_positions))
 
         else:
 
@@ -96,6 +95,7 @@ def plot(batch_backup, subplot_spec):
 
     axes[0].set_yticks(np.arange(0, 1.1, 0.25))
 
+    # If data are generated based on random parameter sets
     if parameters.get('param_set_idx'):
         axes[1].set_yticks(np.arange(0, 1.1, 0.25))
     else:

@@ -45,6 +45,7 @@ def prices_over_fov(pool_backup, ax, span):
 
         for i, bound in enumerate(boundaries[1:]):
             if r <= bound:
+                # If data are generated based on random parameters set
                 if parameters.get('param_set_idx'):
                     d = np.mean(b.prices[-span:, :] / b.parameters.p_max)
                 else:
@@ -98,7 +99,7 @@ def profits_over_fov(pool_backup, ax, span):
     boundaries = np.linspace(0, 1, (n_bins + 1))
 
     # Container for data
-    data = [[] for i in range(n_bins)]
+    data = [[] for _ in range(n_bins)]
 
     for b in backups:
 
@@ -106,8 +107,10 @@ def profits_over_fov(pool_backup, ax, span):
 
         for i, bound in enumerate(boundaries[1:]):
             if r <= bound:
+                # If data are generated based on random parameters set
                 if parameters.get('param_set_idx'):
-                    mean_profit = np.mean(b.profits[-span:, :] * 1/b.parameters.p_max*b.parameters.n_positions)
+                    mean_profit = np.mean(b.profits[-span:, :] * (1/b.parameters.p_max*b.parameters.n_positions))
+
                 else:
                     mean_profit = np.mean(b.profits[-span:, :])
 
