@@ -93,9 +93,9 @@ def get_last_random_parameters(json_file):
 
 def load(json_file, force_params, random):
 
-    if not os.path.exists(json_file) and random:
+    if not os.path.exists(json_file) and random or force_params:
 
-        generate_new_random_parameters_files(json_file)
+        generate_new_random_parameters_files()
 
     elif not random and not os.path.exists(json_file) or not random and force_params:
             generate_new_parameters_files()
@@ -107,7 +107,21 @@ def load(json_file, force_params, random):
 
 
 def extract_parameters(j_param):
-    if type(j_param["seed"]) == list:
+    if isinstance(j_param["n_prices"], list):
+        return [
+            Parameters(
+                p_min=j_param["p_min"],
+                p_max=j_param["p_max"][param_idx],
+                n_prices=j_param["n_prices"][param_idx],
+                n_positions=j_param["n_positions"][param_idx],
+                t_max=j_param["t_max"],
+                r=j_param["r"][i],
+                seed=j_param["seed"][i],
+                move=getattr(model.Move, j_param["move"])
+            )
+            for i, param_idx in enumerate(j_param["param_set_idx"])
+        ]
+    elif isinstance(j_param['seed'], list):
         return [
             Parameters(
                 p_min=j_param["p_min"],
@@ -135,20 +149,20 @@ def extract_parameters(j_param):
         )
 
 
-def generate_new_random_parameters_files(json_file):
+def generate_new_random_parameters_files():
 
-    idx = re.search('(\d)(?:.json)', json_file).group(1)
     n_pool = 1000
+    n_param_set = 64
+
     n_batch = 50
 
-    initial_seed = int(idx)
+    initial_seed = 0
     np.random.seed(initial_seed)
 
     p_min = 1
-    p_max = np.random.randint(5, 25)
-    n_prices = p_max
-    n_positions = np.random.randint(5, 25)
-    t_max = 25
+    p_max = np.random.randint(5, 25, size=n_param_set).tolist()
+    n_prices = [i for i in p_max]
+    n_positions = np.random.randint(5, 25, size=n_param_set).tolist()
 
     to_create = []
 
@@ -167,13 +181,14 @@ def generate_new_random_parameters_files(json_file):
             "p_max": p_max,
             "n_prices": n_prices,
             "n_positions": n_positions,
-            "t_max": t_max,
-            "seed": [int(i) for i in np.random.randint(low=0, high=2 ** 32 - 1, size=n_pool)],
-            "r": [float(i) for i in np.random.uniform(low=0, high=1, size=n_pool)],
+            "t_max": 100,
+            "param_set_idx": list(range(n_param_set)) * n_pool,
+            "seed": [int(i) for i in np.random.randint(low=0, high=2 ** 32 - 1, size=n_pool*n_param_set)],
+            "r": [float(i) for i in np.random.uniform(low=0, high=1, size=n_pool)] * n_param_set,
             "move": str_move,
         }
 
-        to_create.append(("simulation/results/json/pool_{}_random{}.json".format(str_move, idx), for_pool))
+        to_create.append(("simulation/results/json/pool_{}_random.json".format(str_move), for_pool))
 
         # ------ Batch --------- #
 
@@ -185,30 +200,14 @@ def generate_new_random_parameters_files(json_file):
             "p_max": p_max,
             "n_prices": n_prices,
             "n_positions": n_positions,
-            "t_max": t_max,
-            "seed": [int(i) for i in np.random.randint(low=0, high=2 ** 32 - 1, size=n_batch)],
-            "r": [0.25, ] * (n_batch // 2) + [0.50, ] * (n_batch // 2),
+            "t_max": 25,
+            "param_set_idx": list(range(n_param_set)) * n_batch,
+            "seed": [int(i) for i in np.random.randint(low=0, high=2 ** 32 - 1, size=n_batch*n_param_set)],
+            "r": [0.25, ] * (n_batch // 2) * n_param_set + [0.50, ] * (n_batch // 2) * n_param_set,
             "move": str_move,
         }
 
-        to_create.append(("simulation/results/json/batch_{}_random{}.json".format(str_move, idx), for_batch))
-
-        # ---- Separate -------- #
-
-        for r in (25, 50):
-            for_ind = {
-                "initial_seed": initial_seed,
-                "p_min": p_min,
-                "p_max": p_max,
-                "n_prices": n_prices,
-                "n_positions": n_positions,
-                "t_max": t_max,
-                "seed": np.random.randint(low=0, high=2 ** 32),
-                "r": r / 100,
-                "move": str_move
-            }
-
-            to_create.append(("simulation/results/json/{}_{}_random{}.json".format(r, str_move, idx), for_ind))
+        to_create.append(("simulation/results/json/batch_{}_random.json".format(str_move), for_batch))
 
     for f_name, content in to_create:
         with open(f_name, "w") as f:
@@ -218,7 +217,7 @@ def generate_new_random_parameters_files(json_file):
 def generate_new_parameters_files():
 
     n_pool = 1000
-    n_batch = 400
+    n_batch = 50
 
     p_min = 1
     p_max = 11

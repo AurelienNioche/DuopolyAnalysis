@@ -58,7 +58,7 @@ def produce_data(parameters_file, data_file, t_max, random, force_params):
     backups = []
 
     for bkp in tqdm.tqdm(
-            pl.imap_unordered(run, pool_parameters),
+            pl.imap(run, pool_parameters),
             total=len(pool_parameters)):
         backups.append(bkp)
 
@@ -78,26 +78,19 @@ def data_already_produced(*args):
 
 
 def pool(force, t_max, random, force_params):
+
     heuristics = model.get_heuristics()
 
     backups = {}
 
-    if random:
-        # get index of the new random parameters
-        i = parameters.add_new_random_parameters(
-            json_file="simulation/results/json/pool_max_diff_random.json"
-        )
-    else:
-        i = 0
-
     for h in heuristics:
 
-        parameters_file = "simulation/results/json/pool_{}{}{}.json".format(
-            h, ('', '_random')[random], ('', i)[random]
+        parameters_file = "simulation/results/json/pool_{}{}.json".format(
+            h, ('', '_random')[random],
         )
 
-        data_file = "simulation/results/pickle/pool_{}{}{}.p".format(
-            h, ('', '_random')[random], ('', i)[random]
+        data_file = "simulation/results/pickle/pool_{}{}.p".format(
+            h, ('', '_random')[random],
         )
 
         if not data_already_produced(data_file) or force:
@@ -117,22 +110,14 @@ def batch(force, t_max, random, force_params):
 
     backups = {}
 
-    if random:
-        # get index of the random parameters
-        i = parameters.get_last_random_parameters(
-            json_file="simulation/results/json/batch_max_diff_random.json"
-        )
-    else:
-        i = 0
-
     for h in heuristics:
 
-        parameters_file = "simulation/results/json/batch_{}{}{}.json".format(
-            h, ('', '_random')[random], ('', i)[random]
+        parameters_file = "simulation/results/json/batch_{}{}.json".format(
+            h, ('', '_random')[random]
         )
 
-        data_file = "simulation/results/pickle/batch_{}{}{}.p".format(
-            h, ('', '_random')[random], ('', i)[random]
+        data_file = "simulation/results/pickle/batch_{}{}.p".format(
+            h, ('', '_random')[random]
         )
 
         if not data_already_produced(data_file) or force:

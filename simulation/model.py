@@ -45,7 +45,7 @@ def to_latex_table(expected_profits, strategies, opp_move):
 
     table += r"\end{tabular}" + "\n" + \
          r"\end{center}" + "\n" + \
-        r"\end{table}"
+         r"\end{table}"
 
     print()
     print("opp move", strategies[opp_move, :])
@@ -218,7 +218,7 @@ class Model:
         if self.r == 0.25:
             to_latex_table(
                 exp_profits, strategies=self.strategies, opp_move=opp_move)
-
+        #
         max_profits = max(exp_profits)
 
         idx = np.flatnonzero(exp_profits == max_profits)

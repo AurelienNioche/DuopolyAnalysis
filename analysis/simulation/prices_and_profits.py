@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pylab import plt, np
+import scipy.stats
 import os
 
 
@@ -36,7 +37,7 @@ def prices_over_fov(pool_backup, ax, span):
     span = int(span_ratio * t_max)
 
     # Container for data
-    data = [[] for i in range(n_bins)]
+    data = [[] for _ in range(n_bins)]
 
     for b in backups:
 
@@ -44,7 +45,10 @@ def prices_over_fov(pool_backup, ax, span):
 
         for i, bound in enumerate(boundaries[1:]):
             if r <= bound:
-                d = np.mean(b.prices[-span:, :])
+                if parameters.get('param_set_idx'):
+                    d = np.mean(b.prices[-span:, :] / b.parameters.p_max)
+                else:
+                    d = np.mean(b.prices[-span:, :])
                 data[i].append(d)
                 break
 
@@ -58,8 +62,12 @@ def prices_over_fov(pool_backup, ax, span):
 
     ax.set_xticks([])
     ax.set_ylabel("Price")
-    ax.set_ylim((parameters["p_min"]-0.5, parameters["p_max"]+0.5))
-    ax.set_yticks(np.arange(parameters["p_min"], parameters["p_max"]+1, 2))
+    if parameters.get('param_set_idx'):
+        ax.set_ylim(-0.01, 1.01)
+        # ax.set_yticks(np.arange(parameters["p_min"], max(parameters["p_max"])+1, 2))
+    else:
+        ax.set_ylim(parameters["p_min"]-0.5, parameters["p_max"]+0.5)
+        ax.set_yticks(np.arange(parameters["p_min"], parameters["p_max"]+1, 2))
 
     # ax.set_title("Mean prices over $r$")
 
@@ -98,7 +106,11 @@ def profits_over_fov(pool_backup, ax, span):
 
         for i, bound in enumerate(boundaries[1:]):
             if r <= bound:
-                mean_profit = np.mean(b.profits[-span:, :])
+                if parameters.get('param_set_idx'):
+                    mean_profit = np.mean(b.profits[-span:, :] * 1/b.parameters.p_max*b.parameters.n_positions)
+                else:
+                    mean_profit = np.mean(b.profits[-span:, :])
+
                 data[i].append(mean_profit)
                 break
 
@@ -109,7 +121,7 @@ def profits_over_fov(pool_backup, ax, span):
     ax.set_xlim(-0.01, 1.01)
 
     ax.set_xticks(np.arange(0, 1.1, 0.25))
-    ax.set_ylim(0, 120)
+    ax.set_ylim(0, 1.01)
 
     ax.tick_params(labelsize=9)
 

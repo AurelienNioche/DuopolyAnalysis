@@ -11,9 +11,11 @@ from django.core.wsgi import get_wsgi_application
 
 application = get_wsgi_application()
 # Your application specific imports
-from game.models import User, Room
+from game.models import User, Room, Round, RoundComposition, RoundState, FirmProfit
 import fit.data
 import behavior.data
+import behavior.stats
+import behavior.backup
 import behavior.demographics
 from make_figs import simulation_fig
 
@@ -28,15 +30,19 @@ def save(obj, fname):
         return pickle.dump(obj=obj, file=f)
 
 
+def print_stats():
+    behavior.stats.stats()
+
+
 def run_simulations():
     simulation_fig(
-        force=True,
+        force=False,
         # pool simulations are simulations where
         # where vary r
         span_pool=1,
         t_max_pool=100,
         t_max_xp=25,
-        random_params=False,
+        random_params=True,
         force_params=False,
     )
 
@@ -124,53 +130,58 @@ def compute_number_of_observations_xp_behavior():
     return count
 
 
-def compute_remuneration(mt_ids=None, supp_bonus=None):
-    count = dict(
-        all=0,
-        stopped=0,
-        tutorial=0,
-        pve=0,
-        pvp=0,
-        end=0,
-        error=0
-    )
+def compute_remuneration():
 
-    if mt_ids is None:
-        mt_ids = [i[0] for i in User.objects.all().values_list("mechanical_id")]
+    compensation = []
+    conversion_rate = 0.5 * 10 ** (-3)
 
-    for mt_id in mt_ids:
+    data_filtered = behavior.backup.get_data(force=False)
+    treated_users = set()
 
-        # Application logic
-        u = User.objects.filter(mechanical_id=mt_id, registered=True).first()
-        if not u:
-            u = User.objects.filter(mechanical_id=mt_id).first()
+    for d in data_filtered:
 
-        if u:
-            rm = Room.objects.filter(id=u.room_id).first()
-            if rm:
+        for user_id in d.user_id:
+            if user_id == 'bot' or user_id in treated_users:
+                continue
 
-                count['all'] += 1
-                if rm.state == "end":
+            treated_users.add(user_id)
 
-                    count['end'] += 1
+            # Application logic
+            u = User.objects.filter(id=user_id).first()
+            if not u:
+                raise Exception
 
-                else:
+            if u:
+                rm = Room.objects.filter(id=u.room_id).first()
+                if rm:
+                    if rm.state == "end":
 
-                    if rm.state in ("pvp", "pve"):
-                        count[rm.state] += 1
+                        rds = Round.objects.filter(room_id=rm.id)
 
-                    else:
-                        if rm.state in ('error', 'tutorial'):
-                            count[rm.state] += 1
+                        round_id_and_agent_ids = []
 
-                    count['stopped'] += 1
+                        for rd in rds:
 
-            else:
-                count['stopped'] += 1
-        else:
-            pass
+                            rc = RoundComposition.objects.filter(round_id=rd.id, user_id=u.id).first()
+                            if rc is not None:
+                                round_id_and_agent_ids.append((rd.id, rc.firm_id))
 
-    return count
+                        profit = 0
+
+                        for round_id, agent_id in round_id_and_agent_ids:
+
+                            # print("round_id", round_id, "agent_id", agent_id)
+
+                            pr = FirmProfit.objects.get(agent_id=agent_id, t=rm.ending_t, round_id=round_id).value
+
+                            profit += pr
+
+                        compensation.append(1 + profit*conversion_rate)
+
+    # Assert that we treat only subjects that did the experiment
+    assert len(treated_users) == 222
+    print("mean =", np.mean(compensation))
+    print("std =", np.std(compensation))
 
 
 def compute_panel_data_analysis():
@@ -248,7 +259,8 @@ def main():
     # demographics()
     # compute_panel_data_analysis()
     # kruskal()
-
+    # compute_remuneration()
+    # print_stats()
 
 if __name__ == "__main__":
     main()

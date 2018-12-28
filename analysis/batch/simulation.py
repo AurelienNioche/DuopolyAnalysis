@@ -11,6 +11,7 @@ def plot(batch_backup, subplot_spec):
     # ----------------- Data ------------------- #
 
     # Look at the parameters
+    parameters = batch_backup.parameters
     n_simulations = len(batch_backup.backups)
     n_positions = batch_backup.parameters["n_positions"]
 
@@ -23,17 +24,32 @@ def plot(batch_backup, subplot_spec):
     for i, b in enumerate(batch_backup.backups):
 
         # Compute the mean distance between the two firms
-        data = np.absolute(
-            b.positions[:, 0] -
-            b.positions[:, 1]) / n_positions
+        if parameters.get('param_set_idx'):
 
-        d[i] = np.mean(data)
+            data = np.absolute(
+                b.positions[:, 0] -
+                b.positions[:, 1]) / b.parameters.n_positions
 
-        # Compute the mean price
-        prices[i] = np.mean(b.prices[:, :])
+            prices[i] = np.mean(b.prices[:, :] / b.parameters.p_max)
+            d[i] = np.mean(data)
 
-        # Compute the mean profit
-        scores[i] = np.mean(b.profits[:, :])
+            # Compute the mean profit
+            print(np.max(b.profits[:, :]), b.parameters.p_max*b.parameters.n_positions)
+            assert np.max(b.profits[:, :]) <= b.parameters.p_max*b.parameters.n_positions
+            scores[i] = np.mean(b.profits[:, :] * 1/b.parameters.p_max*b.parameters.n_positions)
+
+        else:
+
+            data = np.absolute(
+                b.positions[:, 0] -
+                b.positions[:, 1]) / n_positions
+
+            # Compute the mean price
+            prices[i] = np.mean(b.prices[:, :])
+            d[i] = np.mean(data)
+
+            # Compute the mean profit
+            scores[i] = np.mean(b.profits[:, :])
 
         r[i] = b.parameters.r
 
@@ -49,7 +65,12 @@ def plot(batch_backup, subplot_spec):
     ax_profit = plt.subplot(gs[0, 2])
 
     y_labels = "Distance", "Price", "Profit"
-    y_limits = (0, 1), (1, 11), (0, 120)
+
+    if parameters.get('param_set_idx'):
+        y_limits = (0, 1), (0, 1), (0, 1)
+    else:
+        y_limits = (0, 1), (1, 11), (0, 120)
+
     arr = (d, prices, scores)
     axes = [ax_distance, ax_price, ax_profit]
 
@@ -74,5 +95,10 @@ def plot(batch_backup, subplot_spec):
         ax.set_xlabel("$r$")
 
     axes[0].set_yticks(np.arange(0, 1.1, 0.25))
-    axes[1].set_yticks(np.arange(1, 11.1, 2))
+
+    if parameters.get('param_set_idx'):
+        axes[1].set_yticks(np.arange(0, 1.1, 0.25))
+    else:
+        axes[1].set_yticks(np.arange(1, 11.1, 2))
+
 

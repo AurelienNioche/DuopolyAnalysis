@@ -13,7 +13,7 @@ def get(force=False):
 
     # Look at the parameters
     n_simulations = len(backups)
-    n_positions = backups[0].n_positions
+    n_positions = [backups[i].n_positions for i in range(n_simulations)]
 
     # Containers
     dist = np.zeros(n_simulations)
@@ -26,7 +26,7 @@ def get(force=False):
         # Compute the mean distance between the two firms
         data = np.absolute(
             b.positions[:, 0] -
-            b.positions[:, 1]) / n_positions
+            b.positions[:, 1]) / n_positions[i]
 
         dist[i] = np.mean(data)
 

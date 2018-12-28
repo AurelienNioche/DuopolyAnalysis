@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pylab import plt, np
+import scipy.stats
 import os
 
 
@@ -25,37 +26,64 @@ def distance(pool_backup, fig_name=None, ax=None, span=1.):
 
     # Look at the parameters
     n_simulations = len(parameters["seed"])
-    n_positions = parameters["n_positions"]
+    n_positions = parameters['n_positions']
     t_max = parameters["t_max"]
 
     # Containers
-    x = np.zeros(n_simulations)
-    y = np.zeros(n_simulations)
-    z = np.zeros(n_simulations)
-    y_err = np.zeros(n_simulations)
+    x, y, z, y_err = [], [], [], []
 
     # How many time steps from the end of the simulation are included in analysis
     span_ratio = span  # Take last third
     span = int(span_ratio * t_max)
 
-    for i, b in enumerate(backups):
+    if isinstance(n_positions, list):
+        r_values = np.asarray([b.parameters.r for b in backups])
 
-        x[i] = b.parameters.r
+        for r in np.unique(r_values):
 
-        # Compute the mean distance between the two firms
-        data = np.absolute(
-            b.positions[-span:, 0] -
-            b.positions[-span:, 1]) / n_positions
+            bkups = [(i, b) for i, b in enumerate(backups) if b.parameters.r == r]
+            spacing = []
+            profits = []
+            std = []
 
-        spacing = np.mean(data)
+            for i, b in bkups:
 
-        y[i] = spacing
+                # Compute the mean distance between the two firms
+                data = np.absolute(
+                        b.positions[-span:, 0] -
+                        b.positions[-span:, 1]) / b.parameters.n_positions
 
-        # Get std
-        y_err[i] = np.std(data)
+                spacing.append(np.mean(data))
+                profits.append(np.mean(b.profits[-span:, :]))
+                std.append(np.std(data))
 
-        # Get mean profits
-        z[i] = np.mean(b.profits[-span:, :])
+            x.append(r)
+
+            y.append(np.mean(spacing))
+
+            # Get std
+            y_err.append(np.mean(std))
+
+            # Get mean profits
+            z.append(np.mean(profits))
+
+    else:
+        for i, b in enumerate(backups):
+
+            # Compute the mean distance between the two firms
+            data = np.absolute(
+                    b.positions[-span:, 0] -
+                    b.positions[-span:, 1]) / b.parameters.n_positions
+
+            x.append(b.parameters.r)
+
+            y.append(np.mean(data))
+
+            # Get std
+            y_err.append(np.std(data))
+
+            # Get mean profits
+            z.append(np.mean(b.profits[-span:, :]))
 
     # Plot this
     if ax is None:
@@ -86,7 +114,7 @@ def distance(pool_backup, fig_name=None, ax=None, span=1.):
     # if color:
     #     _color(fig=fig, ax=ax, x=x, y=y, z=z)
     # else:
-    _bw(ax=ax, x=x, y=y, y_err=y_err)
+    _bw(ax=ax, x=np.asarray(x), y=np.asarray(y), y_err=np.asarray(y_err))
 
     if fig_name:
         # Cut the margins
