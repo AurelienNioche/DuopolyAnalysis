@@ -30,20 +30,19 @@ def distance(pool_backup, fig_name=None, ax=None, span=1.):
     t_max = parameters["t_max"]
 
     # Containers
-    x, y, z, y_err = [], [], [], []
+    x, y, y_err = [], [], []
 
     # How many time steps from the end of the simulation are included in analysis
     span_ratio = span  # Take last third
     span = int(span_ratio * t_max)
 
-    if isinstance(n_positions, list):
+    if parameters.get('param_set_idx'):
         r_values = np.asarray([b.parameters.r for b in backups])
 
         for r in np.unique(r_values):
 
             bkups = [(i, b) for i, b in enumerate(backups) if b.parameters.r == r]
             spacing = []
-            profits = []
             std = []
 
             for i, b in bkups:
@@ -54,7 +53,6 @@ def distance(pool_backup, fig_name=None, ax=None, span=1.):
                         b.positions[-span:, 1]) / b.parameters.n_positions
 
                 spacing.append(np.mean(data))
-                profits.append(np.mean(b.profits[-span:, :]))
                 std.append(np.std(data))
 
             x.append(r)
@@ -63,9 +61,6 @@ def distance(pool_backup, fig_name=None, ax=None, span=1.):
 
             # Get std
             y_err.append(np.mean(std))
-
-            # Get mean profits
-            z.append(np.mean(profits))
 
     else:
         for i, b in enumerate(backups):
@@ -81,9 +76,6 @@ def distance(pool_backup, fig_name=None, ax=None, span=1.):
 
             # Get std
             y_err.append(np.std(data))
-
-            # Get mean profits
-            z.append(np.mean(b.profits[-span:, :]))
 
     # Plot this
     if ax is None:
