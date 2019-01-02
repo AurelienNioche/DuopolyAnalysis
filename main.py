@@ -207,6 +207,8 @@ def compute_demographics_analysis():
         x[1, i] = user_bkup.age[i]  # np.random.random()
         x[2, i] = user_bkup.nationality[i]  # np.random.random()
 
+    # u, p = scipy.stats.mannwhitneyu(to_comp[0], to_comp[1])
+
     for heuristic in 'max_profit', 'max_diff', 'equal_sharing':
 
         y = np.zeros(n_ind)
@@ -220,21 +222,35 @@ def compute_demographics_analysis():
         print("{}: {:.02f}". format("General mean", np.mean(y), "General std", np.std(y)))
 
         # Sex
-        for s, s_name in zip((0, 1), ('male', 'female')):
-            m = np.mean(y[x[0, :] == s])
-            s = np.std(y[x[0, :] == s])
+
+        male_data = y[x[0, :] == 0]
+        female_data = y[x[0, :] == 1]
+
+        for s_data, s_name in zip((male_data, female_data), ('male', 'female')):
+            m = np.mean(s_data)
+            s = np.std(s_data)
             print("{}: mean={:.02f} std={:.02f}".format(s_name, m, s))
 
+        n = len(male_data) + len(female_data)
+
+        u, p = scipy.stats.mannwhitneyu(male_data, female_data)
+        print(f'Mann-Whitney rank test for sex-score: u {u}, p {p:.3f}, n {n}')
+
         # Age
-        for age in range(15, 61, 15):
-            d = [y[i] for i in range(len(y)) if x[1, i] in (age, age+14)]
-            print("{}-{}: mean={:.02f} std={:.02f}".format(age, age+14, np.mean(d), np.std(d)))
+
+        cor, p = scipy.stats.mannwhitneyu(x[0, :], x[1, :])
+        print(f'Pearson corr age-score {cor}, p {p}, n {len(x[0])}')
+
+        print()
+        # for age in range(15, 61, 15):
+        #     d = [y[i] for i in range(len(y)) if x[1, i] in (age, age+14)]
+        #     print("{}-{}: mean={:.02f} std={:.02f}".format(age, age+14, np.mean(d), np.std(d)))
 
         # Nationality
-        for i, n in enumerate(nationalities):
-            m = np.mean(y[x[2, :] == i])
-            s = np.std(y[x[2, :] == i])
-            print("{}: mean={:.02f} std={:.02f}".format(n, m, s))
+        # for i, n in enumerate(nationalities):
+        #     m = np.mean(y[x[2, :] == i])
+        #     s = np.std(y[x[2, :] == i])
+        #     print("{}: mean={:.02f} std={:.02f}".format(n, m, s))
 
 
 # def kruskal():
@@ -261,6 +277,7 @@ def main():
     # kruskal()
     # compute_remuneration()
     # print_stats()
+
 
 if __name__ == "__main__":
     main()
