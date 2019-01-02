@@ -109,3 +109,4 @@ fig/
 duopoly.sqlite3
 simulation/results/
 __old__/
+game/migrations/
