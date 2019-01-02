@@ -184,10 +184,10 @@ def compute_remuneration():
     print("std =", np.std(compensation))
 
 
-def compute_panel_data_analysis():
+def compute_demographics_analysis():
 
     fit_bkup = load('fit.p')
-    user_bkup = load('user.p')
+    user_bkup = behavior.backup.get_user_data()
 
     nationalities = np.unique(user_bkup.nationality)
 
@@ -255,9 +255,9 @@ def main():
     # print(compute_number_of_observations_xp_fit())
     # print('Count of xp behavior data')
     # print(compute_number_of_observations_xp_behavior())
-    run_simulations()
+    # run_simulations()
     # demographics()
-    # compute_panel_data_analysis()
+    compute_demographics_analysis()
     # kruskal()
     # compute_remuneration()
     # print_stats()

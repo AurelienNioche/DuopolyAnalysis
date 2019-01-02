@@ -279,7 +279,7 @@ def load_user_data_from_db():
     return user_data
 
 
-def get_user_data(force):
+def get_user_data(force=False):
 
     if not os.path.exists("data/user.p") or force:
         user_data = load_user_data_from_db()
@@ -289,7 +289,7 @@ def get_user_data(force):
     return user_data
 
 
-def get_data(force):
+def get_data(force=False):
 
     if not os.path.exists("data/data.p") or force:
         backups = load_data_from_db()
