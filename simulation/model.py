@@ -24,36 +24,6 @@ def get_heuristics():
             (Move.max_profit, Move.max_diff, Move.equal_sharing)]
 
 
-def to_latex_table(expected_profits, strategies, opp_move):
-
-    expected_profits = expected_profits.astype(int)
-    expected_profits = expected_profits.reshape((21, 11))
-    strategies = strategies.astype(int)
-
-    table = \
-        r"\begin{table}[htbp]" + "\n" + \
-        r"\begin{center}" + "\n" + \
-        r"\begin{tabular}{lllllllllll}" + "\n" + \
-        r"Position & " + \
-        r" & ".join(["\$" + str(strategies[i, 1] + 1) for i in range(11)]) + r"\\" + "\n"\
-        r"\hline \\" + "\n"
-
-    for i in range(21):
-        table += \
-            r" {} & ".format(i + 1) + " & ".join([str(expected_profits[i, j]) for j in range(11)]) + \
-            "\\\ \n"
-
-    table += r"\end{tabular}" + "\n" + \
-         r"\end{center}" + "\n" + \
-         r"\end{table}"
-
-    print()
-    print("opp move", strategies[opp_move, :])
-
-    print(table)
-    quit()
-
-
 class Move(enum.Enum):
 
     max_profit = enum.auto()

@@ -27,16 +27,6 @@ from make_figs import simulation_fig
 from analysis.batch import customized_plot
 
 
-def load(fname):
-    with open(f'data/{fname}', 'rb') as f:
-        return pickle.load(f)
-
-
-def save(obj, fname):
-    with open(f'data/{fname}', 'wb') as f:
-        return pickle.dump(obj=obj, file=f)
-
-
 def print_stats():
 
     print('-' * 5, 'XP', '-' * 5)
