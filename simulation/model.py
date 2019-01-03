@@ -215,10 +215,6 @@ class Model:
         for i in range(self.n_strategies):
             exp_profits[i] = self.profits_given_position_and_price(i, opp_move)[0]
 
-        if self.r == 0.25:
-            to_latex_table(
-                exp_profits, strategies=self.strategies, opp_move=opp_move)
-        #
         max_profits = max(exp_profits)
 
         idx = np.flatnonzero(exp_profits == max_profits)

@@ -89,4 +89,6 @@ def stats_and_table(fit_b):
 def stats(force):
 
     fit_b = fit.data.get(force=force)
-    stats_and_table(fit_b)
+
+    for d in fit_b:
+        stats_and_table(d)

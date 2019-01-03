@@ -146,7 +146,7 @@ def individual(force=False, force_params=False):
 
             if not data_already_produced(parameters_file, data_file) or force:
 
-                json_parameters = parameters.load(parameters_file, force_params)
+                json_parameters = parameters.load(parameters_file, force_params, random=False)
                 param = parameters.extract_parameters(json_parameters)
                 run_backup = run(param)
                 run_backup.save(parameters_file, data_file)
