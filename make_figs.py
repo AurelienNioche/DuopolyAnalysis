@@ -125,10 +125,10 @@ def simulation_fig(force=False, span_pool=1, t_max_pool=100, t_max_xp=25, random
     plt.show()
 
 
-def dynamics_fig(force=False):
+def dynamics_fig(force=True):
 
     xp_examples = fit.exemplary_cases.get(force=force)
-    sim_examples = simulation.data.individual(force=True)
+    sim_examples = simulation.data.individual(force=force)
 
     fig = plt.figure(figsize=(10, 8), dpi=200)
     gs = matplotlib.gridspec.GridSpec(
