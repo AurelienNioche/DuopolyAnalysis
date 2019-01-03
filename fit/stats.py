@@ -2,7 +2,7 @@ import scipy.stats
 import statsmodels.stats.multitest
 
 
-def stats_and_table(fit_b):
+def stats(fit_b):
 
     r = fit_b.r
     s = fit_b.display_opponent_score
