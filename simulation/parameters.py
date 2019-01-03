@@ -91,7 +91,7 @@ def get_last_random_parameters(json_file):
     return i
 
 
-def load(json_file, force_params, random):
+def load(json_file, force_params, random=False):
 
     if not os.path.exists(json_file) and random or force_params:
 
