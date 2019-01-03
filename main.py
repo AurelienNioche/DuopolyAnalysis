@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 # Your application specific imports
 from game.models import User, Room, Round, RoundComposition, RoundState, FirmProfit
-import fit.data
+# import fit.data
 import fit.stats
 import behavior.data
 import behavior.stats
@@ -25,6 +25,8 @@ import behavior.demographics
 from make_figs import simulation_fig
 
 from analysis.batch import customized_plot
+
+import statsmodels.stats
 
 
 def load(fname):
@@ -42,7 +44,7 @@ def print_stats():
     print('-' * 5, 'XP', '-' * 5)
     behavior.stats.stats(force=False)
     print('-' * 5, 'Fit', '-' * 5)
-    fit.stats.stats(force=True)
+    fit.stats.stats(force=False)
 
 
 def run_simulations():
@@ -212,7 +214,7 @@ def compute_demographics_analysis():
     n_var = 3  # Gender, age, nationality
     n_hr = 3  # Max profit, max diff, equal sharing
 
-    hr = ('max_profit', 'max_diff', 'equal_sharing')
+    hr = ('max_profit', 'max_diff', 'tacit_collusion')
 
     x = np.zeros((n_var, n_ind))
     y = np.zeros((n_hr, n_ind))
@@ -241,6 +243,8 @@ def compute_demographics_analysis():
     male_data = np.zeros((n_hr, n_male))
     female_data = np.zeros((n_hr, n_female))
 
+    ps = []
+
     for i_h, heuristic in enumerate(hr):
 
         male_data[i_h] = y[i_h, x[0, :] == 0]
@@ -253,6 +257,16 @@ def compute_demographics_analysis():
 
         u, p = scipy.stats.mannwhitneyu(male_data[i_h], female_data[i_h])
         print(f'Mann-Whitney rank test for sex-score: u {u}, p {p:.3f}, n {n}')
+        print()
+        ps.append(p)
+
+    valid, p_corr, alpha_c_sidak, alpha_c_bonf = \
+        statsmodels.stats.multitest.multipletests(pvals=ps, alpha=0.01, method="b")
+
+    print("p_corrected = ", [f"{i:.3f}" for i in p_corr])
+    print()
+
+    # Plot
 
     fig = plt.figure(figsize=(5, 8), dpi=200)
 
@@ -303,12 +317,21 @@ def compute_demographics_analysis():
     #
     # Age
 
+    ps = []
+
     for i_h, heuristic in enumerate(hr):
 
         cor, p = scipy.stats.pearsonr(x[1, :], y[i_h])
         print(f'Pearson corr age-score {cor:.2f}, p {p:.3f}, n {len(x[0])}')
 
         print()
+        ps.append(p)
+
+    valid, p_corr, alpha_c_sidak, alpha_c_bonf = \
+        statsmodels.stats.multitest.multipletests(pvals=ps, alpha=0.01, method="b")
+
+    print("p_corrected = ", [f"{i:.3f}" for i in p_corr])
+    print()
 
     # Figure for age
 
@@ -386,10 +409,10 @@ def main():
     # print(compute_number_of_observations_xp_behavior())
     # run_simulations()
     # demographics()
-    # compute_demographics_analysis()
+    compute_demographics_analysis()
     # kruskal()
     # compute_remuneration()
-    print_stats()
+    # print_stats()
 
 
 if __name__ == "__main__":

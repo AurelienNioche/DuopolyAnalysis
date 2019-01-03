@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import fit.fig
-import fit.data
+# import fit.data
 
 import behavior.fig
 import behavior.data
