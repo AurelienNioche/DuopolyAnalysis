@@ -13,6 +13,7 @@ application = get_wsgi_application()
 # Your application specific imports
 from game.models import User, Room, Round, RoundComposition, RoundState, FirmProfit
 import fit.data
+import fit.stats
 import behavior.data
 import behavior.stats
 import behavior.backup
@@ -31,7 +32,9 @@ def save(obj, fname):
 
 
 def print_stats():
+
     behavior.stats.stats()
+    fit.stats.stats()
 
 
 def run_simulations():

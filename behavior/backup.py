@@ -89,7 +89,6 @@ def load_data_from_db():
     backups = []
 
     rms = Room.objects.filter(state="end")
-    print(str(rms.count()))
 
     for rm in tqdm(rms):
 
