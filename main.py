@@ -232,83 +232,83 @@ def compute_demographics_analysis():
 
         print("{}: {:.02f}". format("General mean", np.mean(y[i_h]), "General std", np.std(y[i_h])))
 
-    # # Sex
-    # n_male = np.sum(x[0, :] == 0)
-    # n_female = np.sum(x[0, :] == 1)
+    # Sex
+    n_male = np.sum(x[0, :] == 0)
+    n_female = np.sum(x[0, :] == 1)
+
+    n = n_male + n_female
+
+    male_data = np.zeros((n_hr, n_male))
+    female_data = np.zeros((n_hr, n_female))
+
+    for i_h, heuristic in enumerate(hr):
+
+        male_data[i_h] = y[i_h, x[0, :] == 0]
+        female_data[i_h] = y[i_h, x[0, :] == 1]
+
+        for s_data, s_name in zip((male_data[i_h], female_data[i_h]), ('male', 'female')):
+            m = np.mean(s_data)
+            s = np.std(s_data)
+            print("{}: mean={:.02f} std={:.02f}".format(s_name, m, s))
+
+        u, p = scipy.stats.mannwhitneyu(male_data[i_h], female_data[i_h])
+        print(f'Mann-Whitney rank test for sex-score: u {u}, p {p:.3f}, n {n}')
+
+    fig = plt.figure(figsize=(5, 8), dpi=200)
+
+    gs = matplotlib.gridspec.GridSpec(nrows=3, ncols=1)
+
+    axes = (
+        fig.add_subplot(gs[0, 0]),
+        # plt.subplot(gs[0, 1]),
+        fig.add_subplot(gs[1, 0]),
+        # plt.subplot(gs[1, 1]),
+        fig.add_subplot(gs[2, 0]),
+        # plt.subplot(gs[2, 1])
+    )
+
+    color = ("C0", "C9")
+
+    for i_h, heuristic in enumerate(hr):
+        customized_plot.violin(ax=axes[i_h], data=[male_data[i_h], female_data[i_h]],
+                               color=color, edgecolor="white", alpha=0.8)
+        axes[i_h].set_ylabel("Score")
+        axes[i_h].set_ylim((-0.01, 1.01))
+
+    axes[0].set_xticks([])
+    axes[1].set_xticks([])
+    axes[2].set_xticklabels(['Male', 'Female'])
+
+    # axes[0].set_ylabel("Score")
+
+    plt.tight_layout()
+
+    ax = fig.add_subplot(gs[:, :], zorder=-10)
+
+    plt.axis("off")
+    ax.text(
+        s="A", x=-0.13, y=0.69, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
+    ax.text(
+        s="B", x=-0.13, y=0.35, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
+    ax.text(
+        s="C", x=-0.13, y=0, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
+
+    plt.savefig('fig/supplementary_sex.pdf')
+
+    # plt.show()
+    plt.close()
     #
-    # n = n_male + n_female
-    #
-    # male_data = np.zeros((n_hr, n_male))
-    # female_data = np.zeros((n_hr, n_female))
-    #
-    # for i_h, heuristic in enumerate(hr):
-    #
-    #     male_data[i_h] = y[i_h, x[0, :] == 0]
-    #     female_data[i_h] = y[i_h, x[0, :] == 1]
-    #
-    #     for s_data, s_name in zip((male_data[i_h], female_data[i_h]), ('male', 'female')):
-    #         m = np.mean(s_data)
-    #         s = np.std(s_data)
-    #         print("{}: mean={:.02f} std={:.02f}".format(s_name, m, s))
-    #
-    #     u, p = scipy.stats.mannwhitneyu(male_data[i_h], female_data[i_h])
-    #     print(f'Mann-Whitney rank test for sex-score: u {u}, p {p:.3f}, n {n}')
-    #
-    # fig = plt.figure(figsize=(5, 8), dpi=200)
-    #
-    # gs = matplotlib.gridspec.GridSpec(nrows=3, ncols=1)
-    #
-    # axes = (
-    #     fig.add_subplot(gs[0, 0]),
-    #     # plt.subplot(gs[0, 1]),
-    #     fig.add_subplot(gs[1, 0]),
-    #     # plt.subplot(gs[1, 1]),
-    #     fig.add_subplot(gs[2, 0]),
-    #     # plt.subplot(gs[2, 1])
-    # )
-    #
-    # color = ("C0", "C9")
-    #
-    # for i_h, heuristic in enumerate(hr):
-    #     customized_plot.violin(ax=axes[i_h], data=[male_data[i_h], female_data[i_h]],
-    #                            color=color, edgecolor="white", alpha=0.8)
-    #     axes[i_h].set_ylabel("Score")
-    #     axes[i_h].set_ylim((-0.01, 1.01))
-    #
-    # axes[0].set_xticks([])
-    # axes[1].set_xticks([])
-    # axes[2].set_xticklabels(['Male', 'Female'])
-    #
-    # # axes[0].set_ylabel("Score")
-    #
-    # plt.tight_layout()
-    #
-    # ax = fig.add_subplot(gs[:, :], zorder=-10)
-    #
-    # plt.axis("off")
-    # ax.text(
-    #     s="A", x=-0.13, y=0.69, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-    #     fontsize=20)
-    # ax.text(
-    #     s="B", x=-0.13, y=0.35, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-    #     fontsize=20)
-    # ax.text(
-    #     s="C", x=-0.13, y=0, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-    #     fontsize=20)
-    #
-    # plt.savefig('fig/supplementary_sex.pdf')
-    #
-    # # plt.show()
-    # plt.close()
-    #
-    # # Age
-    #
-    # for i_h, heuristic in enumerate(hr):
-    #
-    #     cor, p = scipy.stats.pearsonr(x[1, :], y[i_h])
-    #     print(f'Pearson corr age-score {cor}, p {p}, n {len(x[0])}')
-    #
-    #     print()
+    # Age
+
+    for i_h, heuristic in enumerate(hr):
+
+        cor, p = scipy.stats.pearsonr(x[1, :], y[i_h])
+        print(f'Pearson corr age-score {cor:.2f}, p {p:.3f}, n {len(x[0])}')
+
+        print()
 
     # Figure for age
 
