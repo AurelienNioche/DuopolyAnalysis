@@ -1,8 +1,9 @@
 import scipy.stats
 import statsmodels.stats.multitest
+import fit.data
 
 
-def stats(fit_b):
+def stats_and_table(fit_b):
 
     r = fit_b.r
     s = fit_b.display_opponent_score
@@ -83,3 +84,9 @@ def stats(fit_b):
 
     print("*** Latex-formated table ***")
     print(table)
+
+
+def stats(force):
+
+    fit_b = fit.data.get(force=force)
+    stats_and_table(fit_b)

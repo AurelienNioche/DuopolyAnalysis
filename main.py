@@ -39,8 +39,10 @@ def save(obj, fname):
 
 def print_stats():
 
-    behavior.stats.stats()
-    fit.stats.stats()
+    print('-' * 5, 'XP', '-' * 5)
+    behavior.stats.stats(force=False)
+    print('-' * 5, 'Fit', '-' * 5)
+    fit.stats.stats(force=True)
 
 
 def run_simulations():
@@ -384,10 +386,10 @@ def main():
     # print(compute_number_of_observations_xp_behavior())
     # run_simulations()
     # demographics()
-    compute_demographics_analysis()
+    # compute_demographics_analysis()
     # kruskal()
     # compute_remuneration()
-    # print_stats()
+    print_stats()
 
 
 if __name__ == "__main__":
