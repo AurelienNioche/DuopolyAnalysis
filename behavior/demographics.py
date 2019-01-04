@@ -6,7 +6,7 @@ import operator
 import itertools
 # import argparse
 import scipy.stats
-import statsmodels.stats
+import statsmodels.stats.multitest
 
 import behavior.backup
 import fit.data
@@ -296,7 +296,6 @@ def run(force):
     plt.savefig('fig/supplementary_age.pdf')
 
     plt.show()
-
 
     # for age in range(15, 61, 15):
     #     d = [y[i] for i in range(len(y)) if x[1, i] in (age, age+14)]
