@@ -109,7 +109,8 @@ def profits_over_fov(pool_backup, ax, span):
             if r <= bound:
                 # If data are generated based on random parameters set
                 if parameters.get('param_set_idx'):
-                    mean_profit = np.mean(b.profits[:, :] /
+                    mean_profit = 2 * \
+                                  np.mean(b.profits[:, :] /
                                           (b.parameters.p_max*b.parameters.n_positions))
 
                 else:
