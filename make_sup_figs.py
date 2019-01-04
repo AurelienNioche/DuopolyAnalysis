@@ -34,7 +34,7 @@ def simulation_full_span_fig():
         t_max_xp=25,
         random_params=False,
         force_params=False,
-        fig_name="fig/supplementary_simulation_random.pdf"
+        fig_name="fig/supplementary_simulation_full_span.pdf"
     )
 
 
