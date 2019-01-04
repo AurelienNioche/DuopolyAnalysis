@@ -2,17 +2,12 @@
 import os
 import pickle
 import numpy as np
-# import linearmodels as lm
-# import scipy.stats
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 # Ensure settings are read
 from django.core.wsgi import get_wsgi_application
 
 application = get_wsgi_application()
-
-import matplotlib
-import matplotlib.pyplot as plt
 
 # Your application specific imports
 from game.models import User, Room, Round, RoundComposition, RoundState, FirmProfit
@@ -21,9 +16,6 @@ import behavior.data
 import behavior.stats
 import behavior.backup
 import behavior.demographics
-from make_figs import simulation_fig
-
-# from analysis.batch import customized_plot
 
 
 def load(fname):
@@ -40,27 +32,9 @@ def print_stats():
     behavior.stats.stats()
 
 
-def run_simulations():
-    simulation_fig(
-        force=False,
-        # pool simulations are simulations where
-        # where vary r
-        span_pool=1,
-        t_max_pool=100,
-        t_max_xp=25,
-        random_params=True,
-        force_params=False,
-    )
-
-
 def old_demographics():
 
     behavior.demographics.old_run(force=False)
-
-
-def demographics():
-
-    behavior.demographics.run(force=False)
 
 
 def compute_conditions():
@@ -195,28 +169,16 @@ def compute_remuneration():
     print("std =", np.std(compensation))
 
 
-# def kruskal():
-#
-#     fit_bkup = load('fit.p')
-#     user_bkup = load('user.p')
-#
-#     x = np.asarray(fit_bkup.fit_scores)[user_bkup.gender == 'female']
-#     y = np.asarray(fit_bkup.fit_scores)[user_bkup.gender == 'male']
-#
-#     print(scipy.stats.kruskal(x, y))
-
-
 def main():
-
 
     # print('Subjects stats according to remuneration: ', compute_remuneration())
     # print('Subjects stats: ', compute_conditions())
     # print('Count of xp fit data')
     # print(compute_number_of_observations_xp_fit())
     # print('Count of xp behavior data')
-    # print(compute_number_of_observations_xp_behavior())
+    print(compute_number_of_observations_xp_behavior())
     # run_simulations()
-    demographics()
+    # demographics()
     # kruskal()
     # compute_remuneration()
     # print_stats()

@@ -77,7 +77,8 @@ def xp_fig(force=False):
     plt.show()
 
 
-def simulation_fig(force=False, span_pool=1, t_max_pool=100, t_max_xp=25, random_params=False, force_params=False):
+def simulation_fig(force=False, span_pool=1, t_max_pool=100, t_max_xp=25,
+                   random_params=False, force_params=False, fig_name="fig/simulation.pdf"):
 
     pool_bkp = simulation.data.pool(force=force, t_max=t_max_pool, random=random_params, force_params=force_params)
     batch_bkp = simulation.data.batch(force=force, t_max=t_max_xp, random=random_params, force_params=force_params)
@@ -120,7 +121,6 @@ def simulation_fig(force=False, span_pool=1, t_max_pool=100, t_max_xp=25, random
         s="F", x=0.58, y=-0.05, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
         fontsize=20)
 
-    fig_name = "fig/simulation.pdf"
     plt.savefig(fig_name)
     plt.show()
 
