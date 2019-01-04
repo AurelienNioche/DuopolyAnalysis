@@ -5,9 +5,6 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 
-import fit.fig
-# import fit.data
-
 import behavior.fig
 import behavior.data
 
@@ -19,6 +16,8 @@ import analysis.batch.simulation
 import analysis.dynamics.separate
 
 import fit.exemplary_cases
+import fit.data
+import fit.fig
 
 
 def xp_fig(force=False):
@@ -77,7 +76,7 @@ def xp_fig(force=False):
     plt.show()
 
 
-def simulation_fig(force=False, span_pool=1, t_max_pool=100, t_max_xp=25,
+def simulation_fig(force=False, span_pool=0.33, t_max_pool=100, t_max_xp=25,
                    random_params=False, force_params=False, fig_name="fig/simulation.pdf"):
 
     pool_bkp = simulation.data.pool(force=force, t_max=t_max_pool, random=random_params, force_params=force_params)
@@ -125,7 +124,7 @@ def simulation_fig(force=False, span_pool=1, t_max_pool=100, t_max_xp=25,
     plt.show()
 
 
-def dynamics_fig(force=True):
+def dynamics_fig(force=False):
 
     xp_examples = fit.exemplary_cases.get(force=force)
     sim_examples = simulation.data.individual(force=force)
@@ -244,7 +243,7 @@ def main():
 
     os.makedirs('fig', exist_ok=True)
     dynamics_fig(force=False)
-    # simulation_fig()
+    simulation_fig(force=False)
     xp_fig(force=False)
 
 
