@@ -21,9 +21,9 @@ import analysis.dynamics.separate
 import fit.exemplary_cases
 
 
-def xp_fig(force=True):
+def xp_fig(force=False):
 
-    fit_data = fit.data.get(force=force)
+    fit_data = fit.data.get_customized(force=force)
     behavior_data = behavior.data.get(force=force)
 
     # --------- Clustered figure ------------------ #

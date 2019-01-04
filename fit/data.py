@@ -17,6 +17,13 @@ def get(force=False):
     else:
         fit_b = backup.load("data/fit.p")
 
+    return fit_b
+
+
+def get_customized(force=False):
+
+    fit_b = get(force)
+
     r_values = np.sort(np.unique(fit_b.r))
     s_values = (False, True)
 

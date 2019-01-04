@@ -2,8 +2,8 @@
 import os
 import pickle
 import numpy as np
-import linearmodels as lm
-import scipy.stats
+# import linearmodels as lm
+# import scipy.stats
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 # Ensure settings are read
@@ -23,7 +23,7 @@ import behavior.backup
 import behavior.demographics
 from make_figs import simulation_fig
 
-from analysis.batch import customized_plot
+# from analysis.batch import customized_plot
 
 
 def load(fname):
@@ -51,6 +51,11 @@ def run_simulations():
         random_params=True,
         force_params=False,
     )
+
+
+def old_demographics():
+
+    behavior.demographics.old_run(force=False)
 
 
 def demographics():
@@ -97,13 +102,13 @@ def compute_conditions():
     return count
 
 
-def compute_number_of_observations_xp_fit():
+def compute_number_of_observations_xp_fit(force=False):
     # fit data structure = [ [[r=0.25, s=0] * n_heuristic],
     #                        [[r=0.25, s=1] * n_heuristic]],
     #                       [[r=0.5, s=0] * n_heuristic]],
     #                       [[r=0.5, s=1] * n_heuristic]] ]
 
-    fit_data = fit.data.get()
+    fit_data = fit.data.get_customized(force)
 
     count = {
         "r=0.25, s=0": len(fit_data[0][0]),
@@ -190,177 +195,6 @@ def compute_remuneration():
     print("std =", np.std(compensation))
 
 
-def compute_demographics_analysis():
-
-    fit_bkup = load('fit.p')
-    user_bkup = behavior.backup.get_user_data()
-
-    nationalities = np.unique(user_bkup.nationality)
-
-    user_bkup.gender[user_bkup.gender == "male"] = 0
-    user_bkup.gender[user_bkup.gender == "female"] = 1
-
-    for i, n in enumerate(nationalities):
-        user_bkup.nationality[user_bkup.nationality == n] = i
-
-    n_ind = 222
-    n_var = 3  # Gender, age, nationality
-    n_hr = 3  # Max profit, max diff, equal sharing
-
-    hr = ('max_profit', 'max_diff', 'equal_sharing')
-
-    x = np.zeros((n_var, n_ind))
-    y = np.zeros((n_hr, n_ind))
-
-    for i in range(n_ind):
-        x[0, i] = user_bkup.gender[i]  # np.random.choice([0, 1])
-        x[1, i] = user_bkup.age[i]  # np.random.random()
-        x[2, i] = user_bkup.nationality[i]  # np.random.random()
-
-    for i_h, heuristic in enumerate(hr):
-
-        for i, y_i in enumerate(fit_bkup.t_fit_scores[heuristic]):
-            y[i_h, i] = np.mean(y_i)
-            assert y[i_h, i] == fit_bkup.fit_scores[heuristic][i]
-
-        print("\n{}: {}".format('Heuristic', heuristic))
-
-        print("{}: {:.02f}". format("General mean", np.mean(y[i_h]), "General std", np.std(y[i_h])))
-
-    # # Sex
-    # n_male = np.sum(x[0, :] == 0)
-    # n_female = np.sum(x[0, :] == 1)
-    #
-    # n = n_male + n_female
-    #
-    # male_data = np.zeros((n_hr, n_male))
-    # female_data = np.zeros((n_hr, n_female))
-    #
-    # for i_h, heuristic in enumerate(hr):
-    #
-    #     male_data[i_h] = y[i_h, x[0, :] == 0]
-    #     female_data[i_h] = y[i_h, x[0, :] == 1]
-    #
-    #     for s_data, s_name in zip((male_data[i_h], female_data[i_h]), ('male', 'female')):
-    #         m = np.mean(s_data)
-    #         s = np.std(s_data)
-    #         print("{}: mean={:.02f} std={:.02f}".format(s_name, m, s))
-    #
-    #     u, p = scipy.stats.mannwhitneyu(male_data[i_h], female_data[i_h])
-    #     print(f'Mann-Whitney rank test for sex-score: u {u}, p {p:.3f}, n {n}')
-    #
-    # fig = plt.figure(figsize=(5, 8), dpi=200)
-    #
-    # gs = matplotlib.gridspec.GridSpec(nrows=3, ncols=1)
-    #
-    # axes = (
-    #     fig.add_subplot(gs[0, 0]),
-    #     # plt.subplot(gs[0, 1]),
-    #     fig.add_subplot(gs[1, 0]),
-    #     # plt.subplot(gs[1, 1]),
-    #     fig.add_subplot(gs[2, 0]),
-    #     # plt.subplot(gs[2, 1])
-    # )
-    #
-    # color = ("C0", "C9")
-    #
-    # for i_h, heuristic in enumerate(hr):
-    #     customized_plot.violin(ax=axes[i_h], data=[male_data[i_h], female_data[i_h]],
-    #                            color=color, edgecolor="white", alpha=0.8)
-    #     axes[i_h].set_ylabel("Score")
-    #     axes[i_h].set_ylim((-0.01, 1.01))
-    #
-    # axes[0].set_xticks([])
-    # axes[1].set_xticks([])
-    # axes[2].set_xticklabels(['Male', 'Female'])
-    #
-    # # axes[0].set_ylabel("Score")
-    #
-    # plt.tight_layout()
-    #
-    # ax = fig.add_subplot(gs[:, :], zorder=-10)
-    #
-    # plt.axis("off")
-    # ax.text(
-    #     s="A", x=-0.13, y=0.69, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-    #     fontsize=20)
-    # ax.text(
-    #     s="B", x=-0.13, y=0.35, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-    #     fontsize=20)
-    # ax.text(
-    #     s="C", x=-0.13, y=0, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-    #     fontsize=20)
-    #
-    # plt.savefig('fig/supplementary_sex.pdf')
-    #
-    # # plt.show()
-    # plt.close()
-    #
-    # # Age
-    #
-    # for i_h, heuristic in enumerate(hr):
-    #
-    #     cor, p = scipy.stats.pearsonr(x[1, :], y[i_h])
-    #     print(f'Pearson corr age-score {cor}, p {p}, n {len(x[0])}')
-    #
-    #     print()
-
-    # Figure for age
-
-    fig = plt.figure(figsize=(5, 8), dpi=200)
-
-    gs = matplotlib.gridspec.GridSpec(nrows=3, ncols=1)
-
-    axes = (
-        fig.add_subplot(gs[0, 0]),
-        fig.add_subplot(gs[1, 0]),
-        fig.add_subplot(gs[2, 0])
-    )
-
-    for i_h, heuristic in enumerate(hr):
-
-        # Do the scatter plot
-        axes[i_h].scatter(x[1, :], y[i_h], facecolor="black", edgecolor='white', s=15, alpha=1)
-
-        axes[i_h].set_ylabel("Score")
-        axes[i_h].set_ylim((-0.01, 1.01))
-
-    axes[0].set_xticks([])
-    axes[1].set_xticks([])
-    axes[2].set_xlabel("Age")
-
-    # axes[0].set_ylabel("Score")
-
-    plt.tight_layout()
-
-    ax = fig.add_subplot(gs[:, :], zorder=-10)
-
-    plt.axis("off")
-    ax.text(
-        s="A", x=-0.13, y=0.69, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
-    ax.text(
-        s="B", x=-0.13, y=0.35, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
-    ax.text(
-        s="C", x=-0.13, y=0, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=20)
-
-    plt.savefig('fig/supplementary_age.pdf')
-
-    plt.show()
-
-        # for age in range(15, 61, 15):
-        #     d = [y[i] for i in range(len(y)) if x[1, i] in (age, age+14)]
-        #     print("{}-{}: mean={:.02f} std={:.02f}".format(age, age+14, np.mean(d), np.std(d)))
-
-        # Nationality
-        # for i, n in enumerate(nationalities):
-        #     m = np.mean(y[x[2, :] == i])
-        #     s = np.std(y[x[2, :] == i])
-        #     print("{}: mean={:.02f} std={:.02f}".format(n, m, s))
-
-
 # def kruskal():
 #
 #     fit_bkup = load('fit.p')
@@ -373,6 +207,8 @@ def compute_demographics_analysis():
 
 
 def main():
+
+
     # print('Subjects stats according to remuneration: ', compute_remuneration())
     # print('Subjects stats: ', compute_conditions())
     # print('Count of xp fit data')
@@ -380,8 +216,7 @@ def main():
     # print('Count of xp behavior data')
     # print(compute_number_of_observations_xp_behavior())
     # run_simulations()
-    # demographics()
-    compute_demographics_analysis()
+    demographics()
     # kruskal()
     # compute_remuneration()
     # print_stats()
