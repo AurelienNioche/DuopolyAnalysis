@@ -59,8 +59,8 @@ def plot(data, subplot_spec):
         ax.set_xticklabels([])
 
     for ax, y_label, y_lim in zip(axes[0::2], y_labels, y_limits):
-        ax.text(-0.35, 0.5, y_label, rotation="vertical", verticalalignment='center',
-                horizontalalignment='center', transform=ax.transAxes, fontsize=12)
+        # ax.text(-0.35, 0.5, y_label, rotation="vertical", verticalalignment='center',
+        #        horizontalalignment='center', transform=ax.transAxes, fontsize=12)
         ax.set_ylabel(y_label)
         ax.tick_params(axis="y", labelsize=9)
         ax.set_ylim(y_lim)

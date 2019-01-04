@@ -91,7 +91,7 @@ def get_last_random_parameters(json_file):
     return i
 
 
-def load(json_file, force_params, random):
+def load(json_file, force_params, random=False):
 
     if not os.path.exists(json_file) and random or force_params:
 
@@ -168,8 +168,8 @@ def generate_new_random_parameters_files():
 
     # ------ Pool ---------- #
     for move in (
-            model.Move.max_profit, model.Move.strategic, model.Move.max_diff,
-            model.Move.equal_sharing
+            model.Move.max_profit, model.Move.max_diff,  # model.Move.strategic,
+            model.Move.tacit_collusion
     ):
         str_move = str(move).replace("Move.", "")
 
@@ -229,8 +229,8 @@ def generate_new_parameters_files():
 
     # ------ Pool ---------- #
     for move in (
-            model.Move.max_profit, model.Move.strategic, model.Move.max_diff,
-            model.Move.equal_sharing
+            model.Move.max_profit, model.Move.max_diff,  # model.Move.strategic,
+            model.Move.tacit_collusion
     ):
         str_move = str(move).replace("Move.", "")
 

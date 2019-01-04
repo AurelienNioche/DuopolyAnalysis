@@ -1,5 +1,6 @@
 import scipy.stats
 import statsmodels.stats.multitest
+import fit.compute
 
 
 def stats_and_table(fit_b):
@@ -7,9 +8,9 @@ def stats_and_table(fit_b):
     r = fit_b.r
     s = fit_b.display_opponent_score
 
-    p = fit_b.fit_scores["profit"]
-    d = fit_b.fit_scores["competition"]
-    e = fit_b.fit_scores["equal_sharing"]
+    p = fit_b.fit_scores["max_profit"]
+    d = fit_b.fit_scores["max_diff"]
+    e = fit_b.fit_scores["tacit_collusion"]
 
     to_compare = []
 
@@ -83,3 +84,9 @@ def stats_and_table(fit_b):
 
     print("*** Latex-formated table ***")
     print(table)
+
+
+def stats(force):
+
+    fit_b = fit.compute.get_fit(force=force)
+    stats_and_table(fit_b)

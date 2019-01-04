@@ -21,45 +21,15 @@ import simulation.backup as backup
 
 def get_heuristics():
     return [str(i).replace("Move.", "") for i in
-            (Move.max_profit, Move.max_diff, Move.equal_sharing)]
-
-
-def to_latex_table(expected_profits, strategies, opp_move):
-
-    expected_profits = expected_profits.astype(int)
-    expected_profits = expected_profits.reshape((21, 11))
-    strategies = strategies.astype(int)
-
-    table = \
-        r"\begin{table}[htbp]" + "\n" + \
-        r"\begin{center}" + "\n" + \
-        r"\begin{tabular}{lllllllllll}" + "\n" + \
-        r"Position & " + \
-        r" & ".join(["\$" + str(strategies[i, 1] + 1) for i in range(11)]) + r"\\" + "\n"\
-        r"\hline \\" + "\n"
-
-    for i in range(21):
-        table += \
-            r" {} & ".format(i + 1) + " & ".join([str(expected_profits[i, j]) for j in range(11)]) + \
-            "\\\ \n"
-
-    table += r"\end{tabular}" + "\n" + \
-         r"\end{center}" + "\n" + \
-         r"\end{table}"
-
-    print()
-    print("opp move", strategies[opp_move, :])
-
-    print(table)
-    quit()
+            (Move.max_profit, Move.max_diff, Move.tacit_collusion)]
 
 
 class Move(enum.Enum):
 
     max_profit = enum.auto()
     max_diff = enum.auto()
-    strategic = enum.auto()
-    equal_sharing = enum.auto()
+    tacit_collusion = enum.auto()
+    # strategic = enum.auto()
 
 
 class Model:
@@ -95,8 +65,8 @@ class Model:
 
             Move.max_profit: self.move_profit_based,
             Move.max_diff: self.move_diff_based,
-            Move.equal_sharing: self.move_equal_sharing,
-            Move.strategic: self.move_profit_strategic_based
+            Move.tacit_collusion: self.move_tacit_collusion,
+            # Move.strategic: self.move_profit_strategic_based
 
         }[self.parameters.move]
 
@@ -215,10 +185,6 @@ class Model:
         for i in range(self.n_strategies):
             exp_profits[i] = self.profits_given_position_and_price(i, opp_move)[0]
 
-        if self.r == 0.25:
-            to_latex_table(
-                exp_profits, strategies=self.strategies, opp_move=opp_move)
-        #
         max_profits = max(exp_profits)
 
         idx = np.flatnonzero(exp_profits == max_profits)
@@ -242,28 +208,28 @@ class Model:
 
         return np.random.choice(idx)
 
-    def move_profit_strategic_based(self, opp_move):
+    # def move_profit_strategic_based(self, opp_move):
+    #
+    #     values = np.zeros(self.n_strategies)
+    #
+    #     profits_t_plus = np.zeros((self.n_strategies, 2))
+    #
+    #     for i in range(self.n_strategies):
+    #         profits_t = self.profits_given_position_and_price(i, opp_move)[0]
+    #         for j in range(self.n_strategies):
+    #             profits_t_plus[j] = self.profits_given_position_and_price(i, j)
+    #
+    #         max_profits_opp = max(profits_t_plus[:, 1])
+    #         mean_profits_t_plus = np.mean(profits_t_plus[profits_t_plus[:, 1] == max_profits_opp, 0])
+    #         values[i] = profits_t + mean_profits_t_plus
+    #
+    #     max_value = max(values)
+    #
+    #     idx = np.flatnonzero(values == max_value)
+    #
+    #     return np.random.choice(idx)
 
-        values = np.zeros(self.n_strategies)
-
-        profits_t_plus = np.zeros((self.n_strategies, 2))
-
-        for i in range(self.n_strategies):
-            profits_t = self.profits_given_position_and_price(i, opp_move)[0]
-            for j in range(self.n_strategies):
-                profits_t_plus[j] = self.profits_given_position_and_price(i, j)
-
-            max_profits_opp = max(profits_t_plus[:, 1])
-            mean_profits_t_plus = np.mean(profits_t_plus[profits_t_plus[:, 1] == max_profits_opp, 0])
-            values[i] = profits_t + mean_profits_t_plus
-
-        max_value = max(values)
-
-        idx = np.flatnonzero(values == max_value)
-
-        return np.random.choice(idx)
-
-    def move_equal_sharing(self, opp_move):
+    def move_tacit_collusion(self, opp_move):
 
         exp_profits = np.zeros((self.n_strategies, 2))
 

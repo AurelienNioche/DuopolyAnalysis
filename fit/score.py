@@ -18,7 +18,7 @@ from fit import abstract
 
 class Score(abstract.AbstractModel):
 
-    names = "max_profit", "max_diff", "equal_sharing"  # "profit_strategic", "competition_strategic"
+    names = "max_profit", "max_diff", "tacit_collusion"  # "profit_strategic", "competition_strategic"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -65,7 +65,7 @@ class Score(abstract.AbstractModel):
 
         return player_value / max_value if max_value > 0 else 1
     
-    def equal_sharing(self, player_position, player_price, opp_position, opp_price):
+    def tacit_collusion(self, player_position, player_price, opp_position, opp_price):
 
         """
         TODO: Make this code more explicit

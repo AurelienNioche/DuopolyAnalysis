@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import fit.fig
-import fit.data
+# import fit.data
 
 import behavior.fig
 import behavior.data
@@ -125,7 +125,7 @@ def simulation_fig(force=False, span_pool=1, t_max_pool=100, t_max_xp=25, random
     plt.show()
 
 
-def dynamics_fig(force=False):
+def dynamics_fig(force=True):
 
     xp_examples = fit.exemplary_cases.get(force=force)
     sim_examples = simulation.data.individual(force=force)
@@ -165,11 +165,11 @@ def dynamics_fig(force=False):
     )
 
     analysis.dynamics.separate.eeg_like(
-        backup=sim_examples["equal_sharing"]["50"], subplot_spec=gs[3, 3], letter='D'
+        backup=sim_examples["tacit_collusion"]["50"], subplot_spec=gs[3, 3], letter='D'
     )
 
     analysis.dynamics.separate.eeg_like(
-        backup=xp_examples["equal_sharing"]["50"], subplot_spec=gs[3, 4], letter=''
+        backup=xp_examples["tacit_collusion"]["50"], subplot_spec=gs[3, 4], letter=''
     )
 
     ax = fig.add_subplot(gs[:, :], zorder=-10)
@@ -243,9 +243,9 @@ def dynamics_fig(force=False):
 def main():
 
     os.makedirs('fig', exist_ok=True)
-    # dynamics_fig()
+    dynamics_fig(force=False)
     # simulation_fig()
-    xp_fig()
+    xp_fig(force=False)
 
 
 if __name__ == "__main__":
