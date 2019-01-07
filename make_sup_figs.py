@@ -4,15 +4,15 @@ import behavior.demographics
 from make_figs import simulation_fig
 
 
-def demographics_figs():
+def demographics_figs(force=False):
 
     # Will create violin plots for gender and scatter plot for age
-    behavior.demographics.run(force=False)
+    behavior.demographics.run(force=force)
 
 
-def simulation_random_fig():
+def simulation_random_fig(force=False):
     simulation_fig(
-        force=True,
+        force=force,
         # pool simulations are simulations where
         # where vary r
         span_pool=0.33,
@@ -24,9 +24,9 @@ def simulation_random_fig():
     )
 
 
-def simulation_full_span_fig():
+def simulation_full_span_fig(force=False):
     simulation_fig(
-        force=True,
+        force=force,
         # pool simulations are simulations where
         # where vary r
         span_pool=1,

@@ -35,8 +35,8 @@ def plot(batch_backup, subplot_spec):
             d[i] = np.mean(data)
 
             # Compute the mean profit
-            scores[i] = np.mean(b.profits[:, :] /
-                                (b.parameters.p_max*b.parameters.n_positions))
+            scores[i] = 2*np.mean(b.profits[:, :] /
+                                  (b.parameters.p_max*b.parameters.n_positions))
 
         else:
 
