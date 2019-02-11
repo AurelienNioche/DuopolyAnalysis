@@ -85,11 +85,11 @@ def pool(force, t_max, random, force_params):
 
     for h in heuristics:
 
-        parameters_file = "simulation/results/json/pool_{}{}.json".format(
+        parameters_file = "simulation/config/pool_{}{}.json".format(
             h, ('', '_random')[random],
         )
 
-        data_file = "simulation/results/pickle/pool_{}{}.p".format(
+        data_file = "simulation/results/pool_{}{}.p".format(
             h, ('', '_random')[random],
         )
 
@@ -112,11 +112,11 @@ def batch(force, t_max, random, force_params):
 
     for h in heuristics:
 
-        parameters_file = "simulation/results/json/batch_{}{}.json".format(
+        parameters_file = "simulation/config/batch_{}{}.json".format(
             h, ('', '_random')[random]
         )
 
-        data_file = "simulation/results/pickle/batch_{}{}.p".format(
+        data_file = "simulation/results/batch_{}{}.p".format(
             h, ('', '_random')[random]
         )
 
@@ -141,8 +141,8 @@ def individual(force=False, force_params=False):
 
         for r in ("25", "50"):
 
-            parameters_file = "simulation/results/json/{}_{}.json".format(r, h)
-            data_file = "simulation/results/pickle/{}_{}.p".format(r, h)
+            parameters_file = "simulation/config/{}_{}.json".format(r, h)
+            data_file = "simulation/results/{}_{}.p".format(r, h)
 
             if not data_already_produced(parameters_file, data_file) or force:
 

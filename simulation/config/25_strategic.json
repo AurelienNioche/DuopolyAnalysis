@@ -1,0 +1,10 @@
+{
+    "move": "strategic",
+    "n_positions": 21,
+    "n_prices": 11,
+    "p_max": 11,
+    "p_min": 1,
+    "r": 0.25,
+    "seed": 3026015570,
+    "t_max": 25
+}

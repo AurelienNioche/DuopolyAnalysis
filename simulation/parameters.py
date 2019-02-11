@@ -188,7 +188,7 @@ def generate_new_random_parameters_files():
             "move": str_move,
         }
 
-        to_create.append(("simulation/results/json/pool_{}_random.json".format(str_move), for_pool))
+        to_create.append(("simulation/config/pool_{}_random.json".format(str_move), for_pool))
 
         # ------ Batch --------- #
 
@@ -207,7 +207,7 @@ def generate_new_random_parameters_files():
             "move": str_move,
         }
 
-        to_create.append(("simulation/results/json/batch_{}_random.json".format(str_move), for_batch))
+        to_create.append(("simulation/config/batch_{}_random.json".format(str_move), for_batch))
 
     for f_name, content in to_create:
         with open(f_name, "w") as f:
@@ -247,7 +247,7 @@ def generate_new_parameters_files():
             "move": str_move,
         }
 
-        to_create.append(("simulation/results/json/pool_{}.json".format(str_move), for_pool))
+        to_create.append(("simulation/config/pool_{}.json".format(str_move), for_pool))
 
         # ------ Batch --------- #
 
@@ -264,7 +264,7 @@ def generate_new_parameters_files():
             "move": str_move,
         }
 
-        to_create.append(("simulation/results/json/batch_{}.json".format(str_move), for_batch))
+        to_create.append(("simulation/config/batch_{}.json".format(str_move), for_batch))
 
         # ---- Separate -------- #
 
@@ -280,7 +280,7 @@ def generate_new_parameters_files():
                 "move": str_move
             }
 
-            to_create.append(("simulation/results/json/{}_{}.json".format(i, str_move), for_ind))
+            to_create.append(("simulation/config/{}_{}.json".format(i, str_move), for_ind))
 
     for f_name, content in to_create:
         with open(f_name, "w") as f:

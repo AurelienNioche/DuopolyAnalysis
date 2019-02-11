@@ -1,0 +1,10 @@
+{
+  "r": 0.25,
+  "seed": 1911182176,
+  "n_positions": 21,
+  "n_prices": 11,
+  "t_max": 25,
+  "p_min": 1,
+  "p_max": 11,
+  "move": "tacit_collusion"
+}
