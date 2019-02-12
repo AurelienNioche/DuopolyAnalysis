@@ -129,47 +129,53 @@ def dynamics_fig(force=False):
     xp_examples = fit.exemplary_cases.get(force=force)
     sim_examples = simulation.data.individual(force=force)
 
-    fig = plt.figure(figsize=(10, 8), dpi=200)
+    fig = plt.figure(figsize=(10, 10), dpi=200)
     gs = matplotlib.gridspec.GridSpec(
-        nrows=4, ncols=5,
+        nrows=6, ncols=5,
         width_ratios=[0.13, 1, 1, 1, 1],
-        height_ratios=[0.12, 1, 0.2, 1])
+        height_ratios=[0.13, 1.2, 0.02, 1.2, 0.02, 1.2])
 
     # First row
 
     analysis.dynamics.separate.eeg_like(
-        backup=sim_examples["max_profit"]["25"], subplot_spec=gs[1, 1], letter='A'
-    )
+        backup=sim_examples["max_profit"]["25"], subplot_spec=gs[1, 1])
 
     analysis.dynamics.separate.eeg_like(
-        backup=xp_examples["max_profit"]["25"], subplot_spec=gs[1, 2], letter=''
-    )
+        backup=xp_examples["max_profit"]["25"], subplot_spec=gs[1, 2])
 
     analysis.dynamics.separate.eeg_like(
-        backup=sim_examples["max_diff"]["25"], subplot_spec=gs[1, 3], letter='C'
-    )
+        backup=sim_examples["max_profit"]["50"], subplot_spec=gs[1, 3])
 
     analysis.dynamics.separate.eeg_like(
-        backup=xp_examples["max_diff"]["25"], subplot_spec=gs[1, 4], letter=''
-    )
+        backup=xp_examples["max_profit"]["50"], subplot_spec=gs[1, 4])
 
     # Second row
 
     analysis.dynamics.separate.eeg_like(
-        backup=sim_examples["max_profit"]["50"], subplot_spec=gs[3, 1], letter='B'
-    )
+        backup=sim_examples["max_diff"]["25"], subplot_spec=gs[3, 1])
 
     analysis.dynamics.separate.eeg_like(
-        backup=xp_examples["max_profit"]["50"], subplot_spec=gs[3, 2], letter=''
-    )
+        backup=xp_examples["max_diff"]["25"], subplot_spec=gs[3, 2])
 
     analysis.dynamics.separate.eeg_like(
-        backup=sim_examples["tacit_collusion"]["50"], subplot_spec=gs[3, 3], letter='D'
-    )
+        backup=sim_examples["max_diff"]["50"], subplot_spec=gs[3, 3])
 
     analysis.dynamics.separate.eeg_like(
-        backup=xp_examples["tacit_collusion"]["50"], subplot_spec=gs[3, 4], letter=''
-    )
+        backup=xp_examples["max_diff"]["50"], subplot_spec=gs[3, 4])
+
+    # Third row
+
+    analysis.dynamics.separate.eeg_like(
+        backup=sim_examples["tacit_collusion"]["25"], subplot_spec=gs[5, 1])
+
+    analysis.dynamics.separate.eeg_like(
+        backup=xp_examples["tacit_collusion"]["25"], subplot_spec=gs[5, 2])
+
+    analysis.dynamics.separate.eeg_like(
+        backup=sim_examples["tacit_collusion"]["50"], subplot_spec=gs[5, 3])
+
+    analysis.dynamics.separate.eeg_like(
+        backup=xp_examples["tacit_collusion"]["50"], subplot_spec=gs[5, 4])
 
     ax = fig.add_subplot(gs[:, :], zorder=-10)
 
@@ -180,59 +186,68 @@ def dynamics_fig(force=False):
 
     # Top left
     ax.text(
-        s="Profit max.", x=L, y=1, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
+        s="$r=0.25$", x=L, y=1, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=15)
     ax.text(
-        s="Sim.", x=L-shift, y=0.95, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
+        s="Sim.", x=L-shift*0.9, y=0.97, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
     ax.text(
-        s="Exp.", x=L+shift, y=0.95, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
+        s="Exp.", x=L+shift, y=0.97, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
 
     # Top right
     ax.text(
-        s="Diff max.", x=R, y=1, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
+        s="$r=0.50$", x=R, y=1, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=15)
 
     ax.text(
-        s="Sim.", x=R-shift, y=0.95, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
+        s="Sim.", x=R-shift*0.9, y=0.97, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
     ax.text(
-        s="Exp.", x=R+shift, y=0.95, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
-        fontsize=13)
-
-    # Bottom left
-    ax.text(
-        s="Profit max.", x=L, y=0.43, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=15)
-
-    ax.text(
-        s="Sim.", x=L-shift, y=0.4, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
-        fontsize=13)
-    ax.text(
-        s="Exp.", x=L+shift, y=0.4, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
-        fontsize=13)
-
-    # Bottom right
-    ax.text(
-        s="Tacit collusion", x=R, y=0.43, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
-        fontsize=15)
-
-    ax.text(
-        s="Sim.", x=R-shift, y=0.4, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
-        fontsize=13)
-    ax.text(
-        s="Exp.", x=R+shift, y=0.4, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
+        s="Exp.", x=R+shift, y=0.97, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes,
         fontsize=13)
 
     # Side
 
     ax.text(
-        s="$r= 0.25$", x=0, y=0.75, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        s="Profit max.", x=0, y=0.8, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
         fontsize=15, rotation='vertical')
     ax.text(
-        s="$r=0.50$", x=0, y=0.2, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        s="Diff max.", x=0, y=0.45, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
         fontsize=15, rotation='vertical')
+    ax.text(
+        s="Tacit collusion", x=0, y=0.1, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=15, rotation='vertical')
+
+    # Letters
+
+    left, right = 0.05, 0.54
+
+    first_r, second_r, third_r = 0.64, 0.3, -0.04
+
+    ax.text(
+        s="A", x=left, y=first_r, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
+
+    ax.text(
+        s="B", x=right, y=first_r, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
+
+    ax.text(
+        s="C", x=left, y=second_r, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
+
+    ax.text(
+        s="D", x=right, y=second_r, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
+
+    ax.text(
+        s="E", x=left, y=third_r, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
+
+    ax.text(
+        s="F", x=right, y=third_r, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes,
+        fontsize=20)
 
     plt.tight_layout(pad=1)
     plt.savefig("fig/dynamics.pdf")
