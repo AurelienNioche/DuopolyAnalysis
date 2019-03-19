@@ -278,6 +278,98 @@ def load_user_data_from_db():
     return user_data
 
 
+def load_remuneration_data_from_db(force=False, conversion_rate=0.5 * 10 ** (-3)):
+
+    data_filtered = get_data(force=force)
+
+    remuneration_data = {}
+    treated_users = set()
+
+    for d in data_filtered:
+
+        for user_id in d.user_id:
+            if user_id == 'bot' or user_id in treated_users:
+                continue
+
+            treated_users.add(user_id)
+
+            # Application logic
+            u = User.objects.filter(id=user_id).first()
+            if not u:
+                raise Exception
+
+            if u:
+                rm = Room.objects.filter(id=u.room_id).first()
+                if rm:
+                    if rm.state == "end":
+
+                        rds = Round.objects.filter(room_id=rm.id)
+
+                        round_id_and_agent_ids = []
+
+                        for rd in rds:
+
+                            rc = RoundComposition.objects.filter(round_id=rd.id, user_id=u.id).first()
+                            if rc is not None:
+                                round_id_and_agent_ids.append((rd.id, rc.firm_id))
+
+                        profit = 0
+
+                        for round_id, agent_id in round_id_and_agent_ids:
+                            # print("round_id", round_id, "agent_id", agent_id)
+
+                            pr = FirmProfit.objects.get(agent_id=agent_id, t=rm.ending_t, round_id=round_id).value
+
+                            profit += pr
+
+                        comp = 1 + profit * conversion_rate
+                        remuneration_data[user_id] = comp
+
+    save(remuneration_data, 'data/remuneration_data.p')
+    return remuneration_data
+
+
+def load_count_data_from_db():
+
+    count= dict(
+        all=0,
+        total_excluded=0,
+        not_entered=0,
+        stopped=0,
+        tutorial=0,
+        pve=0,
+        pvp=0,
+        end=0,
+    )
+
+    for u in User.objects.all():
+
+        count['all'] += 1
+        rm = Room.objects.filter(id=u.room_id).first()
+
+        if rm:
+            if rm.state not in count:
+                count[rm.state] = 1
+            else:
+                count[rm.state] += 1
+            if rm.state not in ('end',):
+                count['stopped'] += 1
+        else:
+            count['not_entered'] += 1
+
+    # 10 sessions were not valid
+    #  (bad positions and prices at the beginning)
+    # were part of pretests
+    count['end'] -= 10
+    count['all'] -= 10
+
+    # total excluded
+    count['total_excluded'] = count['stopped'] + count['not_entered']
+
+    save(count, 'data/count_data.p')
+    return count
+
+
 def get_user_data(force=False):
 
     if not os.path.exists("data/user.p") or force:
@@ -286,6 +378,26 @@ def get_user_data(force=False):
         user_data = load("data/user.p")
 
     return user_data
+
+
+def get_remuneration_data(force=False):
+
+    if not os.path.exists("data/remuneration_data.p") or force:
+        remuneration_data = load_remuneration_data_from_db(force=force)
+    else:
+        remuneration_data = load("data/remuneration_data.p")
+
+    return remuneration_data
+
+
+def get_count_data(force=False):
+
+    if not os.path.exists("data/count_data.p") or force:
+        count_data = load_count_data_from_db()
+    else:
+        count_data = load("data/count_data.p")
+
+    return count_data
 
 
 def get_data(force=False):

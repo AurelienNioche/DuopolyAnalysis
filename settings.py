@@ -8,14 +8,14 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'data', 'duopoly.sqlite3'),
     },
-    'new': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'data', 'duopolyNew.sqlite3'),
-    },
-    'old': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'data', 'duopolyOld.sqlite3'),
-    }
+    # 'new': {
+    #         'ENGINE': 'django.db.backends.sqlite3',
+    #         'NAME': os.path.join(BASE_DIR, 'data', 'duopolyNew.sqlite3'),
+    # },
+    # 'old': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': os.path.join(BASE_DIR, 'data', 'duopolyOld.sqlite3'),
+    # }
 }
 
 # example) MySQL
@@ -34,7 +34,7 @@ INSTALLED_APPS = (
     "game",
 )
 
-SECRET_KEY = 'TAMERE'
+SECRET_KEY = '1234'
 
 DEBUG = True
 # TIME_ZONE = "Europe/Paris"

@@ -260,6 +260,7 @@ def main():
     dynamics_fig(force=False)
     simulation_fig(force=False)
     xp_fig(force=False)
+    print('Done!')
 
 
 if __name__ == "__main__":
